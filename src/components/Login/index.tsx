@@ -3,11 +3,13 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-
+import { useSearchParams } from 'next/navigation';
 import Link from "next/link";
-import { AuthenticationProvider, DASHBOARD } from "@/types/auth";
+import { AuthenticationProvider } from "@/types/auth";
 const SignInForm = () => {
-    const router = useRouter();
+    // const router = useRouter();
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get('callbackUrl')
     const initialValues = {
         email: '',
         password: "",
@@ -15,21 +17,17 @@ const SignInForm = () => {
     const [formInputs, setFormInputs] = useState(initialValues);
     const validate = () => {
         const { email, password } = formInputs;
-        const errors: any = {};
+        const errors = {};
         if (!email.trim()) {
-            errors.email = 'Email is required.';
-            toast.error(errors.email);
+            toast.error('Email is required.');
 
         } else if (!/\S+@\S+\.\S+/.test(email)) {
-            errors.email = 'Email is invalid.';
-            toast.error(errors.email);
+            toast.error('Email is invalid.');
         }
         if (!password.trim()) {
-            errors.password = 'Password is required.';
-            toast.error(errors.password);
-        } else if (password.length < 8) {
-            errors.password = 'Password is too short.';
-            toast.error(errors.password);
+            toast.error('Password is required.');
+        } else if (password.length < 6) {
+            toast.error('Password is too short.');
         }
         return Object.keys(errors).length === 0;
     };
@@ -38,28 +36,19 @@ const SignInForm = () => {
         e.preventDefault();
         const isValid = validate();
         if (isValid) {
-            try {
-                const data = await signIn(AuthenticationProvider.ADMIN, {
-                    email: formInputs.email,
-                    password: formInputs.password,
-                    redirect: false,
-                    // callbackUrl: '/dashboard'
-                });
-                if (data?.error) {
-                    toast.error(data?.error);
-                    return;
-                } else {
-                    toast.success("Logged in");
-                    router.push(DASHBOARD);
-                    // router.push("/dashboard");
-                }
-            } catch (error: any) {
-                const errorData = error?.message ?? "Something went wrong while checking your credentials. Please try again later."
-                toast.error(errorData);
-                return errorData;
+            const data = await signIn(AuthenticationProvider.ADMIN, {
+                email: formInputs.email,
+                password: formInputs.password,
+                redirect: true,
+                callbackUrl: '/dashboard'
+            })
+            if (data?.error) {
+                toast.error(data?.error);
+                return;
             }
+            toast.success("Logged in");
         } else {
-            // toast.error('Form has errors. Please correct them');
+            toast.error('Form has errors. Please correct them');
         }
     }
     return (
@@ -179,7 +168,7 @@ const SignInForm = () => {
             <div className="mt-6 text-center">
                 <p>
                     {/* Forgot Password?{" "} */}
-                    <Link href="/admin/auth/forgot-password" className="text-primary">
+                    <Link href="/auth/forgot-password" className="text-primary">
                         Forgot Password?
                     </Link>
                 </p>
