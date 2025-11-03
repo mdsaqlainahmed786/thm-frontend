@@ -1,0 +1,16 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "GDT6V8X9B7.com.thehotelmedia.ios",
+                "paths": [
+                    "/share/posts",
+                    "/share/users",
+                    "/share/events",
+                    "/review"
+                ]
+            }
+        ]
+    }
+}

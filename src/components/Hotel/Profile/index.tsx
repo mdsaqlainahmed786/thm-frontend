@@ -1,0 +1,648 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import { PageContent, PageTitle } from "../Layouts/AdminLayout";
+export const DefaultProfilePic = "/images/user-placeholder.jpg";
+export const DefaultCoverPic = "/images/cover/cover-01.png";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { fetchBusinessQuestions, fetchLanguages, fetchProfile, updateAmenity, updateProfile } from "@/api-services/hotel";
+import SVG from "@/components/SVG/index";
+import Image from "next/image";
+import moment from "moment";
+import { ListIcon, DownArrowIcon } from "@/components/Icons";
+import { fetchBusinessTypes, fetchBusinessSubtypes } from "@/api-services/business";
+import Select, { CSSObjectWithLabel, ControlProps, ActionMeta, MultiValue, SingleValue } from 'react-select';
+import Button from "@/components/Button";
+import Input from "../Common/UI/Input";
+import Label from "../Common/UI/Label";
+
+const Profile: React.FC<{}> = () => {
+
+    const [modal, setModal] = useState(false);
+    const [popup, setPopup] = useState(false);
+    const [popupSetting, setPopupSetting] = useState<"language" | "amenity">("language");
+    const emptyData: {
+        value: string;
+        label: string;
+    }[] = [];
+    const emptyAnswer: {
+        questionID: string;
+        answer: string;
+    }[] = []
+    const initialFormInputs = {
+        name: "",
+        bio: "",
+        gstn: "",
+        website: "",
+        email: "",
+        phoneNumber: "",
+        dialCode: "",
+        address: "",
+        businessTypeID: "",
+        businessSubTypeID: "",
+        checkIn: "",
+        checkOut: "",
+        languages: emptyData,
+        answer: emptyAnswer,
+    }
+    const [formInputs, setFormInputs] = useState(initialFormInputs);
+    const { isPending, isError, error, data, isFetching, isPlaceholderData, refetch } = useQuery({
+        queryKey: ['business-profile'],
+        queryFn: () => fetchProfile(),
+        placeholderData: keepPreviousData,
+    });
+    const { data: businessTypes, refetch: refetchBusinessTypes } = useQuery({
+        queryKey: ['business-types'],
+        queryFn: () => fetchBusinessTypes(),
+        placeholderData: keepPreviousData,
+    });
+    const { data: businessSubTypes, refetch: refetchBusinessSubTypes } = useQuery({
+        queryKey: ['business-types', formInputs.businessTypeID],
+        queryFn: () => fetchBusinessSubtypes(formInputs.businessTypeID),
+        placeholderData: keepPreviousData,
+    });
+    const { data: languages, refetch: refetchLanguage } = useQuery({
+        queryKey: ['languages'],
+        queryFn: () => fetchLanguages(),
+        placeholderData: keepPreviousData,
+    });
+    const { data: businessQuestions, refetch: refetchBusinessQuestions } = useQuery({
+        queryKey: ['business-questions'],
+        queryFn: () => fetchBusinessQuestions(formInputs.businessTypeID, formInputs.businessSubTypeID),
+        placeholderData: keepPreviousData,
+    });
+    useEffect(() => {
+        if (formInputs.businessTypeID && formInputs.businessSubTypeID) {
+            refetchBusinessQuestions();
+        }
+    }, [formInputs.businessTypeID, formInputs.businessSubTypeID]);
+    const loading = isPending || isFetching;
+    useEffect(() => {
+        if (data && data?.businessProfileRef) {
+            const answer = data?.businessProfileRef?.amenities && data?.businessProfileRef?.amenities.length !== 0 ?
+                data.businessProfileRef?.amenities.map((amenityID) => {
+                    return {
+                        questionID: amenityID,
+                        answer: "Yes"
+                    }
+                }) :
+                emptyAnswer;
+            setFormInputs({
+                ...formInputs,
+                bio: data?.businessProfileRef?.bio || "",
+                name: data?.businessProfileRef?.name || "",
+                gstn: data?.businessProfileRef?.gstn || "",
+                website: data?.businessProfileRef?.website || "",
+                email: data?.businessProfileRef?.email || "",
+                phoneNumber: data?.businessProfileRef?.phoneNumber || "",
+                dialCode: data?.businessProfileRef?.dialCode || "",
+                address: (data && data.businessProfileRef?.address) ? `${data.businessProfileRef.address.street || ""}, ${data.businessProfileRef.address.city || ""}, ${data.businessProfileRef.address.state || ""}, ${data.businessProfileRef.address.zipCode || ""}, ${data.businessProfileRef.address.country || ""}` : "",
+                businessTypeID: data?.businessProfileRef?.businessTypeID || "",
+                businessSubTypeID: data?.businessProfileRef?.businessSubTypeID || "",
+                checkIn: data?.businessProfileRef?.checkIn || "",
+                checkOut: data?.businessProfileRef?.checkOut || "",
+                answer: answer
+            })
+        }
+    }, [data]);
+
+    const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        try {
+            e.preventDefault();
+            await updateProfile(formInputs);
+            setModal(false);
+            refetch();
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    const handleAmenityAndLanguageUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+        try {
+            e.preventDefault();
+            const data = {};
+            if (popupSetting === "amenity") {
+                await updateAmenity(formInputs.answer);
+            }
+            if (popupSetting === "language") {
+                Object.assign(data, { languageSpoken: formInputs.languages.map((data) => data.value) });
+                await updateProfile(data);
+            }
+            setPopup(false)
+            refetch();
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+
+    const changeLanguage = async (newValue: MultiValue<{ value: string; label: string; }> |
+        SingleValue<{ value: string; label: string; }>,
+        actionMeta: ActionMeta<{ value: string; label: string; }>) => {
+        setFormInputs({
+            ...formInputs,
+            languages: newValue as {
+                value: string;
+                label: string;
+            }[]
+        });
+    }
+    return (
+        <>
+            <div className={`overflow-hidden rounded-xl  bg-boxdark shadow-default  dark:bg-boxdark ${loading ? "animate-pulse" : null} `}>
+
+                <div className={`${popup ? '' : 'hidden'} fixed left-0 top-0 z-999999 flex h-screen w-full justify-center overflow-y-scroll bg-theme-black dark:bg-theme-black px-4 py-5`}>
+                    <div className=" m-auto w-full max-w-lg rounded-xl border border-stroke bg-theme-black-full p-4 shadow-default dark:border-strokedark dark:bg-theme-black-full sm:p-6 xl:p-8">
+                        <div className="flex justify-between">
+                            <h4>
+                                {popupSetting === "amenity" ? "Update Amenities" : "Update Spoken Language"}
+                            </h4>
+                            <button className="bg-primary/50 border-radius h-6 w-6 rounded-full flex justify-center items-center" type="button" onClick={() => setPopup(false)}>
+                                <svg className="fill-current" width="8" height="8" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M11.8913 9.99599L19.5043 2.38635C20.032 1.85888 20.032 1.02306 19.5043 0.495589C18.9768 -0.0317329 18.141 -0.0317329 17.6135 0.495589L10.0001 8.10559L2.38673 0.495589C1.85917 -0.0317329 1.02343 -0.0317329 0.495873 0.495589C-0.0318274 1.02306 -0.0318274 1.85888 0.495873 2.38635L8.10887 9.99599L0.495873 17.6056C-0.0318274 18.1331 -0.0318274 18.9689 0.495873 19.4964C0.717307 19.7177 1.05898 19.9001 1.4413 19.9001C1.75372 19.9001 2.13282 19.7971 2.40606 19.4771L10.0001 11.8864L17.6135 19.4964C17.8349 19.7177 18.1766 19.9001 18.5589 19.9001C18.8724 19.9001 19.2531 19.7964 19.5265 19.4737C20.0319 18.9452 20.0245 18.1256 19.5043 17.6056L11.8913 9.99599Z" fill=""></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <form onSubmit={handleAmenityAndLanguageUpdate}>
+                            <div className="my-8">
+                                {popupSetting === "amenity" ?
+                                    <div className="mb-3">
+                                        {
+                                            businessQuestions && businessQuestions.map((data, index) => {
+                                                return (
+                                                    <div className="rounded-xl border border-theme-gray bg-theme-black px-3 py-2.5 shadow-default dark:border-theme-gray dark:bg-theme-black mb-2" key={index}>
+                                                        <label htmlFor="question" className="text-sm font-medium tracking-wide mb-1.5 font-quicksand ">
+                                                            {data.question}
+                                                        </label>
+                                                        <div className="flex items-center space-x-6">
+                                                            {
+                                                                data.answer.map((answer, index) => {
+                                                                    const isChecked = formInputs.answer.filter((_data => _data.questionID === data.id && _data.answer === answer)).length > 0;
+                                                                    console.log(isChecked);
+                                                                    return (
+                                                                        <div key={index} className="flex items-center gap-1.5">
+                                                                            <input id={`questions-${index}`} type="radio" name={data.id} checked={isChecked} value={answer} className="w-4 h-4 border-primary focus:ring-2 focus:ring-primary/30  dark:focus:ring-primary/60 dark:focus:bg-primary dark:bg-primary dark:border-primary rounded-full" onChange={(e) => {
+                                                                                const target = e.target;
+                                                                                const questionID = target.name;
+                                                                                const selectedAnswer = target.value;
+                                                                                const haveValue = formInputs.answer.find((data) => data.questionID === questionID);
+                                                                                if (!haveValue) {
+                                                                                    const answer = [
+                                                                                        ...formInputs.answer,
+                                                                                        {
+                                                                                            questionID: questionID,
+                                                                                            answer: selectedAnswer
+                                                                                        }
+                                                                                    ];
+                                                                                    console.log("Data ", answer);
+                                                                                    setFormInputs({ ...formInputs, answer: answer });
+                                                                                } else {
+                                                                                    const updatedAnswers = formInputs.answer.map((data) =>
+                                                                                        data.questionID === questionID
+                                                                                            ? { ...data, answer: selectedAnswer }
+                                                                                            : data
+                                                                                    );
+                                                                                    setFormInputs({
+                                                                                        ...formInputs,
+                                                                                        answer: updatedAnswers
+                                                                                    });
+                                                                                }
+                                                                            }} />
+                                                                            <label htmlFor={`questions-${index}`} className="block text-sm font-normal text-gray-900 dark:text-gray-300" >
+                                                                                {answer}
+                                                                            </label>
+                                                                        </div>
+                                                                    )
+                                                                })
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })
+                                        }
+                                    </div>
+                                    :
+                                    <div className="mb-3">
+                                        <Label id="spokenLanguage" >Language</Label>
+                                        <div className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-3.5 py-1 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm">
+                                            <Select
+                                                isMulti={true}
+                                                closeMenuOnSelect={false}
+                                                className="text-black dark:text-black"
+                                                styles={{
+                                                    control: (baseStyles, state) => ({
+                                                        ...baseStyles,
+                                                        background: "transparent",
+                                                        border: state.isFocused ? "0" : "0",
+                                                        boxShadow: state.isFocused ? "0" : "0",
+                                                        '&:hover': {
+                                                            border: state.isFocused ? "0" : "0",
+                                                        },
+                                                    })
+                                                }}
+                                                options={languages && languages.length !== 0 ? languages.map((data, index) => ({ value: data.languageCode, label: data.languageName })) : []}
+                                                value={formInputs.languages}
+                                                onChange={(newValue, actionMeta) => changeLanguage(newValue, actionMeta)}
+                                            />
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
+                            <div className="flex flex-wrap justify-end items-center gap-4">
+                                <button type="button" className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-theme-gray-1 dark:bg-theme-gray-1" onClick={() => setPopup(false)}>
+                                    <span className="text-sm font-normal font-quicksand">Cancel</span>
+                                </button>
+                                <button type="submit" className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-primary/50 dark:bg-primary/50">
+                                    <span className="text-sm font-normal font-quicksand">Update</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div >
+                {/* Edit User Model */}
+            </div >
+            <div className={`overflow-hidden rounded-xl  bg-boxdark shadow-default  dark:bg-boxdark ${loading ? "animate-pulse" : null} `}>
+                {/* Edit User Model */}
+                <div className={`${modal ? '' : 'hidden'} fixed left-0 top-6 z-999999 flex h-screen w-full justify-center overflow-y-scroll bg-theme-black dark:bg-theme-black px-4 py-5`}>
+                    <div className=" m-auto w-full max-w-5xl rounded-xl border border-stroke bg-theme-black-full p-4 shadow-default dark:border-strokedark dark:bg-theme-black-full sm:p-6 xl:p-8">
+                        <div className="flex justify-between">
+                            <h4>Profile</h4>
+                            <button className="bg-primary/50 border-radius h-6 w-6 rounded-full flex justify-center items-center" type="button" onClick={() => setModal(false)}>
+                                <svg className="fill-current" width="8" height="8" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M11.8913 9.99599L19.5043 2.38635C20.032 1.85888 20.032 1.02306 19.5043 0.495589C18.9768 -0.0317329 18.141 -0.0317329 17.6135 0.495589L10.0001 8.10559L2.38673 0.495589C1.85917 -0.0317329 1.02343 -0.0317329 0.495873 0.495589C-0.0318274 1.02306 -0.0318274 1.85888 0.495873 2.38635L8.10887 9.99599L0.495873 17.6056C-0.0318274 18.1331 -0.0318274 18.9689 0.495873 19.4964C0.717307 19.7177 1.05898 19.9001 1.4413 19.9001C1.75372 19.9001 2.13282 19.7971 2.40606 19.4771L10.0001 11.8864L17.6135 19.4964C17.8349 19.7177 18.1766 19.9001 18.5589 19.9001C18.8724 19.9001 19.2531 19.7964 19.5265 19.4737C20.0319 18.9452 20.0245 18.1256 19.5043 17.6056L11.8913 9.99599Z" fill=""></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <form onSubmit={handleFormSubmit}>
+                            <div className="my-8">
+                                <div className="mb-17.5">
+                                    <div className="min-h-40 rounded-[14px] relative flex justify-center" style={{ background: `url('${data?.businessProfileRef?.coverImage || DefaultCoverPic}')` }}>
+                                        <Image src={data?.businessProfileRef?.profilePic?.small ?? DefaultProfilePic} width={330} height={160} alt="Default cover image" className="w-33 h-33 rounded-full absolute -bottom-6 object-cover border-2 border-[#1C1C1C99]" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="mb-3">
+                                        <Label id="name" >Business Type</Label>
+                                        <div className="relative z-20 ">
+                                            <span className="absolute left-5 top-1/2 z-30 -translate-y-1/2">
+                                                <ListIcon width={16} height={16} />
+                                            </span>
+                                            <select className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm" required={true} onChange={(e) => setFormInputs({ ...formInputs, businessTypeID: e.target.value })} value={formInputs.businessTypeID}>
+                                                <option value="" disabled={false} className="text-body dark:text-bodydark">Select Business Type</option>
+                                                {
+                                                    businessTypes && businessTypes.map((data, index) => (
+                                                        <option key={index} value={data.id} className="text-body dark:text-bodydark">{data.name}</option>
+                                                    ))
+                                                }
+                                            </select>
+                                            <span className="absolute right-4 top-1/2 z-10 -translate-y-1/2">
+                                                <DownArrowIcon />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mb-3">
+                                        <Label id="phoneNumber" >Business Subtype</Label>
+                                        <div className="relative z-20 ">
+                                            <span className="absolute left-5 top-1/2 z-30 -translate-y-1/2">
+                                                <ListIcon width={16} height={16} />
+                                            </span>
+                                            <select className="relative z-20 w-full appearance-none rounded-theme-xl border border-theme-gray-1 bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm" required={true} onChange={(e) => setFormInputs({ ...formInputs, businessSubTypeID: e.target.value })} value={formInputs.businessSubTypeID}>
+                                                <option value="" disabled={false} className="text-body dark:text-bodydark">Select Business Subtype</option>
+                                                {
+                                                    businessSubTypes && businessSubTypes.map((data, index) => (
+                                                        <option key={index} value={data.id} className="text-body dark:text-bodydark">{data.name}</option>
+                                                    ))
+                                                }
+                                            </select><span className="absolute right-4 top-1/2 z-10 -translate-y-1/2">
+                                                <DownArrowIcon />
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="mb-3">
+                                        <Label id="name" >Business Name</Label>
+                                        <Input id="name" name="name" required={true} value={formInputs.name} onChange={(e) => setFormInputs({ ...formInputs, name: e.target.value })} />
+                                    </div>
+                                    <div className="mb-3">
+                                        <Label id="phoneNumber" >Phone Number</Label>
+                                        <Input id="phoneNumber" name="phoneNumber" value={formInputs.phoneNumber} onChange={(e) => setFormInputs({ ...formInputs, phoneNumber: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="mb-3">
+                                        <Label id="email" >Email</Label>
+                                        <Input type="email" id="email" name="email" required={true} value={formInputs.email} onChange={(e) => setFormInputs({ ...formInputs, email: e.target.value })} />
+                                    </div>
+                                    <div className="mb-3">
+                                        <Label id="website" >Website Link</Label>
+                                        <Input id="website" name="website" value={formInputs.website} onChange={(e) => setFormInputs({ ...formInputs, website: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="mb-3">
+                                        <Label id="gstn" >GSTIN</Label>
+                                        <Input id="gstn" name="gstn" value={formInputs.gstn} onChange={(e) => setFormInputs({ ...formInputs, gstn: e.target.value })} />
+                                    </div>
+                                    <div className="mb-3">
+                                        <Label id="address" >Address</Label>
+                                        <Input id="address" name="address" value={formInputs.address} disabled={true} onChange={(e) => setFormInputs({ ...formInputs, address: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="mb-3">
+                                        <Label id="checkIn" >Check In</Label>
+                                        <Input type="time" id="checkIn" name="checkIn" value={formInputs.checkIn} onChange={(e) => setFormInputs({ ...formInputs, checkIn: e.target.value })} />
+                                    </div>
+                                    <div className="mb-3">
+                                        <Label id="checkOut" >Check Out</Label>
+                                        <Input type="time" id="checkOut" name="checkOut" value={formInputs.checkOut} onChange={(e) => setFormInputs({ ...formInputs, checkOut: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="">
+                                    <div className="mb-3">
+                                        <Label id="bio" >Description/Bio</Label>
+                                        <textarea id="bio" placeholder="" required={false} className="w-full rounded-theme-xl border border-theme-gray-1 bg-white px-4.5 py-3 text-white focus:border-primary focus-visible:outline-none dark:border-theme-gray-1 dark:bg-boxdark dark:text-white dark:focus:border-primary text-sm font-normal" name="bio" value={formInputs.bio} onChange={(e) => setFormInputs({ ...formInputs, bio: e.target.value })} ></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap justify-end items-center gap-4">
+                                <button type="button" className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-theme-gray-1 dark:bg-theme-gray-1" onClick={() => setModal(false)}>
+                                    <span className="text-sm font-normal font-quicksand">Cancel</span>
+                                </button>
+                                <button type="submit" className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-primary/50 dark:bg-primary/50">
+                                    <span className="text-sm font-normal font-quicksand">Update</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div >
+                {/* Edit User Model */}
+
+            </div >
+            <div className="mb-4 flex flex-row  gap-3 justify-between items-center">
+                <PageTitle>Profile</PageTitle>
+                <Button.Hotel.Button name="Edit Profile" onClick={() => setModal(!modal)} svg={<SVG.Edit />} />
+            </div>
+            <PageContent>
+                <div className="flex flex-col gap-3">
+                    <div className="grid  grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                        <div className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${loading ? 'animate-pulse' : ''}`}>
+                            <div className="flex flex-col gap-2.5 justify-between">
+                                <div className="flex flex-col gap-2.5">
+                                    <div className="min-h-40  rounded-[14px] relative flex justify-center" style={{ background: `url('${data?.businessProfileRef?.coverImage || DefaultCoverPic}')` }}>
+                                        <Image src={data?.businessProfileRef?.profilePic?.small ?? DefaultProfilePic} width={330} height={160} alt="Default cover image" className="w-14.5 h-14.5 rounded-full absolute -bottom-6 object-cover border-2 border-[#1C1C1C99]" />
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <h5 className="text-base font-bold dark:text-white text-white">
+                                            {data && data.businessProfileRef && data.businessProfileRef?.name || ""}
+                                        </h5>
+                                        <p className="text-xs font-normal dark:text-white text-white flex items-center gap-1">
+                                            {data &&
+                                                data?.businessProfileRef &&
+                                                data?.businessProfileRef?.businessTypeRef
+                                                && data?.businessProfileRef?.businessTypeRef.name && data.businessProfileRef?.businessTypeRef.icon
+
+                                                ? <>
+                                                    <span>
+                                                        <Image src={data?.businessProfileRef?.businessTypeRef.icon} width={40} height={40} alt="Hotel image" className="h-4.5
+                                                         w-full mb-1.5" />
+                                                    </span>
+                                                    <span>{data?.businessProfileRef?.businessTypeRef.name}</span>
+                                                </> : ''
+                                            }
+                                            {data &&
+                                                data?.businessProfileRef &&
+                                                data?.businessProfileRef?.businessSubtypeRef
+                                                && data?.businessProfileRef?.businessSubtypeRef.name
+
+                                                ? data?.businessProfileRef?.businessSubtypeRef.name : ''
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex justify-around">
+                                    <div className="flex flex-col gap-0.5 justify-center items-center">
+                                        <h5 className="text-base font-bold tracking-wide leading-none">{data && data?.posts || 0}</h5>
+                                        <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">Posts</p>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 justify-center items-center">
+                                        <h5 className="text-base font-bold tracking-wide leading-none">{data && data?.follower || 0}</h5>
+                                        <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">Followers</p>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 justify-center items-center">
+                                        <h5 className="text-base font-bold tracking-wide leading-none">{data && data?.following || 0}</h5>
+                                        <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">Following</p>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 justify-center items-center">
+                                        <h5 className="text-base font-bold tracking-wide leading-none">
+                                            <span className="flex items-center gap-1">
+                                                <span>
+                                                    {data && data?.businessProfileRef && data.businessProfileRef.rating || 0}
+                                                </span>
+                                                <span>
+                                                    <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M7.50175 1.15123C7.71632 0.794694 8.23322 0.794693 8.44779 1.15123L10.7617 4.99614C10.8388 5.12423 10.9645 5.21558 11.1102 5.24931L15.4819 6.26182C15.8873 6.35571 16.047 6.84732 15.7743 7.16156L12.8326 10.5504C12.7346 10.6632 12.6865 10.8111 12.6995 10.96L13.0875 15.4307C13.1234 15.8452 12.7053 16.1491 12.3221 15.9867L8.19013 14.2362C8.05248 14.1779 7.89706 14.1779 7.75941 14.2362L3.62745 15.9867C3.24429 16.1491 2.8261 15.8452 2.86208 15.4307L3.25008 10.96C3.263 10.8111 3.21498 10.6632 3.11698 10.5504L0.175285 7.16156C-0.0974985 6.84732 0.062233 6.35571 0.467628 6.26182L4.83939 5.24931C4.98503 5.21558 5.11076 5.12423 5.18785 4.99614L7.50175 1.15123Z" fill="#F2C94C" />
+                                                    </svg>
+                                                </span>
+                                            </span>
+                                        </h5>
+                                        <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">Rating</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${loading ? 'animate-pulse' : ''}`} >
+                            <h5 className="mb-3.5 text-base font-bold text-white dark:text-white">Business Details</h5>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Phone Number :
+                                    </p>
+                                    <p className="text-base font-normal text-white dark:text-white">
+                                        {data && data.businessProfileRef?.dialCode || ""}{data && data.businessProfileRef?.phoneNumber || ""}
+                                    </p>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Email :
+                                    </p>
+                                    <p className="text-base font-normal text-white dark:text-white">
+                                        {data && data.businessProfileRef?.email || ""}
+                                    </p>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Website Link :
+                                    </p>
+                                    <a href={data && data.businessProfileRef?.website || "#"} className="text-base font-normal  dark:text-primary text-primary" target="_blank">
+                                        {data && data.businessProfileRef?.website || ""}
+                                    </a>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        GSTIN :
+                                    </p>
+                                    <p className="text-base font-normal capitalize text-white dark:text-white">
+                                        {data && data.businessProfileRef?.gstn || ""}
+                                    </p>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60 w-19">
+                                        Address :
+                                    </p>
+                                    <p className="text-base font-normal capitalize text-white dark:text-white text-right">
+                                        {(data && data.businessProfileRef?.address) ? `${data.businessProfileRef.address.street || ""}, ${data.businessProfileRef.address.city || ""}, ${data.businessProfileRef.address.state || ""}, ${data.businessProfileRef.address.zipCode || ""}, ${data.businessProfileRef.address.country || ""}` : ""}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${loading ? 'animate-pulse' : ''} md:col-span-2 xl:col-span-1`}>
+                            <h5 className="mb-3.5 text-base font-bold text-white dark:text-white">Manager Details</h5>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Name :
+                                    </p>
+                                    <p className="text-base font-normal text-white dark:text-white">
+                                        {data && data.name || ""}
+                                    </p>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Phone Number :
+                                    </p>
+                                    <p className="text-base font-normal text-white dark:text-white">
+                                        {data && data.dialCode || ""}  {data && data.phoneNumber || ""}
+                                    </p>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Email :
+                                    </p>
+                                    <p className="text-base font-normal text-white dark:text-white">
+                                        {data && data.email || ""}
+                                    </p>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Permission :
+                                    </p>
+                                    <p className="text-base font-normal capitalize text-white dark:text-white">
+                                        All Permission   {/*This feature is not implement yet   */}
+                                    </p>
+                                </div>
+                                <div className="flex justify-between">
+                                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                                        Date of Joining :
+                                    </p>
+                                    <p className="text-base font-normal capitalize text-white dark:text-white text-right">
+                                        {data && data.createdAt ? moment(data.createdAt ?? "").format('DD-MM-YYYY') : null}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${loading ? 'animate-pulse' : ''}`}>
+                        <div className="flex flex-col justify-between gap-3.5">
+                            <h5 className="text-base font-bold text-white dark:text-white">General Information</h5>
+                            <p className="text-xs font-medium tracking-wide text-white dark:text-white">
+                                {data && data.businessProfileRef && data.businessProfileRef?.bio || ""}
+                            </p>
+                            <h5 className="text-base font-bold text-white dark:text-white">Languages spoken</h5>
+
+                            <div className="flex gap-2">
+                                {
+                                    data && data?.businessProfileRef && data?.businessProfileRef?.languageSpoken &&
+                                        data?.businessProfileRef?.languageSpoken?.length !== 0 ?
+                                        <>
+                                            {
+                                                data?.businessProfileRef?.languageSpoken.map((languageSpoken, index) => {
+
+                                                    return (
+                                                        <div key={index} className="flex items-center flex-wrap bg-primary/60 gap-1 p-2 rounded-[30px]">
+                                                            <Image src={languageSpoken.flag} width={24} height={24} alt="Spoken language" className="rounded-full w-6 h-6 object-cover" />
+                                                            <span className="text-sm font-normal pr-1">
+                                                                {languageSpoken.name}
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                })
+                                            }
+
+                                        </>
+                                        : null
+                                }
+                                <button type="button" className="flex items-center flex-wrap bg-primary/60 gap-1 p-2 rounded-[30px]" onClick={() => {
+                                    setPopup(true);
+                                    setPopupSetting("language");
+                                }}>
+                                    <div className="flex justify-center items-center h-6 w-6 bg-primary dark:bg-primary rounded-full">
+                                        <svg className="fill-current w-3.5 h-3.5" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M15 7H9V1C9 0.4 8.6 0 8 0C7.4 0 7 0.4 7 1V7H1C0.4 7 0 7.4 0 8C0 8.6 0.4 9 1 9H7V15C7 15.6 7.4 16 8 16C8.6 16 9 15.6 9 15V9H15C15.6 9 16 8.6 16 8C16 7.4 15.6 7 15 7Z" fill=""></path>
+                                        </svg>
+                                    </div>
+                                    <span className="text-sm font-normal pr-1">
+                                        Add
+                                    </span>
+                                </button>
+                            </div>
+                            <h5 className="text-base font-bold text-white dark:text-white">Check-in/Check-out</h5>
+                            <ol className="list-disc pl-5">
+                                <li className="text-sm font-normal text-primary dark:text-primary">
+                                    <span className="text-white/60 dark:text-white/60">Check-in from:</span>  {data && data?.businessProfileRef && data?.businessProfileRef?.checkIn || ""}
+                                </li>
+                                <li className="text-sm font-normal text-primary dark:text-primary">
+                                    <span className="text-white/60 dark:text-white/60">Check-out from:</span>  {data && data?.businessProfileRef && data?.businessProfileRef?.checkOut || ""}
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div className="col-span-12 xl:col-span-7">
+                        <div className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${loading ? 'animate-pulse' : ''}`}>
+                            <div className="flex flex-col justify-between gap-3.5">
+                                <div className="flex justify-between items-center">
+                                    <h5 className="text-base font-bold text-white dark:text-white tracking-wide">Amenities</h5>
+                                    <Button.Hotel.Button name="Manage Amenities"
+                                        onClick={() => {
+                                            setPopup(true);
+                                            setPopupSetting("amenity");
+                                        }}
+                                        svg={<SVG.Edit />}
+                                    />
+                                </div>
+                                <div className="flex gap-3 mb-3.5">
+                                    {
+                                        data && data?.businessProfileRef && data?.businessProfileRef?.amenitiesRef &&
+                                            data?.businessProfileRef?.amenitiesRef?.length !== 0 ?
+                                            data?.businessProfileRef?.amenitiesRef.map((amenity, index) => {
+                                                return (
+                                                    <div key={index} className="flex gap-1 items-center justify-start">
+                                                        <span>
+                                                            <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <rect x="0.333333" y="0.907552" width="15.3333" height="15.3333" rx="7.66667" stroke="#4169E1" strokeOpacity="0.5" strokeWidth="0.666667" />
+                                                                <path d="M11.5984 5.57422L6.55844 11.5742L4.39844 9.17422" stroke="#4169E1" strokeLinecap="round" strokeLinejoin="round" />
+                                                            </svg>
+                                                        </span>
+                                                        <span className="text-xs leading-[12px] text-white/60 dark:text-white/60">
+                                                            {
+                                                                amenity.name
+                                                            }
+                                                        </span>
+
+                                                    </div>
+                                                )
+                                            }) : null
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </PageContent >
+        </>
+    );
+};
+
+export default Profile;

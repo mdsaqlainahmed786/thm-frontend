@@ -1,0 +1,124 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+.next/
+out/
+dist/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js specific cache
+.next/
+.vercel/
+.vercel_build_output/
+.next.cache/
+
+# Build artifacts
+*.tsbuildinfo
+
+# VS Code and IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+jest.cache/
+jest-test-results.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Log files
+*.log
+
+# Generated lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Miscellaneous
+*.bak
+*.orig
+*.rej
+
+# Optional: If you use Docker
+.dockerignore
+Dockerfile
+docker-compose*
+
+# Optional: If you use Firebase
+.firebase/
+firebase-debug.log
+
+# Optional: If you use Vercel
+.vercel/
+
+# Optional: If you use Supabase
+.supabase/
+
+# Optional: If you use Turborepo
+.turbo/
+
+# Optional: If you use Prisma
+prisma/generated/
+.dev

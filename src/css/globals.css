@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Quicksand:wght@300..700&display=swap");
+
+:root {
+  --boxdark-2: #000000;
+  --bodydark: #9c9c9c;
+  --comic-sans: "Comic Neue", cursive;
+  --quicksand: "Quicksand", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply relative z-1 bg-whiten font-quicksand text-base font-normal text-body;
+  }
+}
+
+body.dark {
+  background-color: var(--boxdark-2);
+  color: var(--bodydark);
+}
+
+.will-transform {
+  will-change: transform;
+}
