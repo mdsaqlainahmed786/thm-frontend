@@ -3,6 +3,7 @@ const About = () => {
     return (
         <div className="flex flex-col max-w-5xl mb-13">
             <div className="w-full">
+                
                 <h2 className="text-[52px] font-bold font-quicksand dark:text-white text-black-2 flex flex-wrap justify-between items-center mb-27 ">
                     <span>
                         <svg width="115" height="108" viewBox="0 0 115 108" fill="none" xmlns="http://www.w3.org/2000/svg">
