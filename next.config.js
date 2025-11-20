@@ -10,7 +10,7 @@ const nextConfig = {
       "localhost",
       "127.0.0.1",
       "thehotelmedia.com",
-	  "staging.thehotelmedia.com",
+      "staging.thehotelmedia.com",
       "api.thehotelmedia.com",
       "lh3.googleusercontent.com",
     ],
