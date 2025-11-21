@@ -92,7 +92,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
   }, [data]);
   return (
     <div className="col-span-12 xl:col-span-7">
-      <div className="rounded-sm border border-stroke bg-white px-5  py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+      <div className="rounded-sm border border-stroke bg-white px-5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <div className="mb-6 flex justify-between items-center">
           <div>
             <h4 className="text-title-sm2 font-bold text-black dark:text-white">
@@ -263,7 +263,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
             ) : null}
           </div>
         </div>
-        <div className="max-w-full overflow-x-auto">
+        <div className="max-w-full overflow-x-auto no-scrollbar">
           <table className="w-full table-auto">
             <thead>
               <tr className="bg-gray-2 text-left dark:bg-meta-4">
@@ -277,16 +277,19 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                     </th>
                   </>
                 ) : null}
-                <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white">
+                <th className="min-w-[180px] px-4 py-4 font-medium text-black dark:text-white">
                   Account Status
+                </th>
+                <th className="min-w-[100px] px-4 py-4 font-medium text-black dark:text-white">
+                  Followers
                 </th>
                 <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
                   Phone Number
                 </th>
-                <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
+                <th className="min-w-[140px] px-4 py-4 font-medium text-black dark:text-white">
                   Created
                 </th>
-                <th className="px-4 py-4 font-medium text-black dark:text-white">
+                <th className="min-w-[100px] px-4 py-4 font-medium text-black dark:text-white">
                   Actions
                 </th>
               </tr>
@@ -295,7 +298,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
               {isFetching ? (
                 <tr>
                   <td
-                    colSpan={accountType && accountType === "business" ? 6 : 5}
+                    colSpan={accountType && accountType === "business" ? 7 : 6}
                   >
                     <Loading />
                   </td>
@@ -408,9 +411,9 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                               </td>
                             ) : null}
                             <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                              <div className="flex items-center justify-start gap-1.5">
+                              <div className="flex items-center justify-start gap-1.5 flex-wrap">
                                 <p
-                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium ${
+                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
                                     user.isActivated
                                       ? "bg-success text-success"
                                       : "bg-danger text-danger"
@@ -419,7 +422,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                                   {user.isActivated ? "Active" : "Inactive"}
                                 </p>
                                 <p
-                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium ${
+                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
                                     user.isVerified
                                       ? "bg-success text-success"
                                       : "bg-danger text-danger"
@@ -428,7 +431,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                                   {user.isVerified ? "Verified" : "Unverified"}
                                 </p>
                                 <p
-                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium ${
+                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
                                     user.isApproved
                                       ? "bg-success text-success"
                                       : "bg-danger text-danger"
@@ -437,6 +440,11 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                                   {user.isApproved ? "Approved" : "Pending"}
                                 </p>
                               </div>
+                            </td>
+                            <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                              <p className="text-black dark:text-white text-sm font-semibold">
+                                {user.followersCount ?? 0}
+                              </p>
                             </td>
                             <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                               <p className="text-black dark:text-white text-sm font-medium">
