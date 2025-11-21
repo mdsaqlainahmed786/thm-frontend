@@ -117,7 +117,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
             {accountType !== "business" && (
               <div className="flex items-center gap-2">
                 <label className="mb-0 block font-medium tracking-wide text-black text-sm dark:text-white whitespace-nowrap">
-                  Sort by Followers:
+                  Sort by:
                 </label>
                 <div className="relative z-20 bg-white dark:bg-form-input">
                   <span className="absolute left-4 top-1/2 z-30 -translate-y-1/2">
@@ -143,12 +143,6 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                       className="text-body cursor-pointer dark:text-bodydark"
                     >
                       Most Followers
-                    </option>
-                    <option
-                      value="least"
-                      className="text-body cursor-pointer dark:text-bodydark"
-                    >
-                      Least Followers
                     </option>
                   </select>
                   <span className="absolute right-4 top-1/2 z-10 -translate-y-1/2">
