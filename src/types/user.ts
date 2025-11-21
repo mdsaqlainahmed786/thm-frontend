@@ -22,6 +22,8 @@ export interface User {
   businessProfileRef: BusinessProfileRef
   businessDocumentsRef?: any[];
   role: string;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 export interface UserProfile extends User {

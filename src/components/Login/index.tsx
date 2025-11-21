@@ -40,7 +40,7 @@ const SignInForm = () => {
                 email: formInputs.email,
                 password: formInputs.password,
                 redirect: true,
-                callbackUrl: '/dashboard'
+                callbackUrl: 'http://localhost:3000/dashboard'
             })
             if (data?.error) {
                 toast.error(data?.error);
