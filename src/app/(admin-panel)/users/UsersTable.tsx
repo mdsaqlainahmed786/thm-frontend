@@ -46,6 +46,9 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
       clearTimeout(timerId);
     };
   }, [value]);
+  useEffect(() => {
+    setPageNo(1);
+  }, [followersSort]);
   const {
     isPending,
     isError,
@@ -62,16 +65,25 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
       accountType,
       apiParams.businessTypeID,
       apiParams.businessSubTypeID,
+      followersSort,
     ],
-    queryFn: () =>
-      fetchUsers({
+    queryFn: () => {
+      const params: { [key: string]: any } = {
         query: debouncedTerm,
         documentLimit: 20,
         pageNumber: pageNo,
         accountType: accountType,
         businessTypeID: apiParams.businessTypeID,
         businessSubTypeID: apiParams.businessSubTypeID,
-      }),
+      };
+
+      if (followersSort !== "none") {
+        params.sortBy = "followers";
+        params.sortOrder = followersSort === "most" ? "desc" : "asc";
+      }
+
+      return fetchUsers(params);
+    },
     placeholderData: keepPreviousData,
   });
   const { data: businessTypes, refetch: refetchBusinessTypes } = useQuery({
@@ -306,191 +318,175 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
               ) : (
                 <>
                   {data &&
-                    (() => {
-                      let sortedData = [...data.data];
-                      if (followersSort === "most") {
-                        sortedData.sort(
-                          (a, b) =>
-                            (b.followersCount || 0) - (a.followersCount || 0)
-                        );
-                      } else if (followersSort === "least") {
-                        sortedData.sort(
-                          (a, b) =>
-                            (a.followersCount || 0) - (b.followersCount || 0)
-                        );
-                      }
-                      return sortedData.map((user, key) => {
-                        return (
-                          <tr key={key}>
-                            <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
-                              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                <div className="h-12.5 w-15 rounded-md">
-                                  {user.accountType === "business" ? (
-                                    <Image
-                                      src={
-                                        user.businessProfileRef?.profilePic
-                                          ?.small
-                                          ? user.businessProfileRef?.profilePic
-                                              ?.small
-                                          : DefaultCoverPic
-                                      }
-                                      alt={user.name}
-                                      width={48}
-                                      height={48}
-                                      className="rounded-full"
-                                    />
-                                  ) : (
-                                    <Image
-                                      src={
-                                        user?.profilePic?.small
-                                          ? user?.profilePic?.small
-                                          : DefaultCoverPic
-                                      }
-                                      alt={user.name}
-                                      width={48}
-                                      height={48}
-                                      className="rounded-full"
-                                    />
-                                  )}
-                                </div>
-                                <div>
-                                  <h5 className="font-semibold text-black dark:text-white">
-                                    {user.name}
-                                    <small> ({user.username})</small>
-                                  </h5>
-                                  <p className="text-sm text-black dark:text-white mb-1">
-                                    {user.email}
-                                  </p>
-                                  <p className="text-xs font-medium capitalize">
-                                    {user.accountType}
-                                  </p>
-                                </div>
+                    data.data.map((user, key) => {
+                      return (
+                        <tr key={key}>
+                          <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                              <div className="h-12.5 w-15 rounded-md">
+                                {user.accountType === "business" ? (
+                                  <Image
+                                    src={
+                                      user.businessProfileRef?.profilePic?.small
+                                        ? user.businessProfileRef?.profilePic
+                                            ?.small
+                                        : DefaultCoverPic
+                                    }
+                                    alt={user.name}
+                                    width={48}
+                                    height={48}
+                                    className="rounded-full"
+                                  />
+                                ) : (
+                                  <Image
+                                    src={
+                                      user?.profilePic?.small
+                                        ? user?.profilePic?.small
+                                        : DefaultCoverPic
+                                    }
+                                    alt={user.name}
+                                    width={48}
+                                    height={48}
+                                    className="rounded-full"
+                                  />
+                                )}
                               </div>
-                            </td>
-                            {accountType && accountType === "business" ? (
-                              <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                  <div>
-                                    <h5 className=" text-black dark:text-white">
-                                      <span className="font-semibold">
-                                        {" "}
-                                        {user.businessProfileRef &&
-                                          user.businessProfileRef &&
-                                          user.businessProfileRef.name}
-                                      </span>
-                                      <span className="ml-2 text-xs font-semibold">
-                                        {" "}
-                                        Rating:
-                                        {user.businessProfileRef &&
-                                          user.businessProfileRef &&
-                                          user.businessProfileRef.rating}
-                                      </span>
-                                    </h5>
-                                    <p className="text-sm text-black-2 dark:text-white mb-1   font-medium">
+                              <div>
+                                <h5 className="font-semibold text-black dark:text-white">
+                                  {user.name}
+                                  <small> ({user.username})</small>
+                                </h5>
+                                <p className="text-sm text-black dark:text-white mb-1">
+                                  {user.email}
+                                </p>
+                                <p className="text-xs font-medium capitalize">
+                                  {user.accountType}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          {accountType && accountType === "business" ? (
+                            <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                <div>
+                                  <h5 className=" text-black dark:text-white">
+                                    <span className="font-semibold">
+                                      {" "}
+                                      {user.businessProfileRef &&
+                                        user.businessProfileRef &&
+                                        user.businessProfileRef.name}
+                                    </span>
+                                    <span className="ml-2 text-xs font-semibold">
+                                      {" "}
+                                      Rating:
+                                      {user.businessProfileRef &&
+                                        user.businessProfileRef &&
+                                        user.businessProfileRef.rating}
+                                    </span>
+                                  </h5>
+                                  <p className="text-sm text-black-2 dark:text-white mb-1   font-medium">
+                                    {user.businessProfileRef &&
+                                      user.businessProfileRef &&
+                                      user.businessProfileRef.businessTypeRef &&
+                                      user.businessProfileRef.businessTypeRef
+                                        .name}
+                                    <span className="text-xs font-normal tracking-wide capitalize ml-2 text-black/80 dark:text-meta-9">
                                       {user.businessProfileRef &&
                                         user.businessProfileRef &&
                                         user.businessProfileRef
-                                          .businessTypeRef &&
-                                        user.businessProfileRef.businessTypeRef
-                                          .name}
-                                      <span className="text-xs font-normal tracking-wide capitalize ml-2 text-black/80 dark:text-meta-9">
-                                        {user.businessProfileRef &&
-                                          user.businessProfileRef &&
-                                          user.businessProfileRef
-                                            .businessSubtypeRef &&
-                                          user.businessProfileRef
-                                            .businessSubtypeRef.name}
-                                      </span>
-                                    </p>
-                                    <p className="text-xs font-medium">
-                                      {user.businessProfileRef &&
-                                        user.businessProfileRef.email}
-                                    </p>
-                                  </div>
+                                          .businessSubtypeRef &&
+                                        user.businessProfileRef
+                                          .businessSubtypeRef.name}
+                                    </span>
+                                  </p>
+                                  <p className="text-xs font-medium">
+                                    {user.businessProfileRef &&
+                                      user.businessProfileRef.email}
+                                  </p>
                                 </div>
-                              </td>
-                            ) : null}
-                            <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                              <div className="flex items-center justify-start gap-1.5 flex-wrap">
-                                <p
-                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
-                                    user.isActivated
-                                      ? "bg-success text-success"
-                                      : "bg-danger text-danger"
-                                  }`}
-                                >
-                                  {user.isActivated ? "Active" : "Inactive"}
-                                </p>
-                                <p
-                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
-                                    user.isVerified
-                                      ? "bg-success text-success"
-                                      : "bg-danger text-danger"
-                                  }`}
-                                >
-                                  {user.isVerified ? "Verified" : "Unverified"}
-                                </p>
-                                <p
-                                  className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
-                                    user.isApproved
-                                      ? "bg-success text-success"
-                                      : "bg-danger text-danger"
-                                  }`}
-                                >
-                                  {user.isApproved ? "Approved" : "Pending"}
-                                </p>
                               </div>
                             </td>
-                            <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                              <p className="text-black dark:text-white text-sm font-semibold">
-                                {user.followersCount ?? 0}
+                          ) : null}
+                          <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                            <div className="flex items-center justify-start gap-1.5 flex-wrap">
+                              <p
+                                className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
+                                  user.isActivated
+                                    ? "bg-success text-success"
+                                    : "bg-danger text-danger"
+                                }`}
+                              >
+                                {user.isActivated ? "Active" : "Inactive"}
                               </p>
-                            </td>
-                            <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                              <p className="text-black dark:text-white text-sm font-medium">
-                                {user.dialCode}-{user.phoneNumber}
-                                <br />
-                                {accountType &&
-                                accountType === "business" &&
-                                user.businessProfileRef &&
-                                user.businessProfileRef.phoneNumber !== "" ? (
-                                  <>
-                                    {user?.businessProfileRef?.dialCode}-
-                                    {user.businessProfileRef.phoneNumber}
-                                  </>
-                                ) : null}
+                              <p
+                                className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
+                                  user.isVerified
+                                    ? "bg-success text-success"
+                                    : "bg-danger text-danger"
+                                }`}
+                              >
+                                {user.isVerified ? "Verified" : "Unverified"}
                               </p>
-                            </td>
+                              <p
+                                className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium whitespace-nowrap ${
+                                  user.isApproved
+                                    ? "bg-success text-success"
+                                    : "bg-danger text-danger"
+                                }`}
+                              >
+                                {user.isApproved ? "Approved" : "Pending"}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                            <p className="text-black dark:text-white text-sm font-semibold">
+                              {user.followersCount ?? 0}
+                            </p>
+                          </td>
+                          <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                            <p className="text-black dark:text-white text-sm font-medium">
+                              {user.dialCode}-{user.phoneNumber}
+                              <br />
+                              {accountType &&
+                              accountType === "business" &&
+                              user.businessProfileRef &&
+                              user.businessProfileRef.phoneNumber !== "" ? (
+                                <>
+                                  {user?.businessProfileRef?.dialCode}-
+                                  {user.businessProfileRef.phoneNumber}
+                                </>
+                              ) : null}
+                            </p>
+                          </td>
 
-                            <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                              <p className="text-black dark:text-white text-xs font-semibold">
-                                {moment(user.createdAt).format(
-                                  "ddd DD, MMM YYYY hh:mm:ss A"
-                                )}
-                              </p>
-                              <p className="text-xs font-medium">
-                                {moment(user.createdAt).fromNow()}
-                              </p>
-                            </td>
-                            <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                              <div className="flex items-center space-x-3.5">
-                                <Button.Edit
-                                  onClick={() => {
-                                    route.push(`/users/${user._id}?edit=true`);
-                                  }}
-                                />
-                                <Button.View
-                                  onClick={() => {
-                                    route.push(`/users/${user._id}`);
-                                  }}
-                                />
-                                {/* <Button.Download onClick={() => { }} /> */}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      });
-                    })()}
+                          <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                            <p className="text-black dark:text-white text-xs font-semibold">
+                              {moment(user.createdAt).format(
+                                "ddd DD, MMM YYYY hh:mm:ss A"
+                              )}
+                            </p>
+                            <p className="text-xs font-medium">
+                              {moment(user.createdAt).fromNow()}
+                            </p>
+                          </td>
+                          <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                            <div className="flex items-center space-x-3.5">
+                              <Button.Edit
+                                onClick={() => {
+                                  route.push(`/users/${user._id}?edit=true`);
+                                }}
+                              />
+                              <Button.View
+                                onClick={() => {
+                                  route.push(`/users/${user._id}`);
+                                }}
+                              />
+                              {/* <Button.Download onClick={() => { }} /> */}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </>
               )}
             </tbody>
