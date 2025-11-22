@@ -34,9 +34,15 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
     businessSubTypeID: "",
   };
   const [apiParams, setApiParams] = useState(initialApiParams);
-  const [followersSort, setFollowersSort] = useState<"none" | "most" | "least">(
-    "none"
-  );
+  const [sortBy, setSortBy] = useState<
+    | "none"
+    | "created_last_1_hour"
+    | "created_last_1_day"
+    | "created_last_1_week"
+    | "created_last_1_month"
+    | "created_last_1_year"
+    | "followers"
+  >("none");
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedTerm(value);
@@ -48,7 +54,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
   }, [value]);
   useEffect(() => {
     setPageNo(1);
-  }, [followersSort]);
+  }, [sortBy]);
   const {
     isPending,
     isError,
@@ -65,7 +71,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
       accountType,
       apiParams.businessTypeID,
       apiParams.businessSubTypeID,
-      followersSort,
+      sortBy,
     ],
     queryFn: () => {
       const params: { [key: string]: any } = {
@@ -77,9 +83,8 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
         businessSubTypeID: apiParams.businessSubTypeID,
       };
 
-      if (followersSort !== "none") {
-        params.sortBy = "followers";
-        params.sortOrder = followersSort === "most" ? "desc" : "asc";
+      if (sortBy !== "none") {
+        params.sortBy = sortBy;
       }
 
       return fetchUsers(params);
@@ -119,34 +124,87 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                 <label className="mb-0 block font-medium tracking-wide text-black text-sm dark:text-white whitespace-nowrap">
                   Sort by:
                 </label>
-                <div className="relative z-20 bg-white dark:bg-form-input">
+                <div className="relative z-20 bg-white dark:bg-boxdark">
                   <span className="absolute left-4 top-1/2 z-30 -translate-y-1/2">
                     <ListIcon width={16} height={16} />
                   </span>
                   <select
-                    className="relative z-20 w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-10 py-1.5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input text-black dark:text-white text-sm min-w-[180px]"
+                    className="relative z-20 w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-10 py-1.5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[180px]"
                     onChange={(e) =>
-                      setFollowersSort(
-                        e.target.value as "none" | "most" | "least"
+                      setSortBy(
+                        e.target.value as
+                          | "none"
+                          | "created_last_1_hour"
+                          | "created_last_1_day"
+                          | "created_last_1_week"
+                          | "created_last_1_month"
+                          | "created_last_1_year"
+                          | "followers"
                       )
                     }
-                    value={followersSort}
+                    value={sortBy}
                   >
                     <option
                       value="none"
-                      className="text-body cursor-pointer dark:text-bodydark"
+                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
                     >
                       None
                     </option>
                     <option
-                      value="most"
-                      className="text-body cursor-pointer dark:text-bodydark"
+                      value="created_last_1_hour"
+                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
                     >
-                      Most Followers
+                      Last 1 Hour
+                    </option>
+                    <option
+                      value="created_last_1_day"
+                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Last 1 Day
+                    </option>
+                    <option
+                      value="created_last_1_week"
+                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Last 1 Week
+                    </option>
+                    <option
+                      value="created_last_1_month"
+                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Last 1 Month
+                    </option>
+                    <option
+                      value="created_last_1_year"
+                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Last 1 Year
+                    </option>
+                    <option
+                      value="followers"
+                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Most Followers to least
                     </option>
                   </select>
-                  <span className="absolute right-4 top-1/2 z-10 -translate-y-1/2">
-                    <DownArrowIcon width={16} height={16} />
+                  <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2 pointer-events-none">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="text-body dark:text-white"
+                    >
+                      <g opacity="0.8">
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z"
+                          fill="currentColor"
+                        />
+                      </g>
+                    </svg>
                   </span>
                 </div>
               </div>
