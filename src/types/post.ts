@@ -21,6 +21,9 @@ export interface Post {
     postedBy: User
 
     reportCount: number
+    views?: number
+    likes?: any[]
+    likeCount?: number
     name?: string
     venue?: string
     streamingLink?: string
