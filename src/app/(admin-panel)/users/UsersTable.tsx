@@ -186,6 +186,24 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                     >
                       Most Followers to least
                     </option>
+                    <option
+                    value="disapproved"
+                    className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Disapproved
+                    </option>
+                    <option
+                    value="unVerified"
+                    className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Unverified
+                    </option>
+                    <option
+                    value="inActive"
+                    className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                    >
+                      Inactive
+                    </option>
                   </select>
                   <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2 pointer-events-none">
                     <svg
