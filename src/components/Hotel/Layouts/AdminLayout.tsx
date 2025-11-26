@@ -20,7 +20,7 @@ type MainLayoutProps = HotelAdminLayoutSearchableProps | MainLayoutNonSearchable
 
 
 export default function HotelAdminLayout(props: MainLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   return (
     <div className=" dark:text-white text-white">
       <InputProvider>
