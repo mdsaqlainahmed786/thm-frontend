@@ -50,8 +50,10 @@ const config: Config = {
         graydark: "#333A48",
         whiten: "#F1F5F9",
         whiter: "#F5F7FD",
-        boxdark: "#343434",
-        "boxdark-2": "var(--boxdark-2)",
+        boxdark: "#2E3044", // Card background
+        "boxdark-2": "var(--boxdark-2)", // Main background
+        "boxdark-sidebar": "#262837", // Side panel
+        "boxdark-hover": "#3A3D57", // Hover state
         strokedark: "#FFFFFF20",
         "form-strokedark": "#3d4d60",
         "form-input": "#FFFFFF22",
