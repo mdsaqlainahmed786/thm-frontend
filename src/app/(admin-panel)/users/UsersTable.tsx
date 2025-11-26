@@ -43,6 +43,8 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
     | "created_last_1_year"
     | "followers"
   >("none");
+  const [sortOrder, setSortOrder] = useState<"asc" | "dsc" | null>(null);
+  const [showSortOrderModal, setShowSortOrderModal] = useState(false);
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedTerm(value);
@@ -54,6 +56,9 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
   }, [value]);
   useEffect(() => {
     setPageNo(1);
+    if (sortBy !== "followers") {
+      setSortOrder(null);
+    }
   }, [sortBy]);
   const {
     isPending,
@@ -72,6 +77,7 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
       apiParams.businessTypeID,
       apiParams.businessSubTypeID,
       sortBy,
+      sortOrder,
     ],
     queryFn: () => {
       const params: { [key: string]: any } = {
@@ -85,6 +91,10 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
 
       if (sortBy !== "none") {
         params.sortBy = sortBy;
+      }
+
+      if (sortBy === "followers" && sortOrder) {
+        params.sortOrder = sortOrder;
       }
 
       return fetchUsers(params);
@@ -120,110 +130,179 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
           </div>
           <div className="flex items-center gap-4 ml-auto">
             {accountType !== "business" && (
-              <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-2 ${sortBy === "followers" ? "mr-25" : ""}`}>
                 <label className="mb-0 block font-medium tracking-wide text-black text-sm dark:text-white whitespace-nowrap">
                   Sort by:
                 </label>
-                <div className="relative z-20 bg-white dark:bg-boxdark">
-                  <span className="absolute left-4 top-1/2 z-30 -translate-y-1/2">
-                    <ListIcon width={16} height={16} />
-                  </span>
-                  <select
-                    className="relative z-20 w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-10 py-1.5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[180px]"
-                    onChange={(e) =>
-                      setSortBy(
-                        e.target.value as
-                          | "none"
-                          | "created_last_1_hour"
-                          | "created_last_1_day"
-                          | "created_last_1_week"
-                          | "created_last_1_month"
-                          | "created_last_1_year"
-                          | "followers"
-                      )
-                    }
-                    value={sortBy}
-                  >
-                    <option
-                      value="none"
-                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                <div className="flex items-center gap-2">
+                  <div className="relative z-20 bg-white dark:bg-boxdark">
+                    <span className="absolute left-4 top-1/2 z-30 -translate-y-1/2">
+                      <ListIcon width={16} height={16} />
+                    </span>
+                    <select
+                      className="relative z-20 w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-10 py-1.5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[180px]"
+                      onChange={(e) =>
+                        setSortBy(
+                          e.target.value as
+                            | "none"
+                            | "created_last_1_hour"
+                            | "created_last_1_day"
+                            | "created_last_1_week"
+                            | "created_last_1_month"
+                            | "created_last_1_year"
+                            | "followers"
+                        )
+                      }
+                      value={sortBy}
                     >
-                      None
-                    </option>
-                    <option
-                      value="created_last_1_hour"
-                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      <option
+                        value="none"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        None
+                      </option>
+                      <option
+                        value="created_last_1_hour"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Last 1 Hour
+                      </option>
+                      <option
+                        value="created_last_1_day"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Last 1 Day
+                      </option>
+                      <option
+                        value="created_last_1_week"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Last 1 Week
+                      </option>
+                      <option
+                        value="created_last_1_month"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Last 1 Month
+                      </option>
+                      <option
+                        value="created_last_1_year"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Last 1 Year
+                      </option>
+                      <option
+                        value="followers"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Sort by Followers
+                      </option>
+                      <option
+                        value="disapproved"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Disapproved
+                      </option>
+                      <option
+                        value="unVerified"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Unverified
+                      </option>
+                      <option
+                        value="inActive"
+                        className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
+                      >
+                        Inactive
+                      </option>
+                    </select>
+                    <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2 pointer-events-none">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="text-body dark:text-white"
+                      >
+                        <g opacity="0.8">
+                          <path
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                            d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z"
+                            fill="currentColor"
+                          />
+                        </g>
+                      </svg>
+                    </span>
+                  </div>
+                  {sortBy === "followers" && (
+                    <div
+                      className="relative"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowSortOrderModal(!showSortOrderModal);
+                      }}
+                      role="button"
                     >
-                      Last 1 Hour
-                    </option>
-                    <option
-                      value="created_last_1_day"
-                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Last 1 Day
-                    </option>
-                    <option
-                      value="created_last_1_week"
-                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Last 1 Week
-                    </option>
-                    <option
-                      value="created_last_1_month"
-                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Last 1 Month
-                    </option>
-                    <option
-                      value="created_last_1_year"
-                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Last 1 Year
-                    </option>
-                    <option
-                      value="followers"
-                      className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Most Followers to least
-                    </option>
-                    <option
-                    value="disapproved"
-                    className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Disapproved
-                    </option>
-                    <option
-                    value="unVerified"
-                    className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Unverified
-                    </option>
-                    <option
-                    value="inActive"
-                    className="text-body cursor-pointer dark:text-white dark:bg-boxdark"
-                    >
-                      Inactive
-                    </option>
-                  </select>
-                  <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2 pointer-events-none">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="text-body dark:text-white"
-                    >
-                      <g opacity="0.8">
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M5.29289 8.29289C5.68342 7.90237 6.31658 7.90237 6.70711 8.29289L12 13.5858L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.7071 15.7071C12.3166 16.0976 11.6834 16.0976 11.2929 15.7071L5.29289 9.70711C4.90237 9.31658 4.90237 8.68342 5.29289 8.29289Z"
-                          fill="currentColor"
-                        />
-                      </g>
-                    </svg>
-                  </span>
+                      <button
+                        type="button"
+                        className="flex items-center justify-center w-8 h-8 rounded border border-stroke bg-transparent hover:bg-gray-2 dark:border-form-strokedark dark:bg-boxdark dark:hover:bg-meta-4 transition-colors"
+                        aria-label="Sort order options"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="text-body dark:text-white"
+                        >
+                          <path
+                            d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      {showSortOrderModal && (
+                        <div className="absolute left-0 top-full mt-1 z-50 min-w-[180px] rounded border border-stroke bg-white shadow-lg dark:border-strokedark dark:bg-boxdark">
+                          <div className="py-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSortOrder("dsc");
+                                setShowSortOrderModal(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-gray-2 dark:hover:bg-meta-4 transition-colors ${
+                                sortOrder === "dsc"
+                                  ? "bg-primary/10 text-primary dark:bg-primary/20"
+                                  : ""
+                              }`}
+                            >
+                              Sort from more to less
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSortOrder("asc");
+                                setShowSortOrderModal(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-gray-2 dark:hover:bg-meta-4 transition-colors ${
+                                sortOrder === "asc"
+                                  ? "bg-primary/10 text-primary dark:bg-primary/20"
+                                  : ""
+                              }`}
+                            >
+                              Sort from less to more
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
