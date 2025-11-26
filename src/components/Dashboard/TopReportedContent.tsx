@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { DefaultProfilePic, UserDetailedView } from "../Profile";
 import { DefaultPlaceholderImage } from "../Layouts/Placeholder";
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
@@ -54,12 +55,36 @@ const options: ApexOptions = {
   ],
 };
 const TopReportedContent = () => {
+  const router = useRouter();
   const initialApiParams = {
     contentType: "",
     overview: "",
   };
   const [series, setSeries] = useState([0, 0, 0]);
   const [apiParams, setApiParams] = useState(initialApiParams);
+
+  const getContentTypeColor = (contentType: string) => {
+    switch (contentType.toLowerCase()) {
+      case "post":
+        return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+      case "user":
+        return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+      case "comment":
+        return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+      default:
+        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+    }
+  };
+
+  const handleRowClick = (data: any) => {
+    if (data.contentType === "user" && data.usersRef?._id) {
+      router.push(`/users/${data.usersRef._id}`);
+    } else if (data.contentType === "post" && data.postsRef?._id) {
+      // router.push(`/posts/${data.postsRef._id}`);
+    } else if (data.contentType === "comment" && data.commentsRef?._id) {
+      // router.push(`/comments/${data.commentsRef._id}`);
+    }
+  };
   const {
     isPending,
     isError,
@@ -149,136 +174,157 @@ const TopReportedContent = () => {
               </div>
             </div>
           </div>
-          <div className="flex flex-col">
-            <div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-boxdark-hover sm:grid-cols-5">
-              <div className="p-2.5 xl:p-5 col-span-2">
-                <h5 className="text-sm font-medium  xsm:text-base">Content</h5>
+          <div className="flex flex-col overflow-hidden rounded-lg">
+            <div className="sticky top-0 z-10 grid grid-cols-3 rounded-t-lg bg-gray-2 dark:bg-boxdark-hover sm:grid-cols-5 shadow-sm">
+              <div className="p-3 xl:p-5 col-span-2">
+                <h5 className="text-sm font-semibold text-black dark:text-white xsm:text-base">
+                  Content
+                </h5>
               </div>
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium  xsm:text-base">
+              <div className="p-3 text-center xl:p-5">
+                <h5 className="text-sm font-semibold text-black dark:text-white xsm:text-base">
                   Content Type
                 </h5>
               </div>
-              <div className="p-2.5 text-center xl:p-5">
-                <h5 className="text-sm font-medium  xsm:text-base">
+              <div className="p-3 text-center xl:p-5">
+                <h5 className="text-sm font-semibold text-black dark:text-white xsm:text-base">
                   Total Reports
                 </h5>
               </div>
-              <div className="hidden p-2.5 text-center sm:block xl:p-5">
-                <h5 className="text-sm font-medium  xsm:text-base">
+              <div className="hidden p-3 text-center sm:block xl:p-5">
+                <h5 className="text-sm font-semibold text-black dark:text-white xsm:text-base">
                   Last Report
                 </h5>
               </div>
             </div>
-            {data &&
-              data.documents &&
-              data.documents.map((data, index) => {
-                return (
-                  <div
-                    key={index}
-                    className="grid grid-cols-3 sm:grid-cols-5 border-b border-stroke dark:border-white/10"
-                  >
-                    <div className="flex items-center gap-3 p-2.5 xl:p-5 truncate col-span-2">
-                      {data.contentType === "post" && data.postsRef ? (
-                        <>
-                          <div className="flex-shrink-0">
-                            <Image
-                              src={DefaultPlaceholderImage}
-                              width={56}
-                              height={56}
-                              alt="Image"
-                            />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold capitalize">
-                              {data.postsRef && data.postsRef.postType}
-                            </span>
-                            &nbsp;
-                            <span className="text-xs">
-                              {data.postsRef && data.postsRef._id}
-                            </span>
-                            <br />
-                            <p className="hidden text-black dark:text-white sm:block text-xs">
-                              {data.postsRef.content}
-                            </p>
-                          </div>
-                        </>
-                      ) : null}
-                      {data.contentType === "user" && data.usersRef ? (
-                        <UserDetailedView
-                          id={data.usersRef && data.usersRef._id}
-                          name={data.usersRef && data.usersRef.name}
-                          username={data.usersRef && data.usersRef.username}
-                          accountType={
-                            data.usersRef && data.usersRef.accountType
-                          }
-                          image={
-                            data &&
-                            data.usersRef &&
-                            data.usersRef.accountType === "business"
-                              ? data.usersRef.businessProfileRef?.profilePic
-                                  ?.small
-                                ? data.usersRef.businessProfileRef?.profilePic
+            <div className="divide-y divide-stroke dark:divide-white/10">
+              {data &&
+                data.documents &&
+                data.documents.map((item, index) => {
+                  const isLast = index === (data.documents?.length ?? 0) - 1;
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => handleRowClick(item)}
+                      className={`grid grid-cols-3 sm:grid-cols-5 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-boxdark-hover/50 ${
+                        isLast ? "rounded-b-lg" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 p-4 xl:p-6 truncate col-span-2">
+                        {item.contentType === "post" && item.postsRef ? (
+                          <>
+                            <div className="flex-shrink-0">
+                              <div className="relative h-12 w-12 rounded-lg overflow-hidden ring-2 ring-gray-200 dark:ring-white/10">
+                                <Image
+                                  src={DefaultPlaceholderImage}
+                                  width={48}
+                                  height={48}
+                                  alt="Post Image"
+                                  className="object-cover h-full w-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-semibold text-black dark:text-white capitalize truncate">
+                                  {item.postsRef && item.postsRef.postType}
+                                </span>
+                                <span className="text-xs text-bodydark2 dark:text-bodydark truncate">
+                                  {item.postsRef &&
+                                    item.postsRef._id?.substring(0, 8)}
+                                </span>
+                              </div>
+                              <p className="hidden text-black/70 dark:text-white/70 sm:block text-sm truncate">
+                                {item.postsRef.content}
+                              </p>
+                            </div>
+                          </>
+                        ) : null}
+                        {item.contentType === "user" && item.usersRef ? (
+                          <UserDetailedView
+                            id={item.usersRef && item.usersRef._id}
+                            name={item.usersRef && item.usersRef.name}
+                            username={item.usersRef && item.usersRef.username}
+                            accountType={
+                              item.usersRef && item.usersRef.accountType
+                            }
+                            image={
+                              item &&
+                              item.usersRef &&
+                              item.usersRef.accountType === "business"
+                                ? item.usersRef.businessProfileRef?.profilePic
                                     ?.small
+                                  ? item.usersRef.businessProfileRef?.profilePic
+                                      ?.small
+                                  : undefined
+                                : item.usersRef?.profilePic?.small
+                                ? item.usersRef?.profilePic?.small
                                 : undefined
-                              : data.usersRef?.profilePic?.small
-                              ? data.usersRef?.profilePic?.small
-                              : undefined
-                          }
-                        />
-                      ) : null}
-                      {data.contentType === "comment" && data.commentsRef ? (
-                        <>
-                          <div className="flex-shrink-0">
-                            <Image
-                              src={DefaultProfilePic}
-                              alt={"comments"}
-                              width={48}
-                              height={48}
-                              className="rounded-full h-9.5 w-9.5"
-                            />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold capitalize">
-                              {data.commentsRef && data.commentsRef.postType}
-                            </span>
-                            &nbsp;
-                            <span className="text-xs">
-                              {" "}
-                              {data.commentsRef && data.commentsRef._id}
-                            </span>
-                            <br />
-                            <p className="hidden text-black dark:text-white sm:block text-xs capitalize">
-                              {data.commentsRef?.message}
-                            </p>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center justify-center p-2.5 xl:p-5">
-                      <p className="text-black dark:text-white capitalize text-sm">
-                        {data.contentType}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-center p-2.5 xl:p-5">
-                      <p className="text-meta-1 text-sm font-bold">
-                        {data.totalReports}
-                      </p>
-                    </div>
-                    <div className="hidden items-center justify-center p-2.5 sm:flex xl:p-5">
-                      <p className="text-black dark:text-white text-xs font-bold">
-                        {moment(data.createdAt).format(
-                          "ddd DD, MMM YYYY hh:mm:ss A"
-                        )}
-                        <br></br>
-                        <span className="font-medium">
-                          {moment(data.createdAt).fromNow()}
+                            }
+                          />
+                        ) : null}
+                        {item.contentType === "comment" && item.commentsRef ? (
+                          <>
+                            <div className="flex-shrink-0">
+                              <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-white/10">
+                                <Image
+                                  src={DefaultProfilePic}
+                                  alt={"Comment"}
+                                  width={48}
+                                  height={48}
+                                  className="object-cover h-full w-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-semibold text-black dark:text-white capitalize truncate">
+                                  {item.commentsRef &&
+                                    item.commentsRef.postType}
+                                </span>
+                                <span className="text-xs text-bodydark2 dark:text-bodydark truncate">
+                                  {item.commentsRef &&
+                                    item.commentsRef._id?.substring(0, 8)}
+                                </span>
+                              </div>
+                              <p className="hidden text-black/70 dark:text-white/70 sm:block text-sm truncate capitalize">
+                                {item.commentsRef?.message}
+                              </p>
+                            </div>
+                          </>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center justify-center p-4 xl:p-6">
+                        <span
+                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${getContentTypeColor(
+                            item.contentType
+                          )}`}
+                        >
+                          {item.contentType}
                         </span>
-                      </p>
+                      </div>
+                      <div className="flex items-center justify-center p-4 xl:p-6">
+                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-red-500/10 text-red-500 text-sm font-bold">
+                          {item.totalReports}
+                        </span>
+                      </div>
+                      <div className="hidden items-center justify-center p-4 sm:flex xl:p-6">
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-black dark:text-white">
+                            {moment(item.createdAt).format("ddd DD, MMM YYYY")}
+                          </p>
+                          <p className="text-xs text-bodydark2 dark:text-bodydark mt-0.5">
+                            {moment(item.createdAt).format("hh:mm:ss A")}
+                          </p>
+                          <p className="text-xs text-bodydark2 dark:text-bodydark mt-1">
+                            {moment(item.createdAt).fromNow()}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+            </div>
           </div>
         </div>
       </div>
