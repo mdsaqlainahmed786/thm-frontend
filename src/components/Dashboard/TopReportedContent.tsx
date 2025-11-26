@@ -12,28 +12,75 @@ import { DefaultPlaceholderImage } from "../Layouts/Placeholder";
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
-const options: ApexOptions = {
+const getChartOptions = (total: number): ApexOptions => ({
   chart: {
     fontFamily: "Satoshi, sans-serif",
     type: "donut",
   },
   colors: ["#3C50E0", "#0FADCF", "#FF6384"],
-  labels: ["Users", "Posts", "Comments"],
+  fill: {
+    type: "gradient",
+    gradient: {
+      shade: "dark",
+      type: "vertical",
+      shadeIntensity: 0.5,
+      gradientToColors: ["#6366F1", "#22D3EE", "#FB7185"],
+      inverseColors: false,
+      opacityFrom: 1,
+      opacityTo: 0.8,
+      stops: [0, 100],
+    },
+  },
   legend: {
     show: false,
-    position: "bottom",
   },
-
   plotOptions: {
     pie: {
       donut: {
-        size: "65%",
+        size: "70%",
         background: "transparent",
+        labels: {
+          show: true,
+          name: {
+            show: true,
+            fontSize: "14px",
+            fontFamily: "Satoshi, sans-serif",
+            fontWeight: 600,
+            color: "#ffffff",
+            offsetY: -10,
+            formatter: function (val: string) {
+              return "Total";
+            },
+          },
+          value: {
+            show: true,
+            fontSize: "24px",
+            fontFamily: "Satoshi, sans-serif",
+            fontWeight: 700,
+            color: "#ffffff",
+            offsetY: 10,
+            formatter: function (val: string) {
+              return total.toString();
+            },
+          },
+          total: {
+            show: false,
+          },
+        },
       },
     },
   },
+  labels: ["Users", "Posts", "Comments"],
   dataLabels: {
     enabled: false,
+  },
+  tooltip: {
+    enabled: true,
+    y: {
+      formatter: function (val: number) {
+        return val + " reports";
+      },
+    },
   },
   responsive: [
     {
@@ -50,10 +97,13 @@ const options: ApexOptions = {
         chart: {
           width: 200,
         },
+        legend: {
+          show: false,
+        },
       },
     },
   ],
-};
+});
 const TopReportedContent = () => {
   const router = useRouter();
   const initialApiParams = {
@@ -62,6 +112,7 @@ const TopReportedContent = () => {
   };
   const [series, setSeries] = useState([0, 0, 0]);
   const [apiParams, setApiParams] = useState(initialApiParams);
+  const [totalReports, setTotalReports] = useState(0);
 
   const getContentTypeColor = (contentType: string) => {
     switch (contentType.toLowerCase()) {
@@ -104,17 +155,20 @@ const TopReportedContent = () => {
   });
   useEffect(() => {
     if (data && data.reports && data.reports.length) {
-      const seriesData =
-        options.labels && Array.isArray(options.labels)
-          ? options.labels.map((label) => {
-              const singular = label.replace(/s$/, "").toLowerCase();
-              const filterData = data.reports.filter(
-                (report) => report.labelName === singular
-              );
-              return filterData.length !== 0 ? filterData[0].totalReports : 0;
-            })
-          : [];
+      const seriesData = ["Users", "Posts", "Comments"].map((label) => {
+        const singular = label.replace(/s$/, "").toLowerCase();
+        const filterData = data.reports.filter(
+          (report) => report.labelName === singular
+        );
+        return filterData.length !== 0 ? filterData[0].totalReports : 0;
+      });
       setSeries(seriesData);
+
+      // Calculate total reports
+      const total = seriesData.reduce((sum, val) => sum + val, 0);
+      setTotalReports(total);
+    } else {
+      setTotalReports(0);
     }
   }, [data]);
   return (
@@ -197,138 +251,172 @@ const TopReportedContent = () => {
                 </h5>
               </div>
             </div>
-            <div className="divide-y divide-stroke dark:divide-white/10">
-              {data &&
-                data.documents &&
-                data.documents.map((item, index) => {
-                  const isLast = index === (data.documents?.length ?? 0) - 1;
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => handleRowClick(item)}
-                      className={`grid grid-cols-3 sm:grid-cols-5 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-boxdark-hover/50 ${
-                        isLast ? "rounded-b-lg" : ""
-                      }`}
-                    >
-                      <div className="flex items-center gap-4 p-4 xl:p-6 truncate col-span-2">
-                        {item.contentType === "post" && item.postsRef ? (
-                          <>
-                            <div className="flex-shrink-0">
-                              <div className="relative h-12 w-12 rounded-lg overflow-hidden ring-2 ring-gray-200 dark:ring-white/10">
-                                <Image
-                                  src={DefaultPlaceholderImage}
-                                  width={48}
-                                  height={48}
-                                  alt="Post Image"
-                                  className="object-cover h-full w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-sm font-semibold text-black dark:text-white capitalize truncate">
-                                  {item.postsRef && item.postsRef.postType}
-                                </span>
-                                <span className="text-xs text-bodydark2 dark:text-bodydark truncate">
-                                  {item.postsRef &&
-                                    item.postsRef._id?.substring(0, 8)}
-                                </span>
-                              </div>
-                              <p className="hidden text-black/70 dark:text-white/70 sm:block text-sm truncate">
-                                {item.postsRef.content}
-                              </p>
-                            </div>
-                          </>
-                        ) : null}
-                        {item.contentType === "user" && item.usersRef ? (
-                          <UserDetailedView
-                            id={item.usersRef && item.usersRef._id}
-                            name={item.usersRef && item.usersRef.name}
-                            username={item.usersRef && item.usersRef.username}
-                            accountType={
-                              item.usersRef && item.usersRef.accountType
-                            }
-                            image={
-                              item &&
-                              item.usersRef &&
-                              item.usersRef.accountType === "business"
-                                ? item.usersRef.businessProfileRef?.profilePic
-                                    ?.small
-                                  ? item.usersRef.businessProfileRef?.profilePic
-                                      ?.small
-                                  : undefined
-                                : item.usersRef?.profilePic?.small
-                                ? item.usersRef?.profilePic?.small
-                                : undefined
-                            }
-                          />
-                        ) : null}
-                        {item.contentType === "comment" && item.commentsRef ? (
-                          <>
-                            <div className="flex-shrink-0">
-                              <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-white/10">
-                                <Image
-                                  src={DefaultProfilePic}
-                                  alt={"Comment"}
-                                  width={48}
-                                  height={48}
-                                  className="object-cover h-full w-full"
-                                />
-                              </div>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-sm font-semibold text-black dark:text-white capitalize truncate">
-                                  {item.commentsRef &&
-                                    item.commentsRef.postType}
-                                </span>
-                                <span className="text-xs text-bodydark2 dark:text-bodydark truncate">
-                                  {item.commentsRef &&
-                                    item.commentsRef._id?.substring(0, 8)}
-                                </span>
-                              </div>
-                              <p className="hidden text-black/70 dark:text-white/70 sm:block text-sm truncate capitalize">
-                                {item.commentsRef?.message}
-                              </p>
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center justify-center p-4 xl:p-6">
-                        <span
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${getContentTypeColor(
-                            item.contentType
-                          )}`}
-                        >
-                          {item.contentType}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-center p-4 xl:p-6">
-                        <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-red-500/10 text-red-500 text-sm font-bold">
-                          {item.totalReports}
-                        </span>
-                      </div>
-                      <div className="hidden items-center justify-center p-4 sm:flex xl:p-6">
-                        <div className="text-center">
-                          <p className="text-sm font-semibold text-black dark:text-white">
-                            {moment(item.createdAt).format("ddd DD, MMM YYYY")}
-                          </p>
-                          <p className="text-xs text-bodydark2 dark:text-bodydark mt-0.5">
-                            {moment(item.createdAt).format("hh:mm:ss A")}
-                          </p>
-                          <p className="text-xs text-bodydark2 dark:text-bodydark mt-1">
-                            {moment(item.createdAt).fromNow()}
-                          </p>
-                        </div>
+            {isPending || isFetching ? (
+              <div className="divide-y divide-stroke dark:divide-white/10">
+                {[...Array(5)].map((_, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-3 sm:grid-cols-5 animate-pulse"
+                  >
+                    <div className="flex items-center gap-4 p-4 xl:p-6 col-span-2">
+                      <div className="h-12 w-12 rounded-lg bg-gray-200 dark:bg-boxdark-hover flex-shrink-0"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-3/4 bg-gray-200 dark:bg-boxdark-hover rounded"></div>
+                        <div className="h-3 w-1/2 bg-gray-200 dark:bg-boxdark-hover rounded"></div>
                       </div>
                     </div>
-                  );
-                })}
-            </div>
+                    <div className="flex items-center justify-center p-4 xl:p-6">
+                      <div className="h-6 w-16 bg-gray-200 dark:bg-boxdark-hover rounded-full"></div>
+                    </div>
+                    <div className="flex items-center justify-center p-4 xl:p-6">
+                      <div className="h-7 w-7 bg-gray-200 dark:bg-boxdark-hover rounded-full"></div>
+                    </div>
+                    <div className="hidden items-center justify-center p-4 sm:flex xl:p-6">
+                      <div className="space-y-2 text-center">
+                        <div className="h-4 w-24 bg-gray-200 dark:bg-boxdark-hover rounded mx-auto"></div>
+                        <div className="h-3 w-20 bg-gray-200 dark:bg-boxdark-hover rounded mx-auto"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="divide-y divide-stroke dark:divide-white/10">
+                {data &&
+                  data.documents &&
+                  data.documents.map((item, index) => {
+                    const isLast = index === (data.documents?.length ?? 0) - 1;
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => handleRowClick(item)}
+                        className={`grid grid-cols-3 sm:grid-cols-5 transition-all duration-200 hover:bg-gray-50 dark:hover:bg-boxdark-hover/50 ${
+                          isLast ? "rounded-b-lg" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-4 p-4 xl:p-6 truncate col-span-2">
+                          {item.contentType === "post" && item.postsRef ? (
+                            <>
+                              <div className="flex-shrink-0">
+                                <div className="relative h-12 w-12 rounded-lg overflow-hidden ring-2 ring-gray-200 dark:ring-white/10">
+                                  <Image
+                                    src={DefaultPlaceholderImage}
+                                    width={48}
+                                    height={48}
+                                    alt="Post Image"
+                                    className="object-cover h-full w-full"
+                                  />
+                                </div>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-semibold text-black dark:text-white capitalize truncate">
+                                    {item.postsRef && item.postsRef.postType}
+                                  </span>
+                                  <span className="text-xs text-bodydark2 dark:text-bodydark truncate">
+                                    {item.postsRef &&
+                                      item.postsRef._id?.substring(0, 8)}
+                                  </span>
+                                </div>
+                                <p className="hidden text-black/70 dark:text-white/70 sm:block text-sm truncate">
+                                  {item.postsRef.content}
+                                </p>
+                              </div>
+                            </>
+                          ) : null}
+                          {item.contentType === "user" && item.usersRef ? (
+                            <UserDetailedView
+                              id={item.usersRef && item.usersRef._id}
+                              name={item.usersRef && item.usersRef.name}
+                              username={item.usersRef && item.usersRef.username}
+                              accountType={
+                                item.usersRef && item.usersRef.accountType
+                              }
+                              image={
+                                item &&
+                                item.usersRef &&
+                                item.usersRef.accountType === "business"
+                                  ? item.usersRef.businessProfileRef?.profilePic
+                                      ?.small
+                                    ? item.usersRef.businessProfileRef
+                                        ?.profilePic?.small
+                                    : undefined
+                                  : item.usersRef?.profilePic?.small
+                                  ? item.usersRef?.profilePic?.small
+                                  : undefined
+                              }
+                            />
+                          ) : null}
+                          {item.contentType === "comment" &&
+                          item.commentsRef ? (
+                            <>
+                              <div className="flex-shrink-0">
+                                <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-white/10">
+                                  <Image
+                                    src={DefaultProfilePic}
+                                    alt={"Comment"}
+                                    width={48}
+                                    height={48}
+                                    className="object-cover h-full w-full"
+                                  />
+                                </div>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-semibold text-black dark:text-white capitalize truncate">
+                                    {item.commentsRef &&
+                                      item.commentsRef.postType}
+                                  </span>
+                                  <span className="text-xs text-bodydark2 dark:text-bodydark truncate">
+                                    {item.commentsRef &&
+                                      item.commentsRef._id?.substring(0, 8)}
+                                  </span>
+                                </div>
+                                <p className="hidden text-black/70 dark:text-white/70 sm:block text-sm truncate capitalize">
+                                  {item.commentsRef?.message}
+                                </p>
+                              </div>
+                            </>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center justify-center p-4 xl:p-6">
+                          <span
+                            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${getContentTypeColor(
+                              item.contentType
+                            )}`}
+                          >
+                            {item.contentType}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center p-4 xl:p-6">
+                          <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-red-500/10 text-red-500 text-sm font-bold">
+                            {item.totalReports}
+                          </span>
+                        </div>
+                        <div className="hidden items-center justify-center p-4 sm:flex xl:p-6">
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-black dark:text-white">
+                              {moment(item.createdAt).format(
+                                "ddd DD, MMM YYYY"
+                              )}
+                            </p>
+                            <p className="text-xs text-bodydark2 dark:text-bodydark mt-0.5">
+                              {moment(item.createdAt).format("hh:mm:ss A")}
+                            </p>
+                            <p className="text-xs text-bodydark2 dark:text-bodydark mt-1">
+                              {moment(item.createdAt).fromNow()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </div>
       </div>
-      <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default dark:border-white/10 dark:bg-boxdark sm:px-7.5 xl:col-span-4">
+      <div className="col-span-12 rounded-xl border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default dark:border-white/10 dark:bg-boxdark sm:px-7.5 xl:col-span-4 overflow-hidden">
         <div className="mb-3 justify-between gap-4 sm:flex">
           <div>
             <h5 className="text-xl font-semibold text-black dark:text-white">
@@ -378,60 +466,91 @@ const TopReportedContent = () => {
           </div>
         </div>
         <div className="mb-2">
-          <div id="chartThree" className="mx-auto flex justify-center">
-            <ReactApexChart options={options} series={series} type="donut" />
-          </div>
+          {isPending || isFetching ? (
+            <div className="mx-auto flex justify-center items-center h-[300px]">
+              <div className="relative w-[300px] h-[300px] animate-pulse">
+                <div className="absolute inset-0 rounded-full bg-gray-200 dark:bg-boxdark-hover"></div>
+                <div className="absolute inset-[15%] rounded-full bg-white dark:bg-boxdark-2"></div>
+                <div className="absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                  <div className="h-4 w-12 bg-gray-200 dark:bg-boxdark-hover rounded mx-auto mb-2"></div>
+                  <div className="h-8 w-16 bg-gray-200 dark:bg-boxdark-hover rounded mx-auto"></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div id="chartThree" className="mx-auto flex justify-center">
+              <ReactApexChart
+                options={getChartOptions(totalReports)}
+                series={series}
+                type="donut"
+              />
+            </div>
+          )}
         </div>
-        <div className="-mx-8 flex flex-wrap items-center justify-center gap-y-3">
-          <div className="w-full px-8 sm:w-1/2">
-            <div className="flex w-full items-center">
-              <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#6577F3]"></span>
-              <p className="flex w-full justify-between text-sm font-medium text-black dark:text-white">
-                <span>Users</span>
-                <span>
-                  {(data &&
-                    data.reports &&
-                    data.reports?.filter(
-                      (data) => data?.labelName === "user"
-                    )?.[0]?.totalReports) ??
-                    0}
+        {isPending || isFetching ? (
+          <div className="flex flex-col gap-3 px-2 animate-pulse">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-3 w-3 rounded-full bg-gray-200 dark:bg-boxdark-hover"></div>
+                  <div className="h-4 w-16 bg-gray-200 dark:bg-boxdark-hover rounded"></div>
+                </div>
+                <div className="h-4 w-8 bg-gray-200 dark:bg-boxdark-hover rounded"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 px-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="block h-3 w-3 rounded-full bg-[#3C50E0]"></span>
+                <span className="text-sm font-medium text-black dark:text-white">
+                  Users
                 </span>
-              </p>
+              </div>
+              <span className="text-sm font-semibold text-black dark:text-white">
+                {(data &&
+                  data.reports &&
+                  data.reports?.filter(
+                    (data) => data?.labelName === "user"
+                  )?.[0]?.totalReports) ??
+                  0}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="block h-3 w-3 rounded-full bg-[#0FADCF]"></span>
+                <span className="text-sm font-medium text-black dark:text-white">
+                  Posts
+                </span>
+              </div>
+              <span className="text-sm font-semibold text-black dark:text-white">
+                {(data &&
+                  data.reports &&
+                  data.reports?.filter(
+                    (data) => data?.labelName === "post"
+                  )?.[0]?.totalReports) ??
+                  0}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="block h-3 w-3 rounded-full bg-[#FF6384]"></span>
+                <span className="text-sm font-medium text-black dark:text-white">
+                  Comments
+                </span>
+              </div>
+              <span className="text-sm font-semibold text-black dark:text-white">
+                {(data &&
+                  data.reports &&
+                  data.reports?.filter(
+                    (data) => data?.labelName === "comment"
+                  )?.[0]?.totalReports) ??
+                  0}
+              </span>
             </div>
           </div>
-          <div className="w-full px-8 sm:w-1/2">
-            <div className="flex w-full items-center">
-              <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#0FADCF]"></span>
-              <p className="flex w-full justify-between text-sm font-medium text-black dark:text-white">
-                <span>Posts</span>
-                <span>
-                  {(data &&
-                    data.reports &&
-                    data.reports?.filter(
-                      (data) => data?.labelName === "post"
-                    )?.[0]?.totalReports) ??
-                    0}
-                </span>
-              </p>
-            </div>
-          </div>
-          <div className="w-full px-8 sm:w-1/2">
-            <div className="flex w-full items-center">
-              <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#FF6384]"></span>
-              <p className="flex w-full justify-between text-sm font-medium text-black dark:text-white">
-                <span>Comments</span>
-                <span>
-                  {(data &&
-                    data.reports &&
-                    data.reports?.filter(
-                      (data) => data?.labelName === "comment"
-                    )?.[0]?.totalReports) ??
-                    0}
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
