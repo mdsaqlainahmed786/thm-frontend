@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, ReactNode, useCallback, useEffect } from "react";
+import React, { useState, ReactNode, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -23,51 +23,19 @@ type MainLayoutProps =
 
 export default function AdminLayout(props: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
-  // Listen for sidebar collapse state changes
+  // Listen for sidebar collapse state changes (same tab)
   useEffect(() => {
-    const handleStorageChange = () => {
-      try {
-        const collapsed = localStorage.getItem("sidebarCollapsed");
-        if (collapsed !== null) {
-          setIsCollapsed(JSON.parse(collapsed));
-        }
-      } catch (error) {
-        setIsCollapsed(false);
-      }
-    };
-
     const handleCustomEvent = (event: any) => {
-      // Use the value from the event detail if available, otherwise read from localStorage
       if (event.detail && typeof event.detail.isCollapsed === "boolean") {
         setIsCollapsed(event.detail.isCollapsed);
-      } else {
-        handleStorageChange();
       }
     };
 
-    // Check initial state
-    if (typeof window !== "undefined") {
-      try {
-        const collapsed = localStorage.getItem("sidebarCollapsed");
-        if (collapsed !== null) {
-          setIsCollapsed(JSON.parse(collapsed));
-        } else {
-          setIsCollapsed(false);
-        }
-      } catch (error) {
-        setIsCollapsed(false);
-      }
-    }
-
-    // Listen for storage changes (from other tabs)
-    window.addEventListener("storage", handleStorageChange);
-    // Listen for custom events (for same-tab updates)
     window.addEventListener("sidebarCollapseChange", handleCustomEvent);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("sidebarCollapseChange", handleCustomEvent);
     };
   }, []);
