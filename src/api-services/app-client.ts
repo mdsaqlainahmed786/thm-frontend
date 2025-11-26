@@ -5,6 +5,10 @@ import { signOut } from 'next-auth/react';
 import { LOGIN_ROUTE } from "@/types/auth";
 const apiRequest = axios.create({
     baseURL: AppConfig.API_ENDPOINT,
+    headers: {
+        'Accept': 'application/json',
+    },
+    withCredentials: true,
 });
 /**
  * Request interceptor
@@ -17,8 +21,17 @@ apiRequest.interceptors.request.use(
             // console.log(accessToken);
             config.headers['X-Access-Token'] = accessToken;
         }
+        // Ensure headers are set for CORS
+        // Only set Content-Type for requests with a body (POST, PUT, PATCH)
+        if (config.data && !config.headers['Content-Type']) {
+            config.headers['Content-Type'] = 'application/json';
+        }
+        // Always set Accept header
+        if (!config.headers['Accept']) {
+            config.headers['Accept'] = 'application/json';
+        }
         // console.log(accessToken);
-        // config.withCredentials = true;
+        config.withCredentials = true;
         return config;
     },
     (error) => Promise.reject(error)
