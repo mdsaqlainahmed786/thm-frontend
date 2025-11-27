@@ -24,6 +24,7 @@ import {
 } from "@/api-services/business";
 import { Subscription } from "@/types/subscription";
 import { DefaultProfilePic, UserDetailedView } from "@/components/Profile";
+import SubscriptionOverview from "./SubscriptionOverview";
 const SubscriptionTable = () => {
   const features: string[] = [""];
   const initialInputs = {
@@ -203,6 +204,7 @@ const SubscriptionTable = () => {
   };
   return (
     <div className="col-span-12 xl:col-span-7">
+        <SubscriptionOverview />
       <div className="rounded-sm border border-stroke bg-white px-5  py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <div className="mb-6 flex justify-between">
           <div>
@@ -591,7 +593,7 @@ const SubscriptionTable = () => {
                     {formInputs.features &&
                       formInputs.features.map((feature, index) => {
                         return (
-                          <div className="flex items-center gap-2.5">
+                          <div key={index.toString()} className="flex items-center gap-2.5">
                             <input
                               id={`feature_${index}`}
                               placeholder="Enter here"

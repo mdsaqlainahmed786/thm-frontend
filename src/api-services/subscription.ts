@@ -2,6 +2,7 @@ import apiRequest from "./app-client";
 import toast from "react-hot-toast";
 import { handleClientApiErrors } from "./api-errors";
 import { SubscriptionPlans } from "@/types/subscription-plans";
+
 const fetchSubscriptionPlans = async (params: { [key: string]: any }) => {
     try {
         const paramsKey = Object.keys(params);
@@ -31,6 +32,5 @@ const fetchSubscriptionPlans = async (params: { [key: string]: any }) => {
         return null;
     }
 }
-
 
 export { fetchSubscriptionPlans }
