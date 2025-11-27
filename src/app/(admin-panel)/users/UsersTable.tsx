@@ -120,9 +120,9 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
   }, [data]);
   return (
     <>
-      <div className="col-span-12 xl:col-span-7">
-        <div className="rounded-sm border border-stroke bg-white px-5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <UserGrowthChart accountType={accountType} />
+      <div className="col-span-12 xl:col-span-7 -mt-12image.png">
+        <div className="rounded-sm border border-stroke bg-white px-5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <div className="mb-6 flex justify-between items-center">
             <div>
               <h4 className="text-title-sm2 font-bold text-black dark:text-white">
