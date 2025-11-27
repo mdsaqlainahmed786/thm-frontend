@@ -593,7 +593,7 @@ const SubscriptionTable = () => {
                     {formInputs.features &&
                       formInputs.features.map((feature, index) => {
                         return (
-                          <div className="flex items-center gap-2.5">
+                          <div key={index.toString()} className="flex items-center gap-2.5">
                             <input
                               id={`feature_${index}`}
                               placeholder="Enter here"

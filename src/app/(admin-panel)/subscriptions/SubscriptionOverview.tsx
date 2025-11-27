@@ -187,8 +187,11 @@ const SubscriptionOverview: React.FC = () => {
     // 1. Monthly Revenue Line Chart - Last 12 months
     const monthlyRevenue: { [key: string]: number } = {};
     const months = [];
+    const currentDate = moment();
+
+    // Generate months from 11 months ago to current month (inclusive)
     for (let i = 11; i >= 0; i--) {
-      const month = moment().subtract(i, "months");
+      const month = moment().subtract(i, "months").startOf("month");
       const monthKey = month.format("MMM YYYY");
       months.push(monthKey);
       monthlyRevenue[monthKey] = 0;
@@ -196,11 +199,19 @@ const SubscriptionOverview: React.FC = () => {
 
     subscriptions.forEach((sub) => {
       if (sub.ordersRef?.paymentDetail?.transactionAmount) {
-        const createdAt = moment(sub.createdAt);
-        const monthKey = createdAt.format("MMM YYYY");
-        if (monthlyRevenue.hasOwnProperty(monthKey)) {
-          monthlyRevenue[monthKey] +=
-            sub.ordersRef.paymentDetail.transactionAmount || 0;
+        // Use subscription createdAt as it represents when payment was made
+        const paymentDate = moment(sub.createdAt);
+
+        // Only include payments that are not in the future
+        if (
+          paymentDate.isValid() &&
+          paymentDate.isSameOrBefore(currentDate, "day")
+        ) {
+          const monthKey = paymentDate.format("MMM YYYY");
+          if (monthlyRevenue.hasOwnProperty(monthKey)) {
+            monthlyRevenue[monthKey] +=
+              sub.ordersRef.paymentDetail.transactionAmount || 0;
+          }
         }
       }
     });
@@ -619,12 +630,14 @@ const SubscriptionOverview: React.FC = () => {
               </div>
             </div>
           ) : (
+            <div className="h-[350px] flex items-center justify-center mx-auto">
             <ReactApexChart
               options={planDistributionOptions}
               series={chartData.planDistribution.series}
               type="donut"
               height={350}
             />
+            </div>
           )}
         </div>
       </div>
