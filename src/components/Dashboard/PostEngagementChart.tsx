@@ -15,6 +15,7 @@ interface EngagementData {
   date: string;
   views: number;
   likes: number;
+  reports: number;
 }
 
 const PostEngagementChart: React.FC = () => {
@@ -38,6 +39,7 @@ const PostEngagementChart: React.FC = () => {
         categories: [],
         viewsSeries: [],
         likesSeries: [],
+        reportsSeries: [],
       };
     }
 
@@ -47,11 +49,13 @@ const PostEngagementChart: React.FC = () => {
 
     const viewsSeries = engagementData.map((item) => item.views);
     const likesSeries = engagementData.map((item) => item.likes);
+    const reportsSeries = engagementData.map((item) => item.reports);
 
-    return { categories, viewsSeries, likesSeries };
+    return { categories, viewsSeries, likesSeries, reportsSeries };
   };
 
-  const { categories, viewsSeries, likesSeries } = processData(data);
+  const { categories, viewsSeries, likesSeries, reportsSeries } =
+    processData(data);
 
   const chartOptions: ApexOptions = {
     chart: {
@@ -76,7 +80,7 @@ const PostEngagementChart: React.FC = () => {
         enabled: true,
       },
     },
-    colors: ["#3C50E0", "#10B981"],
+    colors: ["#3C50E0", "#10B981", "#EF4444"],
     stroke: {
       curve: "smooth",
       width: 3,
@@ -137,7 +141,7 @@ const PostEngagementChart: React.FC = () => {
       fontSize: "12px",
       fontFamily: "Satoshi, sans-serif",
       fontWeight: 500,
-    //   offsetY: -5,
+      //   offsetY: -5,
       labels: {
         colors: "#64748B",
         useSeriesColors: false,
@@ -176,7 +180,7 @@ const PostEngagementChart: React.FC = () => {
           Post Engagement
         </h4>
         <p className="text-sm text-bodydark2 dark:text-bodydark">
-          Views and likes per day
+          Views, likes, and reports per day
         </p>
       </div>
 
@@ -212,6 +216,7 @@ const PostEngagementChart: React.FC = () => {
               series={[
                 { name: "Views", data: viewsSeries },
                 { name: "Likes", data: likesSeries },
+                { name: "Reports", data: reportsSeries },
               ]}
               type="line"
               height={350}

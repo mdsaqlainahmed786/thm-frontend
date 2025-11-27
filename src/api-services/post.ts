@@ -53,6 +53,7 @@ interface EngagementData {
     date: string;
     views: number;
     likes: number;
+    reports: number;
 }
 
 const fetchPostEngagement = async () => {
@@ -72,8 +73,8 @@ const fetchPostEngagement = async () => {
         if (response.status === 200 && response.data.status) {
             const posts = response.data.data as Post[];
 
-            // Group posts by date and aggregate views and likes
-            const engagementMap = new Map<string, { views: number; likes: number }>();
+            // Group posts by date and aggregate views, likes, and reports
+            const engagementMap = new Map<string, { views: number; likes: number; reports: number }>();
 
             posts.forEach((post) => {
                 if (post.createdAt) {
@@ -81,10 +82,11 @@ const fetchPostEngagement = async () => {
                     if (postDate.isSameOrAfter(startDate) && postDate.isSameOrBefore(endDate)) {
                         const dateKey = postDate.format("YYYY-MM-DD");
 
-                        const current = engagementMap.get(dateKey) || { views: 0, likes: 0 };
+                        const current = engagementMap.get(dateKey) || { views: 0, likes: 0, reports: 0 };
                         engagementMap.set(dateKey, {
                             views: current.views + (post.views ?? 0),
                             likes: current.likes + (post.likeCount ?? post.likes?.length ?? 0),
+                            reports: current.reports + (post.reportCount ?? 0),
                         });
                     }
                 }
@@ -101,6 +103,7 @@ const fetchPostEngagement = async () => {
                     date: dateKey,
                     views: existingData?.views || 0,
                     likes: existingData?.likes || 0,
+                    reports: existingData?.reports || 0,
                 });
 
                 currentDate.add(1, "day");
