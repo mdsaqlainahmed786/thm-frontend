@@ -48,43 +48,45 @@ const CardDataStats: React.FC<CardDataStatsProps> = ({
         </div>
 
         {/* Trend tag with better spacing and styling */}
-        <div
-          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-            levelUp
-              ? "bg-meta-3/10 text-meta-3 dark:bg-meta-3/20 dark:text-meta-3"
-              : levelDown
-              ? "bg-meta-1/10 text-meta-1 dark:bg-meta-1/20 dark:text-meta-1"
-              : "bg-gray-200/50 text-body dark:bg-boxdark-hover/30 dark:text-bodydark"
-          }`}
-        >
-          <span>{rate}</span>
-          {levelUp && (
-            <svg
-              className="h-3.5 w-3.5 fill-meta-3"
-              viewBox="0 0 10 11"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z"
-                fill=""
-              />
-            </svg>
-          )}
-          {levelDown && (
-            <svg
-              className="h-3.5 w-3.5 fill-meta-1"
-              viewBox="0 0 10 11"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M5.64284 7.69237L9.09102 4.33987L10 5.22362L5 10.0849L-8.98488e-07 5.22362L0.908973 4.33987L4.35716 7.69237L4.35716 0.0848701L5.64284 0.0848704L5.64284 7.69237Z"
-                fill=""
-              />
-            </svg>
-          )}
-        </div>
+        {rate && rate.trim() !== "" && (
+          <div
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              levelUp
+                ? "bg-meta-3/10 text-meta-3 dark:bg-meta-3/20 dark:text-meta-3"
+                : levelDown
+                ? "bg-meta-1/10 text-meta-1 dark:bg-meta-1/20 dark:text-meta-1"
+                : "bg-gray-200/50 text-body dark:bg-boxdark-hover/30 dark:text-bodydark"
+            }`}
+          >
+            <span>{rate}</span>
+            {levelUp && (
+              <svg
+                className="h-3.5 w-3.5 fill-meta-3"
+                viewBox="0 0 10 11"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z"
+                  fill=""
+                />
+              </svg>
+            )}
+            {levelDown && (
+              <svg
+                className="h-3.5 w-3.5 fill-meta-1"
+                viewBox="0 0 10 11"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5.64284 7.69237L9.09102 4.33987L10 5.22362L5 10.0849L-8.98488e-07 5.22362L0.908973 4.33987L4.35716 7.69237L4.35716 0.0848701L5.64284 0.0848704L5.64284 7.69237Z"
+                  fill=""
+                />
+              </svg>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
