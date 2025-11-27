@@ -604,10 +604,44 @@ const SubscriptionOverview: React.FC = () => {
             </p>
           </div>
           {isFetching ? (
-            <div className="h-[350px] flex items-center justify-center">
-              <div className="animate-pulse text-body dark:text-bodydark">
-                Loading chart...
+            <div className="h-[350px] relative">
+              {/* Skeleton for Line Chart */}
+              <div className="absolute inset-0 flex flex-col justify-between p-4">
+                {/* Y-axis labels skeleton */}
+                <div className="flex flex-col gap-3 h-full">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className="h-4 w-16 bg-gray-200 dark:bg-boxdark-hover rounded animate-pulse"></div>
+                      <div className="flex-1 h-px bg-gray-200 dark:bg-strokedark"></div>
+                    </div>
+                  ))}
+                </div>
+                {/* X-axis labels skeleton */}
+                <div className="flex justify-between mt-4">
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => (
+                    <div
+                      key={i}
+                      className="h-3 w-12 bg-gray-200 dark:bg-boxdark-hover rounded animate-pulse"
+                    ></div>
+                  ))}
+                </div>
               </div>
+              {/* Line path skeleton */}
+              <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M 5,80 Q 20,60 35,50 T 65,40 T 95,20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeDasharray="4 4"
+                  className="text-gray-300 dark:text-strokedark animate-pulse"
+                  opacity="0.3"
+                />
+              </svg>
             </div>
           ) : (
             <ReactApexChart
@@ -635,9 +669,57 @@ const SubscriptionOverview: React.FC = () => {
             </p>
           </div>
           {isFetching ? (
-            <div className="h-[350px] flex items-center justify-center mx-auto">
-              <div className="animate-pulse text-body dark:text-bodydark">
-                Loading chart...
+            <div className="h-[350px] flex flex-col items-center justify-center mx-auto relative">
+              {/* Skeleton for Donut Chart */}
+              <div className="relative w-[280px] h-[280px]">
+                {/* Outer circle */}
+                <div className="absolute inset-0 rounded-full border-8 border-gray-200 dark:border-strokedark animate-pulse"></div>
+                {/* Inner circle (donut hole) */}
+                <div className="absolute inset-[30%] rounded-full bg-white dark:bg-boxdark"></div>
+                {/* Center text skeleton */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="h-4 w-12 bg-gray-200 dark:bg-boxdark-hover rounded mb-2 animate-pulse"></div>
+                  <div className="h-6 w-16 bg-gray-200 dark:bg-boxdark-hover rounded animate-pulse"></div>
+                </div>
+                {/* Segments skeleton */}
+                <svg
+                  className="absolute inset-0 w-full h-full"
+                  viewBox="0 0 100 100"
+                >
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="35"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    strokeDasharray="60 140"
+                    className="text-gray-300 dark:text-strokedark animate-pulse"
+                    opacity="0.3"
+                    transform="rotate(-90 50 50)"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="35"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    strokeDasharray="40 160"
+                    className="text-gray-300 dark:text-strokedark animate-pulse"
+                    opacity="0.3"
+                    transform="rotate(30 50 50)"
+                  />
+                </svg>
+              </div>
+              {/* Legend skeleton */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex gap-4 mt-4">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                    <div className="h-3 w-16 bg-gray-200 dark:bg-boxdark-hover rounded animate-pulse"></div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
