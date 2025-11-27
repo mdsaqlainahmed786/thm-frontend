@@ -216,34 +216,28 @@ const SubscriptionOverview: React.FC = () => {
       }
     });
 
-    // 2. Plan Distribution Donut Chart
-    const planCounts: { [key: string]: number } = {
-      "Entry Plan": 0,
-      Premium: 0,
-      Business: 0,
-    };
+    // 2. Plan Distribution Donut Chart - Group by price
+    const planCounts: { [key: number]: number } = {};
 
     subscriptions.forEach((sub) => {
-      if (sub.subscriptionPlansRef) {
-        const planName = (sub.subscriptionPlansRef.name || "").toLowerCase();
-        const planType = (sub.subscriptionPlansRef.type || "").toLowerCase();
-        const planLevel = (sub.subscriptionPlansRef.level || "").toLowerCase();
-
-        // Categorize plans - check type first, then name, then level
-        if (planType === "business" || planName.includes("business")) {
-          planCounts["Business"]++;
-        } else if (
-          planLevel === "premium" ||
-          planName.includes("premium") ||
-          planName.includes("standard")
-        ) {
-          planCounts["Premium"]++;
-        } else {
-          // Default to Entry Plan (includes basic, entry, or any other)
-          planCounts["Entry Plan"]++;
+      if (sub.subscriptionPlansRef && sub.subscriptionPlansRef.price) {
+        const price = sub.subscriptionPlansRef.price;
+        if (!planCounts[price]) {
+          planCounts[price] = 0;
         }
+        planCounts[price]++;
       }
     });
+
+    // Sort prices and format labels
+    const sortedPrices = Object.keys(planCounts)
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    const planLabels = sortedPrices.map(
+      (price) => `₹${price.toLocaleString("en-IN")}`
+    );
+    const planSeries = sortedPrices.map((price) => planCounts[price]);
 
     // 3. Active vs Expired vs Cancelled Bar Chart
     let activeCount = 0;
@@ -269,8 +263,8 @@ const SubscriptionOverview: React.FC = () => {
         series: months.map((month) => monthlyRevenue[month] || 0),
       },
       planDistribution: {
-        labels: Object.keys(planCounts),
-        series: Object.values(planCounts),
+        labels: planLabels,
+        series: planSeries,
       },
       statusBarChart: {
         categories: ["Active", "Expired", "Cancelled"],
@@ -338,13 +332,30 @@ const SubscriptionOverview: React.FC = () => {
     },
   };
 
+  // Generate colors dynamically based on number of price categories
+  const getPlanColors = (count: number) => {
+    const baseColors = [
+      "#3C50E0",
+      "#0FADCF",
+      "#FF6384",
+      "#10B981",
+      "#F59E0B",
+      "#8B5CF6",
+      "#EC4899",
+      "#06B6D4",
+      "#F97316",
+      "#84CC16",
+    ];
+    return baseColors.slice(0, Math.max(count, 1));
+  };
+
   const planDistributionOptions: ApexOptions = {
     chart: {
       fontFamily: "Satoshi, sans-serif",
       type: "donut",
       height: 350,
     },
-    colors: ["#3C50E0", "#0FADCF", "#FF6384"],
+    colors: getPlanColors(chartData.planDistribution.labels.length),
     labels: chartData.planDistribution.labels,
     legend: {
       show: true,
@@ -631,12 +642,12 @@ const SubscriptionOverview: React.FC = () => {
             </div>
           ) : (
             <div className="h-[350px] flex items-center justify-center mx-auto">
-            <ReactApexChart
-              options={planDistributionOptions}
-              series={chartData.planDistribution.series}
-              type="donut"
-              height={350}
-            />
+              <ReactApexChart
+                options={planDistributionOptions}
+                series={chartData.planDistribution.series}
+                type="donut"
+                height={350}
+              />
             </div>
           )}
         </div>
