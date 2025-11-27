@@ -6,6 +6,12 @@ import { handleClientApiErrors } from "@/api-services/api-errors";
 import CardDataStats from "@/components/CardDataStats";
 import { Subscription } from "@/types/subscription";
 import moment from "moment";
+import dynamic from "next/dynamic";
+import { ApexOptions } from "apexcharts";
+
+const ReactApexChart = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+});
 
 const SubscriptionOverview: React.FC = () => {
   // Fetch all subscriptions for statistics calculation
@@ -165,10 +171,303 @@ const SubscriptionOverview: React.FC = () => {
 
   const statistics = calculateStatistics();
 
+  // Calculate chart data
+  const calculateChartData = () => {
+    if (!data || !data.data) {
+      return {
+        monthlyRevenue: { categories: [], series: [] },
+        planDistribution: { labels: [], series: [] },
+        statusBarChart: { categories: [], series: [] },
+      };
+    }
+
+    const subscriptions = data.data;
+    const now = moment();
+
+    // 1. Monthly Revenue Line Chart - Last 12 months
+    const monthlyRevenue: { [key: string]: number } = {};
+    const months = [];
+    for (let i = 11; i >= 0; i--) {
+      const month = moment().subtract(i, "months");
+      const monthKey = month.format("MMM YYYY");
+      months.push(monthKey);
+      monthlyRevenue[monthKey] = 0;
+    }
+
+    subscriptions.forEach((sub) => {
+      if (sub.ordersRef?.paymentDetail?.transactionAmount) {
+        const createdAt = moment(sub.createdAt);
+        const monthKey = createdAt.format("MMM YYYY");
+        if (monthlyRevenue.hasOwnProperty(monthKey)) {
+          monthlyRevenue[monthKey] +=
+            sub.ordersRef.paymentDetail.transactionAmount || 0;
+        }
+      }
+    });
+
+    // 2. Plan Distribution Donut Chart
+    const planCounts: { [key: string]: number } = {
+      "Entry Plan": 0,
+      Premium: 0,
+      Business: 0,
+    };
+
+    subscriptions.forEach((sub) => {
+      if (sub.subscriptionPlansRef) {
+        const planName = (sub.subscriptionPlansRef.name || "").toLowerCase();
+        const planType = (sub.subscriptionPlansRef.type || "").toLowerCase();
+        const planLevel = (sub.subscriptionPlansRef.level || "").toLowerCase();
+
+        // Categorize plans - check type first, then name, then level
+        if (planType === "business" || planName.includes("business")) {
+          planCounts["Business"]++;
+        } else if (
+          planLevel === "premium" ||
+          planName.includes("premium") ||
+          planName.includes("standard")
+        ) {
+          planCounts["Premium"]++;
+        } else {
+          // Default to Entry Plan (includes basic, entry, or any other)
+          planCounts["Entry Plan"]++;
+        }
+      }
+    });
+
+    // 3. Active vs Expired vs Cancelled Bar Chart
+    let activeCount = 0;
+    let expiredCount = 0;
+    let cancelledCount = 0;
+
+    subscriptions.forEach((sub) => {
+      if (sub.isCancelled) {
+        cancelledCount++;
+      } else if (
+        sub.expirationDate &&
+        moment(sub.expirationDate).isAfter(now)
+      ) {
+        activeCount++;
+      } else {
+        expiredCount++;
+      }
+    });
+
+    return {
+      monthlyRevenue: {
+        categories: months,
+        series: months.map((month) => monthlyRevenue[month] || 0),
+      },
+      planDistribution: {
+        labels: Object.keys(planCounts),
+        series: Object.values(planCounts),
+      },
+      statusBarChart: {
+        categories: ["Active", "Expired", "Cancelled"],
+        series: [activeCount, expiredCount, cancelledCount],
+      },
+    };
+  };
+
+  const chartData = calculateChartData();
+
+  // Chart options
+  const monthlyRevenueOptions: ApexOptions = {
+    chart: {
+      fontFamily: "Satoshi, sans-serif",
+      type: "line",
+      height: 350,
+      toolbar: {
+        show: false,
+      },
+      zoom: {
+        enabled: false,
+      },
+    },
+    colors: ["#3C50E0"],
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      curve: "smooth",
+      width: 3,
+    },
+    grid: {
+      strokeDashArray: 4,
+      borderColor: "#E5E7EB",
+    },
+    xaxis: {
+      categories: chartData.monthlyRevenue.categories,
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        },
+        formatter: function (val: number) {
+          return "₹" + val.toLocaleString("en-IN");
+        },
+      },
+    },
+    legend: {
+      show: false,
+    },
+    tooltip: {
+      y: {
+        formatter: function (val: number) {
+          return "₹" + val.toLocaleString("en-IN");
+        },
+      },
+    },
+  };
+
+  const planDistributionOptions: ApexOptions = {
+    chart: {
+      fontFamily: "Satoshi, sans-serif",
+      type: "donut",
+      height: 350,
+    },
+    colors: ["#3C50E0", "#0FADCF", "#FF6384"],
+    labels: chartData.planDistribution.labels,
+    legend: {
+      show: true,
+      position: "bottom",
+      fontSize: "14px",
+      fontFamily: "Satoshi, sans-serif",
+      fontWeight: 500,
+      labels: {
+        colors: "#6B7280",
+      },
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: "65%",
+          background: "transparent",
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              fontSize: "14px",
+              fontFamily: "Satoshi, sans-serif",
+              fontWeight: 600,
+              offsetY: -10,
+            },
+            value: {
+              show: true,
+              fontSize: "24px",
+              fontFamily: "Satoshi, sans-serif",
+              fontWeight: 700,
+              offsetY: 10,
+              formatter: function (val: string) {
+                return val;
+              },
+            },
+            total: {
+              show: true,
+              label: "Total",
+              fontSize: "14px",
+              fontFamily: "Satoshi, sans-serif",
+              fontWeight: 600,
+              formatter: function () {
+                return chartData.planDistribution.series
+                  .reduce((a, b) => a + b, 0)
+                  .toString();
+              },
+            },
+          },
+        },
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    responsive: [
+      {
+        breakpoint: 2600,
+        options: {
+          chart: {
+            width: 380,
+          },
+        },
+      },
+      {
+        breakpoint: 640,
+        options: {
+          chart: {
+            width: 200,
+          },
+        },
+      },
+    ],
+  };
+
+  const statusBarChartOptions: ApexOptions = {
+    chart: {
+      fontFamily: "Satoshi, sans-serif",
+      type: "bar",
+      height: 350,
+      toolbar: {
+        show: false,
+      },
+    },
+    colors: ["#3C50E0", "#0FADCF", "#FF6384"],
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "55%",
+        borderRadius: 4,
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      show: true,
+      width: 2,
+      colors: ["transparent"],
+    },
+    xaxis: {
+      categories: chartData.statusBarChart.categories,
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        },
+      },
+    },
+    fill: {
+      opacity: 1,
+    },
+    legend: {
+      show: false,
+    },
+    tooltip: {
+      y: {
+        formatter: function (val: number) {
+          return val.toString();
+        },
+      },
+    },
+  };
+
   return (
     <div className="mb-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
-
         {/* Total Subscribers */}
         <CardDataStats
           loading={isFetching}
@@ -243,8 +542,6 @@ const SubscriptionOverview: React.FC = () => {
           </svg>
         </CardDataStats>
 
-    
-
         {/* Top Plan Purchased */}
         <CardDataStats
           loading={isFetching}
@@ -270,6 +567,66 @@ const SubscriptionOverview: React.FC = () => {
             />
           </svg>
         </CardDataStats>
+      </div>
+
+      {/* Charts Section */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Monthly Revenue Line Chart */}
+        <div className="rounded-sm border border-stroke bg-white px-5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+          <div className="mb-4">
+            <h4 className="text-title-sm2 font-bold text-black dark:text-white">
+              Monthly Revenue
+            </h4>
+            <p className="text-sm text-body dark:text-bodydark">
+              Revenue growth over the last 12 months
+            </p>
+          </div>
+          {isFetching ? (
+            <div className="h-[350px] flex items-center justify-center">
+              <div className="animate-pulse text-body dark:text-bodydark">
+                Loading chart...
+              </div>
+            </div>
+          ) : (
+            <ReactApexChart
+              options={monthlyRevenueOptions}
+              series={[
+                {
+                  name: "Revenue",
+                  data: chartData.monthlyRevenue.series,
+                },
+              ]}
+              type="line"
+              height={350}
+            />
+          )}
+        </div>
+
+        {/* Plan Distribution Donut Chart */}
+        <div className="rounded-sm border border-stroke bg-white px-5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+          <div className="mb-4">
+            <h4 className="text-title-sm2 font-bold text-black dark:text-white">
+              Plan Distribution
+            </h4>
+            <p className="text-sm text-body dark:text-bodydark">
+              Distribution of subscription plans
+            </p>
+          </div>
+          {isFetching ? (
+            <div className="h-[350px] flex items-center justify-center mx-auto">
+              <div className="animate-pulse text-body dark:text-bodydark">
+                Loading chart...
+              </div>
+            </div>
+          ) : (
+            <ReactApexChart
+              options={planDistributionOptions}
+              series={chartData.planDistribution.series}
+              type="donut"
+              height={350}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
