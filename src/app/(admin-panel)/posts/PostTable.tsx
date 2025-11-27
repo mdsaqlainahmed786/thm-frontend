@@ -22,7 +22,6 @@ import "swiper/css/effect-coverflow";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import { UserDetailedView } from "@/components/Profile";
-import Loading from "@/components/Loading";
 const PostTable = () => {
   const initialInputs = {
     content: "",
@@ -239,7 +238,10 @@ const PostTable = () => {
                     setApiParams({ ...apiParams, sortBy: e.target.value })
                   }
                 >
-                  <option value="" className="text-body dark:text-bodydark cursor-pointer dark:bg-boxdark">
+                  <option
+                    value=""
+                    className="text-body dark:text-bodydark cursor-pointer dark:bg-boxdark"
+                  >
                     None
                   </option>
                   <option
@@ -787,15 +789,53 @@ const PostTable = () => {
             </thead>
             <tbody>
               {isFetching ? (
-                <tr>
-                  <td
-                    colSpan={
-                      ["review", "event"].includes(apiParams.postType) ? 9 : 8
-                    }
-                  >
-                    <Loading />
-                  </td>
-                </tr>
+                <>
+                  {[...Array(5)].map((_, index) => (
+                    <tr
+                      key={index}
+                      className="border-b border-stroke dark:border-strokedark"
+                    >
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="flex items-center gap-4">
+                          <div className="h-16 w-16 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 w-32 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            <div className="h-3 w-24 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="h-4 w-20 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                      </td>
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="h-4 w-16 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                      </td>
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="h-4 w-24 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                      </td>
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="h-4 w-20 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                      </td>
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="h-4 w-28 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                      </td>
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="h-4 w-24 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                      </td>
+                      <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                        <div className="flex items-center gap-3.5">
+                          <div className="h-8 w-8 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                          <div className="h-8 w-8 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                        </div>
+                      </td>
+                      {["review", "event"].includes(apiParams.postType) && (
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <div className="h-4 w-16 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </>
               ) : (
                 <>
                   {data &&

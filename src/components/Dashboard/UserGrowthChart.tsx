@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import moment from "moment";
-import Loading from "@/components/Loading";
+import ChartSkeleton from "@/components/Loading/ChartSkeleton";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -198,9 +198,7 @@ const UserGrowthChart: React.FC<{ accountType?: string }> = ({
 
       <div className="min-h-[350px]">
         {isPending || isFetching ? (
-          <div className="flex items-center justify-center h-[350px]">
-            <Loading />
-          </div>
+          <ChartSkeleton height={350} />
         ) : isError ? (
           <div className="flex items-center justify-center h-[350px]">
             <div className="text-center">

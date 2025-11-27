@@ -19,7 +19,7 @@ import {
   fetchBusinessTypes,
 } from "@/api-services/business";
 import { DefaultCoverPic } from "@/components/Profile";
-import Loading from "@/components/Loading";
+import TableSkeleton from "@/components/Loading/TableSkeleton";
 import UserGrowthChart from "@/components/Dashboard/UserGrowthChart";
 const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
   accountType,
@@ -464,15 +464,59 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
               </thead>
               <tbody>
                 {isFetching ? (
-                  <tr>
-                    <td
-                      colSpan={
-                        accountType && accountType === "business" ? 7 : 6
-                      }
-                    >
-                      <Loading />
-                    </td>
-                  </tr>
+                  <>
+                    {[...Array(5)].map((_, index) => (
+                      <tr
+                        key={index}
+                        className="border-b border-stroke dark:border-strokedark"
+                      >
+                        <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <div className="h-12.5 w-15 rounded-md bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            <div className="flex-1 space-y-2">
+                              <div className="h-4 w-32 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                              <div className="h-3 w-24 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                              <div className="h-3 w-16 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            </div>
+                          </div>
+                        </td>
+                        {accountType && accountType === "business" && (
+                          <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                            <div className="space-y-2">
+                              <div className="h-4 w-24 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                              <div className="h-3 w-32 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                              <div className="h-3 w-20 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            </div>
+                          </td>
+                        )}
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-6 w-16 rounded-full bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            <div className="h-6 w-16 rounded-full bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            <div className="h-6 w-16 rounded-full bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                          </div>
+                        </td>
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <div className="h-4 w-8 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                        </td>
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <div className="h-4 w-20 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                        </td>
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <div className="space-y-2">
+                            <div className="h-3 w-32 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            <div className="h-3 w-20 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                          </div>
+                        </td>
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <div className="flex items-center gap-3.5">
+                            <div className="h-8 w-8 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                            <div className="h-8 w-8 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
                 ) : (
                   <>
                     {data &&

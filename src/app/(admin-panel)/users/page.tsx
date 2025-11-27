@@ -6,7 +6,6 @@ export const metadata: Metadata = {
 import AdminLayout from "@/components/Layouts/AdminLayout";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import UsersTable from "./UsersTable";
-
 export default function Users() {
   return (
     <>
