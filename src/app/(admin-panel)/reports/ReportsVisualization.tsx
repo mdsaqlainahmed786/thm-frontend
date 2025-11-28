@@ -558,7 +558,7 @@ const ReportsVisualization = () => {
                   accountType={statistics.topOffendingUser.accountType}
                   image={statistics.topOffendingUser.image}
                 />
-                <div className="mt-2">
+                {/* <div className="mt-2">
                   <p className="text-xs text-body dark:text-bodydark mb-1">
                     Reported for:
                   </p>
@@ -575,7 +575,7 @@ const ReportsVisualization = () => {
                       )
                     )}
                   </div>
-                </div>
+                </div> */}
               </div>
             ) : (
               <div className="mt-3">
