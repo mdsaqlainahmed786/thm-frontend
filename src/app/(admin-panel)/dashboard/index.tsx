@@ -8,6 +8,16 @@ import CardDataStats from "@/components/CardDataStats";
 import Link from "next/link";
 import { Statistics } from "@/types/dashboard";
 const CardDataStatsWrapper: React.FC<{}> = () => {
+  const formatPercentage = (value?: number | null) => {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+      return "0%";
+    }
+
+    // Clamp to a reasonable range to avoid huge values like -33900%
+    const clamped = Math.max(-100, Math.min(100, value));
+    const formatted = clamped.toFixed(1).replace(/\.0$/, "");
+    return `${formatted}%`;
+  };
   const fetchDashboard = async () => {
     try {
       const response = await apiRequest.get(`/admin/home`);
@@ -47,11 +57,7 @@ const CardDataStatsWrapper: React.FC<{}> = () => {
               ? `${data.statistics.users.count}`
               : "0"
           }
-          rate={
-            data && data.statistics && data.statistics.users
-              ? `${data.statistics.users.percentage}%`
-              : "0%"
-          }
+          rate={formatPercentage(data?.statistics?.users?.percentage ?? 0)}
           levelDown={Math.sign(data?.statistics?.users?.percentage ?? 0) === -1}
           levelUp={Math.sign(data?.statistics?.users?.percentage ?? 0) === +1}
         >
@@ -87,11 +93,7 @@ const CardDataStatsWrapper: React.FC<{}> = () => {
               ? `${data.statistics.posts.count}`
               : "0"
           }
-          rate={
-            data && data.statistics && data.statistics.posts
-              ? `${data.statistics.posts.percentage}%`
-              : "0"
-          }
+          rate={formatPercentage(data?.statistics?.posts?.percentage ?? 0)}
           levelDown={Math.sign(data?.statistics?.posts?.percentage ?? 0) === -1}
           levelUp={Math.sign(data?.statistics?.posts?.percentage ?? 0) === +1}
         >
@@ -139,11 +141,9 @@ const CardDataStatsWrapper: React.FC<{}> = () => {
               ? `${data.statistics.businessProfiles.count}`
               : "0"
           }
-          rate={
-            data && data.statistics && data.statistics.businessProfiles
-              ? `${data.statistics.businessProfiles.percentage}%`
-              : "0%"
-          }
+          rate={formatPercentage(
+            data?.statistics?.businessProfiles?.percentage ?? 0
+          )}
           levelDown={
             Math.sign(data?.statistics?.businessProfiles?.percentage ?? 0) ===
             -1
@@ -195,11 +195,7 @@ const CardDataStatsWrapper: React.FC<{}> = () => {
               ? `${data.statistics.reports.count}`
               : "0"
           }
-          rate={
-            data && data.statistics && data.statistics.reports
-              ? `${data.statistics.reports.percentage}%`
-              : "0"
-          }
+          rate={formatPercentage(data?.statistics?.reports?.percentage ?? 0)}
           levelDown={
             Math.sign(data?.statistics?.reports?.percentage ?? 0) === -1
           }
