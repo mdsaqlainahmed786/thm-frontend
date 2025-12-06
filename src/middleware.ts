@@ -1,7 +1,5 @@
-import { redirect } from 'next/navigation';
 import { getToken } from 'next-auth/jwt';
 import { NextResponse, NextRequest } from 'next/server';
-import path from 'path';
 import { DASHBOARD, HOTEL_DASHBOARD, Role } from './types/auth';
 export { default } from 'next-auth/middleware';
 
@@ -47,6 +45,8 @@ export const config = {
         '/hotels/overview',
         '/hotels/room-management',
         '/hotels/support',
+        '/admin/login',
+        '/',
     ],
 };
 
@@ -78,22 +78,37 @@ export async function middleware(req: NextRequest) {
         const regex = new RegExp(`^${endpoint.replace(/:path\*/g, '.*')}$`);
         return regex.test(pathname);
     });
-    console.log(isDashboardEndpoint ? "Yes " : "No ")
-    console.log(pathname, "pathname");
-    console.log(token?.role)
-    console.log(token?.accountType)
-    if (!token) {
-        return NextResponse.redirect(new URL('/api/auth/signin', req.url));
+
+    // If user is authenticated and trying to access login or landing page, redirect to dashboard
+    if (token) {
+        // Redirect authenticated admin users from login/landing pages to dashboard
+        if (token.role === Role.ADMIN && (pathname === "/admin/login" || pathname === "/")) {
+            return NextResponse.redirect(new URL(DASHBOARD, req.url));
+        }
+        // Redirect authenticated hotel users from login/landing pages to hotel dashboard
+        if (token.role !== Role.ADMIN && (pathname === "/admin/login" || pathname === "/")) {
+            return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
+        }
     }
-    if (token && token.role === Role.ADMIN && !isDashboardEndpoint) {
+
+    // If no token and trying to access protected routes, redirect to login
+    if (!token) {
+        // Only redirect to login if accessing protected dashboard endpoints
+        if (isDashboardEndpoint || pathname.startsWith('/hotels/')) {
+            return NextResponse.redirect(new URL('/api/auth/signin', req.url));
+        }
+        // Allow access to login and landing pages if not authenticated
+        return NextResponse.next();
+    }
+
+    // Role-based access control for dashboard endpoints
+    if (token.role === Role.ADMIN && !isDashboardEndpoint && pathname.startsWith('/hotels/')) {
         return NextResponse.redirect(new URL(DASHBOARD, req.url));
     }
-    if (token && token.role !== Role.ADMIN && isDashboardEndpoint) {
+    if (token.role !== Role.ADMIN && isDashboardEndpoint) {
         return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
     }
-    // if (token && token.accountType === "individual") {
-    //     return NextResponse.redirect(new URL("/", req.url));
-    // }
+
     return NextResponse.next();
 }
 

@@ -494,7 +494,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           }`}
         >
           {!isCollapsed && (
-            <Link href="/" className="transition-opacity duration-300">
+            <Link href="/dashboard" className="transition-opacity duration-300">
               <Image
                 width={100}
                 height={100}
@@ -507,7 +507,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           {isCollapsed && (
             <>
               <Link
-                href="/"
+                href="/dashboard"
                 className="flex items-center justify-center transition-opacity duration-300"
               >
                 <Image
