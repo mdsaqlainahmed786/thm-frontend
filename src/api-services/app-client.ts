@@ -22,9 +22,13 @@ apiRequest.interceptors.request.use(
             config.headers['X-Access-Token'] = accessToken;
         }
         // Ensure headers are set for CORS
-        // Only set Content-Type for requests with a body (POST, PUT, PATCH)
+        // Only set Content-Type for JSON requests.
+        // Let the browser set the boundary for FormData (file uploads).
         if (config.data && !config.headers['Content-Type']) {
-            config.headers['Content-Type'] = 'application/json';
+            const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData;
+            if (!isFormData) {
+                config.headers['Content-Type'] = 'application/json';
+            }
         }
         // Always set Accept header
         if (!config.headers['Accept']) {
