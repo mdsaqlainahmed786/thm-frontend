@@ -68,12 +68,20 @@ const BookingTable: React.FC<{}> = () => {
               <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[120px] ">
                 Date Order
               </th>
-              <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[120px] ">
-                Check In
-              </th>
-              <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[120px] ">
-                Check Out
-              </th>
+              {isRestaurant ? (
+                <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[120px] ">
+                  Table Booked
+                </th>
+              ) : (
+                <>
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[120px] ">
+                    Check In
+                  </th>
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[120px] ">
+                    Check Out
+                  </th>
+                </>
+              )}
               {!isRestaurant && (
                 <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[120px] ">
                   Room Type
@@ -153,22 +161,38 @@ const BookingTable: React.FC<{}> = () => {
                               : null}
                           </p>
                         </td>
-                        <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                          <p className="text-white dark:text-white text-sm">
-                            {booking && booking.checkIn
-                              ? moment.utc(booking.checkIn).format("MM-DD-YYYY")
-                              : null}
-                          </p>
-                        </td>
-                        <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                          <p className="text-white dark:text-white text-sm">
-                            {booking && booking.checkOut
-                              ? moment
-                                  .utc(booking.checkOut)
-                                  .format("MM-DD-YYYY")
-                              : null}
-                          </p>
-                        </td>
+                        {isRestaurant ? (
+                          <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                            <p className="text-white dark:text-white text-sm">
+                              {booking && booking.checkIn
+                                ? moment
+                                    .utc(booking.checkIn)
+                                    .format("MM-DD-YYYY")
+                                : null}
+                            </p>
+                          </td>
+                        ) : (
+                          <>
+                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                              <p className="text-white dark:text-white text-sm">
+                                {booking && booking.checkIn
+                                  ? moment
+                                      .utc(booking.checkIn)
+                                      .format("MM-DD-YYYY")
+                                  : null}
+                              </p>
+                            </td>
+                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                              <p className="text-white dark:text-white text-sm">
+                                {booking && booking.checkOut
+                                  ? moment
+                                      .utc(booking.checkOut)
+                                      .format("MM-DD-YYYY")
+                                  : null}
+                              </p>
+                            </td>
+                          </>
+                        )}
 
                         {!isRestaurant && (
                           <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
