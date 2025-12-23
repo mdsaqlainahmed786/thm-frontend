@@ -63,7 +63,7 @@ const reservationStatusOptions: ApexOptions = {
     type: "donut",
   },
   colors: ["#6F42C1", "#C29500", "#C10808", "#505050"],
-  labels: ["Confirmed", "Pending", "Cancelled", "No-show"],
+  // labels: ["Confirmed", "Pending", "Cancelled", "No-show"],
   legend: {
     show: false,
     position: "bottom",
@@ -149,9 +149,7 @@ const Overview: React.FC<{}> = () => {
         pending++;
       } else if (status === "canceled" || status === "canceled by business") {
         cancelled++;
-      } else if (status === "no show" || status === "no-show") {
-        noShow++;
-      }
+      } 
     });
 
     return {
@@ -455,13 +453,11 @@ const Overview: React.FC<{}> = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-[#505050]"></div>
                     <span className="text-white/60">No-show</span>
-                  </div>
-                  <span className="text-white font-semibold">
-                    {reservationStatusCounts.noShow}
-                  </span>
+                  </div> */}
+                  
                 </div>
               </div>
             </div>
