@@ -1,63 +1,19 @@
 "use client";
 import { PageContent, PageTitle } from "@/components/Hotel/Layouts/AdminLayout";
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import BookingTable from "@/components/Hotel/Common/Booking/Table";
-export default function BookingManagement() {
-  const { data: session } = useSession();
-  const router = useRouter();
+export default function TableManagement() {
   const [timelineFilter, setTimelineFilter] = useState("1w");
-  const [checkEvent, setCheckEvent] = useState("Today Check In");
-  const businessTypeName = session?.user?.businessTypeName;
-  console.log(session?.user);
-  console.log(businessTypeName);
-
-  const isHotel = businessTypeName === "Hotel";
-  const isRestaurant = businessTypeName === "Restaurant";
-  const pageTitle = isRestaurant ? "Table Management" : "Booking Management";
-
-  useEffect(() => {
-    if (session && isRestaurant) {
-      router.replace("/hotels/table-management");
-    }
-  }, [session, isRestaurant, router]);
 
   const handleTimelineFilterClick = (text: string) => {
     setTimelineFilter(text);
-  };
-  const handelCheckEventClick = (text: string) => {
-    setCheckEvent(text);
   };
 
   return (
     <>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between items-center">
-        <PageTitle>{pageTitle}</PageTitle>
+        <PageTitle>Table Management</PageTitle>
         <div className="flex gap-2 justify-end items-center">
-          {isHotel && (
-            <div
-              className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
-              role="group"
-            >
-              {["Today Check In", "Today Check Out"].map((text, index) => {
-                return (
-                  <button
-                    onClick={() => handelCheckEventClick(text)}
-                    type="button"
-                    key={index}
-                    className={`${
-                      checkEvent === text
-                        ? "bg-[#4881F5] dark:bg-[#4881F5] border-[#4881F5]"
-                        : "text-white/50  dark:text-white/50 border-transparent"
-                    } px-2.5 py-1.5 text-sm font-normal text-gray-900 border  rounded-lg hover:bg-primary/50 dark:text-white  dark:hover:bg-[#4881F5]/80 dark:hover:text-white hover:text-white`}
-                  >
-                    <span className="px-1.5">{text}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
           <div
             className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
             role="group"
@@ -174,11 +130,6 @@ export default function BookingManagement() {
               </svg>
             </button>
           </div>
-          {/* <Button.Hotel.Button name="Export" onClick={() => {
-                        setModal(!modal);
-                        setFormInputs(initialFormInputs);
-                        setEditMode(false);
-                    }} svg={<SVG.Museum />}></Button.Hotel.Button> */}
         </div>
       </div>
       <PageContent>
@@ -187,3 +138,4 @@ export default function BookingManagement() {
     </>
   );
 }
+

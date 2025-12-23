@@ -25,6 +25,7 @@ declare module "next-auth" {
             role: Role;
             accountType: AccountType,
             businessName: string,
+            businessTypeName?: string,
         } & DefaultSession['user']
     }
 }
@@ -40,5 +41,6 @@ declare module "next-auth/jwt" {
         role: Role;
         accountType: AccountType,
         businessName: string,
+        businessTypeName?: string,
     }
 }

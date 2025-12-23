@@ -5,6 +5,25 @@ import axios from "axios";
 import { cookies } from 'next/headers'
 import { AuthenticationProvider } from "@/types/auth";
 import { LOGIN_ROUTE } from "@/types/auth";
+
+// Helper function to decode JWT token
+function decodeJWT(token: string): any {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            Buffer.from(base64, 'base64')
+                .toString()
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch (error) {
+        console.error('Error decoding JWT:', error);
+        return null;
+    }
+}
 const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({
@@ -124,6 +143,7 @@ const authOptions: AuthOptions = {
                 session.user.role = token.role;
                 session.user.accountType = token.accountType;
                 session.user.businessName = token.businessName;
+                session.user.businessTypeName = token.businessTypeName;
             }
             return session;
         },
@@ -150,9 +170,30 @@ const authOptions: AuthOptions = {
                 token.username = user.username;
                 token.accountType = user.accountType;
                 if (account && account.provider === AuthenticationProvider.HOTEL) {
-                    token.businessName = user?.businessProfileRef?.name || "";
+                    // Decode JWT token to get businessTypeName and businessName
+                    let decodedToken: any = null;
+                    if (user.accessToken) {
+                        decodedToken = decodeJWT(user.accessToken);
+                    }
+
+                    // Try to get businessTypeName from user object first, then from JWT
+                    let businessTypeName = user?.businessProfileRef?.businessTypeRef?.name || "";
+                    if (!businessTypeName && decodedToken?.businessTypeName) {
+                        businessTypeName = decodedToken.businessTypeName;
+                    }
+
+                    // Try to get businessName from user object first, then from JWT
+                    let businessName = user?.businessProfileRef?.name || "";
+                    if (!businessName && decodedToken?.businessName) {
+                        businessName = decodedToken.businessName;
+                    }
+
+                    token.businessName = businessName;
+                    token.businessTypeName = businessTypeName;
                 }
             }
+            console.log(token);
+            console.log(user);
             return token;
         },
 

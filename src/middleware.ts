@@ -41,6 +41,7 @@ export const config = {
         '/hotels/profile',
         '/hotels/price-control',
         '/hotels/booking-management',
+        '/hotels/table-management',
         '/hotels/financial/:path*',
         '/hotels/overview',
         '/hotels/room-management',
