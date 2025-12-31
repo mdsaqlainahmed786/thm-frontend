@@ -2,7 +2,7 @@ import axios from 'axios';
 import AppConfig from '../config/constants';
 import { getCookie } from 'cookies-next';
 import { signOut } from 'next-auth/react';
-import { LOGIN_ROUTE } from "@/types/auth";
+import { LOGIN_ROUTE, HOTEL_LOGIN_URL } from "@/types/auth";
 const apiRequest = axios.create({
     baseURL: AppConfig.API_ENDPOINT,
     headers: {
@@ -62,7 +62,10 @@ apiRequest.interceptors.response.use(
                 } catch (refreshError) {
                     // Handle refresh token error or redirect to login
                     console.log("Handle refresh token error or redirect to login", refreshError)
-                    // signOut({ redirect: true, callbackUrl: LOGIN_ROUTE });
+                    // Check if we're on a hotel route
+                    const isHotelRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/hotels/');
+                    const redirectUrl = isHotelRoute ? HOTEL_LOGIN_URL : LOGIN_ROUTE;
+                    signOut({ redirect: true, callbackUrl: redirectUrl });
                     return Promise.reject(refreshError);
                 }
             }

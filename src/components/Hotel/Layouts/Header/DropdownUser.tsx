@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import { LOGIN_ROUTE } from "@/types/auth";
 import { DefaultProfilePic } from "@/components/Profile";
-import { HOTEL_LOGIN_ROUTE } from "@/types/auth";
+import { HOTEL_LOGIN_URL } from "@/types/auth";
 const DropdownUser = () => {
   const { data: session } = useSession();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -22,7 +22,13 @@ const DropdownUser = () => {
           <Image
             width={112}
             height={112}
-            src={(session && session.user && session.user.profilePic && session.user.profilePic.small) ?? DefaultProfilePic}
+            src={
+              (session &&
+                session.user &&
+                session.user.profilePic &&
+                session.user.profilePic.small) ??
+              DefaultProfilePic
+            }
             style={{
               width: "auto",
               height: "auto",
@@ -48,9 +54,12 @@ const DropdownUser = () => {
         </svg> */}
         <span className="hidden text-left lg:block">
           <span className="block text-sm font-medium text-black dark:text-white">
-            {(session && session.user && session.user.businessName) ?? 'Thomas Anree'}
+            {(session && session.user && session.user.businessName) ??
+              "Thomas Anree"}
           </span>
-          <span className="block text-xs capitalize">{(session && session.user && session.user.name) ?? 'Thomas Anree'}</span>
+          <span className="block text-xs capitalize">
+            {(session && session.user && session.user.name) ?? "Thomas Anree"}
+          </span>
         </span>
       </Link>
 
@@ -86,10 +95,15 @@ const DropdownUser = () => {
               </Link>
             </li>
           </ul>
-          <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base" onClick={() => signOut({
-            redirect: true,
-            callbackUrl: HOTEL_LOGIN_ROUTE
-          })}>
+          <button
+            className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+            onClick={() =>
+              signOut({
+                redirect: true,
+                callbackUrl: HOTEL_LOGIN_URL,
+              })
+            }
+          >
             <svg
               className="fill-current"
               width="22"

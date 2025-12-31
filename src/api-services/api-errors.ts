@@ -1,13 +1,16 @@
 import toast from "react-hot-toast";
 import { signOut } from "next-auth/react";
-import { LOGIN_ROUTE } from "@/types/auth";
+import { LOGIN_ROUTE, HOTEL_LOGIN_URL } from "@/types/auth";
 export const ERROR_MESSAGE = "Something went wrong";
 export function handleClientApiErrors(error: any) {
     if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         if (error?.response?.status === 403 || error?.response?.status == 401) {
-            signOut({ redirect: true, callbackUrl: LOGIN_ROUTE });
+            // Check if we're on a hotel route
+            const isHotelRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/hotels/');
+            const redirectUrl = isHotelRoute ? HOTEL_LOGIN_URL : LOGIN_ROUTE;
+            signOut({ redirect: true, callbackUrl: redirectUrl });
             return;
         }
         console.log(error?.response?.data);
