@@ -86,7 +86,7 @@ export async function middleware(req: NextRequest) {
 
     // Root path (/) redirection logic
     if (pathname === '/') {
-        if (hostname === 'hotels.thehotelmedia.com') {
+        if (hostname.includes('hotels.thehotelmedia.com')) {
             if (token) {
                 console.log("Token is present")
                 console.log("Req url", req.url)
@@ -95,9 +95,9 @@ export async function middleware(req: NextRequest) {
                 console.log("Token is not present")
                 console.log("Req url", req.url)
                 return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
-            }   
+            }
         }
-        if (hostname === 'admin.thehotelmedia.com') {
+        if (hostname.includes('admin.thehotelmedia.com')) {
             if (token) {
                 console.log("Token is present")
                 console.log("Req url", req.url)

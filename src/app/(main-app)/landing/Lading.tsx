@@ -21,16 +21,41 @@ import {
 } from "framer-motion";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { DASHBOARD, HOTEL_DASHBOARD, HOTEL_LOGIN_ROUTE, LOGIN_ROUTE } from "@/types/auth";
 
 export default function Landing() {
   const { scrollY } = useScroll();
   const [scrollVal, setScrollVal] = useState(0);
 
   const [windowWidth, setWindowWidth] = useState(0);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
-    setWindowWidth(window.innerWidth);
-  }, [windowWidth]);
+    if (typeof window !== "undefined") {
+      setWindowWidth(window.innerWidth);
+
+      if (status === "loading") return;
+
+      const hostname = window.location.hostname;
+      
+      if (hostname === 'hotels.thehotelmedia.com') {
+        if (session) {
+          router.push(HOTEL_DASHBOARD);
+        } else {
+          router.push(HOTEL_LOGIN_ROUTE);
+        }
+      } else if (hostname === 'admin.thehotelmedia.com') {
+        if (session) {
+          router.push(DASHBOARD);
+        } else {
+          router.push(LOGIN_ROUTE);
+        }
+      }
+    }
+  }, [session, status, router]);
 
   // console.log("Landing; ", windowWidth)
 
