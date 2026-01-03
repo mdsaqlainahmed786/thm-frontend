@@ -88,15 +88,23 @@ export async function middleware(req: NextRequest) {
     if (pathname === '/') {
         if (hostname === 'hotels.thehotelmedia.com') {
             if (token) {
+                console.log("Token is present")
+                console.log("Req url", req.url)
                 return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
             } else {
+                console.log("Token is not present")
+                console.log("Req url", req.url)
                 return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
-            }
+            }   
         }
         if (hostname === 'admin.thehotelmedia.com') {
             if (token) {
+                console.log("Token is present")
+                console.log("Req url", req.url)
                 return NextResponse.redirect(new URL(DASHBOARD, req.url));
             } else {
+                console.log("Token is not present")
+                console.log("Req url", req.url)
                 return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
             }
         }
