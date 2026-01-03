@@ -78,79 +78,63 @@ export async function middleware(req: NextRequest) {
 
     // Redirection logic for hotel subdomain
     // If accessing hotel routes on the admin subdomain, redirect to the hotel subdomain
-    if (pathname.startsWith('/hotels/') && hostname === 'admin.thehotelmedia.com') {
+    if (pathname.startsWith('/hotels/') && hostname.includes('admin.thehotelmedia.com')) {
         const hotelUrl = new URL(pathname, 'https://hotels.thehotelmedia.com');
         hotelUrl.search = req.nextUrl.search;
         return NextResponse.redirect(hotelUrl);
     }
 
-    // Root path (/) redirection logic
+    // If accessing admin login on hotel subdomain, redirect to hotel login
+    // This handles cases where NextAuth defaults to /admin/login (e.g., after logout)
+    if (pathname === '/admin/login' && hostname.includes('hotels.thehotelmedia.com')) {
+        return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
+    }
+
+    // Root path (/) redirection logic based on hostname
     if (pathname === '/') {
         if (hostname.includes('hotels.thehotelmedia.com')) {
-            if (token) {
-                console.log("Token is present")
-                console.log("Req url", req.url)
-                return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
-            } else {
-                console.log("Token is not present")
-                console.log("Req url", req.url)
-                return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
-            }
+            return NextResponse.redirect(new URL(token ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
         }
         if (hostname.includes('admin.thehotelmedia.com')) {
-            if (token) {
-                console.log("Token is present")
-                console.log("Req url", req.url)
-                return NextResponse.redirect(new URL(DASHBOARD, req.url));
-            } else {
-                console.log("Token is not present")
-                console.log("Req url", req.url)
-                return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
-            }
+            return NextResponse.redirect(new URL(token ? DASHBOARD : LOGIN_ROUTE, req.url));
         }
     }
+
     const isDashboardEndpoint = dashboardEndpoints.some((endpoint) => {
-        // Check if the pathname matches the endpoint, including wildcard match for :path*
         const regex = new RegExp(`^${endpoint.replace(/:path\*/g, '.*')}$`);
         return regex.test(pathname);
     });
 
-    // If user is authenticated and trying to access login or landing page, redirect to dashboard
+    // Handle authentication and role-based redirects
     if (token) {
-        // Redirect authenticated admin users from login/landing pages to dashboard
-        if (token.role === Role.ADMIN && (pathname === "/admin/login" || pathname === "/")) {
+        // Redirection for authenticated users hitting login or root pages
+        if (pathname === "/admin/login" || pathname === "/") {
+            const redirectUrl = token.role === Role.ADMIN ? DASHBOARD : HOTEL_DASHBOARD;
+            return NextResponse.redirect(new URL(redirectUrl, req.url));
+        }
+
+        // Role-based access control
+        if (token.role === Role.ADMIN && !isDashboardEndpoint && pathname.startsWith('/hotels/')) {
             return NextResponse.redirect(new URL(DASHBOARD, req.url));
         }
-        // Redirect authenticated hotel users from login/landing pages to hotel dashboard
-        if (token.role !== Role.ADMIN && (pathname === "/admin/login" || pathname === "/")) {
+        if (token.role !== Role.ADMIN && isDashboardEndpoint) {
             return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
         }
-    }
+    } else {
+        // Handle unauthenticated users
 
-    // If no token and trying to access protected routes, redirect to login
-    if (!token) {
-        // Only redirect to login if accessing protected dashboard endpoints
-        if (isDashboardEndpoint || pathname.startsWith('/hotels/')) {
-            // If accessing hotel routes, redirect to hotels login
-            // Skip the redirect if we are already on the login page to avoid infinite loops
-            if (pathname.startsWith('/hotels/') && pathname !== HOTEL_LOGIN_ROUTE) {
-                return NextResponse.redirect(HOTEL_LOGIN_URL);
-            }
-            // For admin routes, redirect to default signin
-            if (isDashboardEndpoint) {
-                return NextResponse.redirect(new URL('/api/auth/signin', req.url));
+        // Force hotel login on hotels subdomain for any protected or landing route
+        if (hostname.includes('hotels.thehotelmedia.com')) {
+            if (pathname !== HOTEL_LOGIN_ROUTE && (isDashboardEndpoint || pathname.startsWith('/hotels/') || pathname === '/')) {
+                return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
             }
         }
-        // Allow access to login and landing pages if not authenticated
-        return NextResponse.next();
-    }
 
-    // Role-based access control for dashboard endpoints
-    if (token.role === Role.ADMIN && !isDashboardEndpoint && pathname.startsWith('/hotels/')) {
-        return NextResponse.redirect(new URL(DASHBOARD, req.url));
-    }
-    if (token.role !== Role.ADMIN && isDashboardEndpoint) {
-        return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
+        // General protection for dashboard and hotel routes
+        if (isDashboardEndpoint || (pathname.startsWith('/hotels/') && pathname !== HOTEL_LOGIN_ROUTE)) {
+            const loginRedirect = pathname.startsWith('/hotels/') ? HOTEL_LOGIN_URL : new URL(LOGIN_ROUTE, req.url).toString();
+            return NextResponse.redirect(loginRedirect);
+        }
     }
 
     return NextResponse.next();
