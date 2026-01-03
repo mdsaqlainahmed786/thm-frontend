@@ -1,6 +1,6 @@
 import { getToken } from 'next-auth/jwt';
 import { NextResponse, NextRequest } from 'next/server';
-import { DASHBOARD, HOTEL_DASHBOARD, HOTEL_LOGIN_URL, Role } from './types/auth';
+import { DASHBOARD, HOTEL_DASHBOARD, HOTEL_LOGIN_ROUTE, HOTEL_LOGIN_URL, Role } from './types/auth';
 export { default } from 'next-auth/middleware';
 
 const dashboardEndpoints = [
@@ -106,11 +106,14 @@ export async function middleware(req: NextRequest) {
         // Only redirect to login if accessing protected dashboard endpoints
         if (isDashboardEndpoint || pathname.startsWith('/hotels/')) {
             // If accessing hotel routes, redirect to hotels login
-            if (pathname.startsWith('/hotels/')) {
+            // Skip the redirect if we are already on the login page to avoid infinite loops
+            if (pathname.startsWith('/hotels/') && pathname !== HOTEL_LOGIN_ROUTE) {
                 return NextResponse.redirect(HOTEL_LOGIN_URL);
             }
             // For admin routes, redirect to default signin
-            return NextResponse.redirect(new URL('/api/auth/signin', req.url));
+            if (isDashboardEndpoint) {
+                return NextResponse.redirect(new URL('/api/auth/signin', req.url));
+            }
         }
         // Allow access to login and landing pages if not authenticated
         return NextResponse.next();
