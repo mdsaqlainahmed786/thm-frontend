@@ -1,6 +1,6 @@
 import { getToken } from 'next-auth/jwt';
 import { NextResponse, NextRequest } from 'next/server';
-import { DASHBOARD, HOTEL_DASHBOARD, HOTEL_LOGIN_ROUTE, HOTEL_LOGIN_URL, Role } from './types/auth';
+import { DASHBOARD, HOTEL_DASHBOARD, HOTEL_LOGIN_ROUTE, HOTEL_LOGIN_URL, LOGIN_ROUTE, Role } from './types/auth';
 export { default } from 'next-auth/middleware';
 
 const dashboardEndpoints = [
@@ -82,6 +82,24 @@ export async function middleware(req: NextRequest) {
         const hotelUrl = new URL(pathname, 'https://hotels.thehotelmedia.com');
         hotelUrl.search = req.nextUrl.search;
         return NextResponse.redirect(hotelUrl);
+    }
+
+    // Root path (/) redirection logic
+    if (pathname === '/') {
+        if (hostname === 'hotels.thehotelmedia.com') {
+            if (token) {
+                return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
+            } else {
+                return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
+            }
+        }
+        if (hostname === 'admin.thehotelmedia.com') {
+            if (token) {
+                return NextResponse.redirect(new URL(DASHBOARD, req.url));
+            } else {
+                return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
+            }
+        }
     }
     const isDashboardEndpoint = dashboardEndpoints.some((endpoint) => {
         // Check if the pathname matches the endpoint, including wildcard match for :path*
