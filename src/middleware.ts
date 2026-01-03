@@ -46,6 +46,7 @@ export const config = {
         '/hotels/overview',
         '/hotels/room-management',
         '/hotels/support',
+        '/hotels/login',
         '/admin/login',
         '/',
     ],
@@ -73,7 +74,15 @@ export const config = {
 
 export async function middleware(req: NextRequest) {
     const token = await getToken({ req });
-    const { pathname } = req.nextUrl;
+    const { pathname, hostname } = req.nextUrl;
+
+    // Redirection logic for hotel subdomain
+    // If accessing hotel routes on the admin subdomain, redirect to the hotel subdomain
+    if (pathname.startsWith('/hotels/') && hostname === 'admin.thehotelmedia.com') {
+        const hotelUrl = new URL(pathname, 'https://hotels.thehotelmedia.com');
+        hotelUrl.search = req.nextUrl.search;
+        return NextResponse.redirect(hotelUrl);
+    }
     const isDashboardEndpoint = dashboardEndpoints.some((endpoint) => {
         // Check if the pathname matches the endpoint, including wildcard match for :path*
         const regex = new RegExp(`^${endpoint.replace(/:path\*/g, '.*')}$`);
