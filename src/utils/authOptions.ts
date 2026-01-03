@@ -52,8 +52,9 @@ const authOptions: AuthOptions = {
                         throw new Error(response.data?.message ?? "Something went wrong");
                     }
                     const user = response.data?.data;
-                    cookies().set('X-Access-Token', user.accessToken, { secure: false });
-                    cookies().set('SessionToken', user.refreshToken, { secure: false });
+                    const cookieStore = await cookies();
+                    cookieStore.set('X-Access-Token', user.accessToken, { secure: false });
+                    cookieStore.set('SessionToken', user.refreshToken, { secure: false });
                     return user;
                 } catch (error: any) {
                     const { response } = error;
@@ -97,8 +98,9 @@ const authOptions: AuthOptions = {
                     if (user && user.accountType && user.accountType !== "business") {
                         throw new Error("You don't have the right permission to access this page.")
                     }
-                    cookies().set('X-Access-Token', user.accessToken, { secure: false });
-                    cookies().set('SessionToken', user.refreshToken, { secure: false });
+                    const cookieStore = await cookies();
+                    cookieStore.set('X-Access-Token', user.accessToken, { secure: false });
+                    cookieStore.set('SessionToken', user.refreshToken, { secure: false });
                     return user;
                 } catch (error: any) {
                     const { response } = error;
@@ -150,7 +152,6 @@ const authOptions: AuthOptions = {
         //step 1
         async jwt({ token, user, account, profile, trigger, session }) {
             if (trigger === "update") {
-                // Note, that `session` can be any arbitrary object, remember to validate it!
                 if (session.name) {
                     token.name = session.name;
                 }
@@ -170,19 +171,16 @@ const authOptions: AuthOptions = {
                 token.username = user.username;
                 token.accountType = user.accountType;
                 if (account && account.provider === AuthenticationProvider.HOTEL) {
-                    // Decode JWT token to get businessTypeName and businessName
                     let decodedToken: any = null;
                     if (user.accessToken) {
                         decodedToken = decodeJWT(user.accessToken);
                     }
 
-                    // Try to get businessTypeName from user object first, then from JWT
                     let businessTypeName = user?.businessProfileRef?.businessTypeRef?.name || "";
                     if (!businessTypeName && decodedToken?.businessTypeName) {
                         businessTypeName = decodedToken.businessTypeName;
                     }
 
-                    // Try to get businessName from user object first, then from JWT
                     let businessName = user?.businessProfileRef?.name || "";
                     if (!businessName && decodedToken?.businessName) {
                         businessName = decodedToken.businessName;
@@ -192,17 +190,24 @@ const authOptions: AuthOptions = {
                     token.businessTypeName = businessTypeName;
                 }
             }
-            console.log(token);
-            console.log(user);
             return token;
         },
-
-
+        async redirect({ url, baseUrl }) {
+            // Always allow redirects to our own subdomains
+            if (url.includes('thehotelmedia.com')) {
+                return url;
+            }
+            // Default behavior
+            if (url.startsWith("/")) return `${baseUrl}${url}`
+            else if (new URL(url).origin === new URL(baseUrl).origin) return url
+            return baseUrl
+        }
     },
     events: {
         async signOut({ session, token }) {
-            cookies().delete('X-Access-Token');
-            cookies().delete('SessionToken');
+            const cookieStore = await cookies();
+            cookieStore.delete('X-Access-Token');
+            cookieStore.delete('SessionToken');
         },
 
     }
