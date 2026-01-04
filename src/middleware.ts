@@ -55,23 +55,28 @@ export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
     const host = req.headers.get('host') || "";
 
-    // 1. Apex Domain / Incorrect Host Normalization
-    // If the user visits thehotelmedia.com (without subdomains) or a www. version
-    const isApexDomain = host === 'thehotelmedia.com' || host === 'www.thehotelmedia.com';
-    const isHotelRoute = pathname.startsWith('/hotels/');
-
-    if (isApexDomain) {
-        const targetSubdomain = isHotelRoute ? 'hotels' : 'admin';
-        return NextResponse.redirect(`https://${targetSubdomain}.thehotelmedia.com${pathname}${req.nextUrl.search}`);
-    }
-
     // Determine current subdomain status
     const isHotelSubdomain = host.startsWith('hotels.');
     const isAdminSubdomain = host.startsWith('admin.');
+    const isApexDomain = !isHotelSubdomain && !isAdminSubdomain;
+
+    const isHotelRoute = pathname.startsWith('/hotels/');
+
+    // 1. Apex Domain Handling
+    // If on the apex domain, we only redirect if they are trying to access /hotels/ paths
+    if (isApexDomain && !host.includes('localhost')) {
+        if (isHotelRoute) {
+            return NextResponse.redirect(new URL(pathname, 'https://hotels.thehotelmedia.com'));
+        }
+        // Allow root (/) and other non-hotel paths to load the landing page
+        if (pathname === '/') {
+            return NextResponse.next();
+        }
+    }
 
     // 2. Cross-Subdomain Correction
-    // Force hotel routes to the hotels subdomain
-    if (isHotelRoute && !isHotelSubdomain && !host.includes('localhost')) {
+    // Force hotel routes to the hotels subdomain if accessed from admin
+    if (isHotelRoute && isAdminSubdomain && !host.includes('localhost')) {
         return NextResponse.redirect(new URL(pathname, 'https://hotels.thehotelmedia.com'));
     }
 
@@ -81,7 +86,7 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
     }
 
-    // 4. Root path (/) redirection based on subdomain
+    // 4. Subdomain-Specific Root Redirection
     if (pathname === '/') {
         if (isHotelSubdomain) {
             return NextResponse.redirect(new URL(token ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
@@ -98,9 +103,9 @@ export async function middleware(req: NextRequest) {
 
     // 5. Authentication & Role-based access
     if (token) {
-        // Redirection for authenticated users hitting login pages
-        if (pathname === "/admin/login" || pathname === HOTEL_LOGIN_ROUTE || pathname === "/") {
-            const redirectUrl = (token.role === Role.ADMIN && isAdminSubdomain) ? DASHBOARD : HOTEL_DASHBOARD;
+        // Redirection for authenticated users hitting login pages on their subdomains
+        if (pathname === "/admin/login" || pathname === HOTEL_LOGIN_ROUTE || (pathname === "/" && !isApexDomain)) {
+            const redirectUrl = (token.role === Role.ADMIN) ? DASHBOARD : HOTEL_DASHBOARD;
             return NextResponse.redirect(new URL(redirectUrl, req.url));
         }
 
@@ -119,12 +124,14 @@ export async function middleware(req: NextRequest) {
             return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
         }
 
-        // On admin subdomain or others, protect dashboard/hotel routes
-        if (isDashboardEndpoint || (isHotelRoute && pathname !== HOTEL_LOGIN_ROUTE)) {
-            if (isHotelRoute || isHotelSubdomain) {
-                return NextResponse.redirect('https://hotels.thehotelmedia.com/hotels/login');
-            }
+        // On admin subdomain, protect dashboard routes
+        if (isAdminSubdomain && isDashboardEndpoint) {
             return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
+        }
+
+        // Protect hotel routes regardless of subdomain (if not on hotel login Page)
+        if (isHotelRoute && pathname !== HOTEL_LOGIN_ROUTE) {
+            return NextResponse.redirect('https://hotels.thehotelmedia.com/hotels/login');
         }
     }
 

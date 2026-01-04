@@ -41,13 +41,13 @@ export default function Landing() {
 
       const hostname = window.location.hostname;
       
-      if (hostname.includes('hotels.thehotelmedia.com')) {
+      if (hostname.startsWith('hotels.')) {
         if (session) {
           router.push(HOTEL_DASHBOARD);
         } else {
           router.push(HOTEL_LOGIN_ROUTE);
         }
-      } else if (hostname.includes('admin.thehotelmedia.com')) {
+      } else if (hostname.startsWith('admin.')) {
         if (session) {
           router.push(DASHBOARD);
         } else {
