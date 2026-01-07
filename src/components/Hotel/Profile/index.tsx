@@ -32,45 +32,26 @@ import Label from "../Common/UI/Label";
 import apiRequest from "@/api-services/app-client";
 import toast from "react-hot-toast";
 
-async function getBusinessQr(businessID: string): Promise<any> {
+async function getBusinessQr(businessID: string): Promise<string | Blob> {
   try {
-    // Try hotel-specific endpoint first, fallback to admin endpoint
+    // Try admin endpoint (backend returns SVG as text)
     let response;
     try {
-      response = await apiRequest.get(`/business/${businessID}/generate-qr`, {
-        responseType: "blob",
-        skipAuthError: true, // Prevent logout on 401/403 errors
-      } as any);
-    } catch (hotelError: any) {
-      // If hotel endpoint fails, try admin endpoint (for backward compatibility)
-      if (
-        hotelError?.response?.status === 401 ||
-        hotelError?.response?.status === 403
-      ) {
-        // Try admin endpoint as fallback
-        try {
-          response = await apiRequest.get(
-            `/admin/business/${businessID}/generate-qr`,
-            {
-              responseType: "blob",
-              skipAuthError: true, // Prevent logout on 401/403 errors
-            } as any
-          );
-        } catch (adminError: any) {
-          // If admin endpoint also fails with 401/403, throw user-friendly error
-          if (
-            adminError?.response?.status === 401 ||
-            adminError?.response?.status === 403
-          ) {
-            throw new Error(
-              "You don't have permission to access QR code. Please contact support."
-            );
-          }
-          throw adminError;
-        }
-      } else {
-        throw hotelError;
+      response = await apiRequest.get(
+        `/admin/business/${businessID}/generate-qr`,
+        {
+          responseType: "text", // Backend returns SVG as text, not blob
+          skipAuthError: true, // Prevent logout on 401/403 errors
+        } as any
+      );
+    } catch (error: any) {
+      // If endpoint fails with 401/403, throw user-friendly error
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        throw new Error(
+          "You don't have permission to access QR code. Please contact support."
+        );
       }
+      throw error;
     }
 
     if (response && response.status && response.data) {
@@ -97,6 +78,19 @@ async function getBusinessQr(businessID: string): Promise<any> {
 function encodeURIComponentToImage(data: string | Blob): string {
   if (data instanceof Blob) {
     return URL.createObjectURL(data);
+  }
+  // If it's a string (SVG), encode it as a data URL
+  if (typeof data === "string") {
+    // Check if it's already a data URL
+    if (data.startsWith("data:")) {
+      return data;
+    }
+    // Check if it's an SVG string
+    if (data.trim().startsWith("<svg") || data.trim().startsWith("<?xml")) {
+      return `data:image/svg+xml;utf8,${encodeURIComponent(data)}`;
+    }
+    // Otherwise, assume it's a URL or path
+    return data;
   }
   return data;
 }
@@ -288,10 +282,24 @@ const Profile: React.FC<{}> = () => {
     if (data && data?.businessProfileRef?._id) {
       getBusinessQr(data.businessProfileRef._id)
         .then((qrData) => {
-          const url = window.URL.createObjectURL(qrData);
+          // Handle both Blob and string (SVG) responses
+          let url: string;
+          let fileName: string;
+
+          if (qrData instanceof Blob) {
+            url = window.URL.createObjectURL(qrData);
+            fileName = "Business-QR.png";
+          } else if (typeof qrData === "string") {
+            // Convert SVG string to Blob for download
+            const svgBlob = new Blob([qrData], { type: "image/svg+xml" });
+            url = window.URL.createObjectURL(svgBlob);
+            fileName = "Business-QR.svg";
+          } else {
+            throw new Error("Invalid QR code data format");
+          }
+
           const link = document.createElement("a");
           link.href = url;
-          const fileName = "Business-QR.png";
           link.setAttribute("download", fileName);
           document.body.appendChild(link);
           link.click();
@@ -301,7 +309,7 @@ const Profile: React.FC<{}> = () => {
         })
         .catch((error) => {
           console.log(error);
-          toast.error("Failed to download QR code");
+          toast.error(error.message || "Failed to download QR code");
         });
     } else {
       toast.error("Business ID not found.");
@@ -1439,13 +1447,13 @@ const Profile: React.FC<{}> = () => {
                     </svg>
                   </button>
                 </div>
-                <div className="flex justify-center items-center bg-white p-4 rounded-lg">
+                <div className="w-full max-w-[300px] mx-auto aspect-square bg-white rounded-lg border border-stroke dark:border-strokedark flex justify-center items-center p-4">
                   <Image
                     src={qr}
                     alt="Business QR Code"
-                    width={300}
-                    height={300}
-                    className="w-full max-w-[300px] h-auto"
+                    width={200}
+                    height={200}
+                    className="w-full h-full object-contain"
                     unoptimized
                   />
                 </div>
