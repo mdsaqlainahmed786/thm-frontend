@@ -13,19 +13,13 @@ import Button from "../Button";
 export const DefaultProfilePic = "/images/user-placeholder.jpg";
 export const DefaultCoverPic = "/images/cover/cover-01.png";
 
-function encodeURIComponentToImage(data: string | Blob): string {
-  if (data instanceof Blob) {
-    return URL.createObjectURL(data);
-  }
+function encodeURIComponentToImage(data: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(data)}`;
 }
 async function getBusinessQr(businessID: string): Promise<any> {
   try {
     const response = await apiRequest.get(
-      `/admin/business/${businessID}/generate-qr`,
-      {
-        responseType: "blob",
-      }
+      `/admin/business/${businessID}/generate-qr`
     );
     if (response.status && response.data) {
       return response.data;
@@ -158,8 +152,8 @@ const Profile: React.FC<{
   };
   const [formInputs, setFormInputs] = useState(initialFormInputs);
   useEffect(() => {
-    setFormInputs((prev) => ({
-      ...prev,
+    setFormInputs({
+      ...initialFormInputs,
       name: user?.name ?? "",
       bio: bio ?? "",
       email: user?.email ?? "",
@@ -173,7 +167,7 @@ const Profile: React.FC<{
       isActivated: user?.isActivated ?? false,
       role: user?.role ?? "",
       isDeleted: user?.isDeleted ?? false,
-    }));
+    });
     if (
       session &&
       session.user &&
@@ -275,21 +269,20 @@ const Profile: React.FC<{
   const downloadQR = () => {
     if (user && user.businessProfileID) {
       getBusinessQr(user.businessProfileID)
-        .then((qrData) => {
-          const url = window.URL.createObjectURL(qrData);
+        .then((data) => {
+          console.log(data);
+          const url = window.URL.createObjectURL(new Blob([data]));
           const link = document.createElement("a");
           link.href = url;
           const fileName = "Business-QR.png";
+          // Setting filename received in response
           link.setAttribute("download", fileName);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-          toast.success("QR code downloaded successfully");
         })
         .catch((error) => {
           console.log(error);
-          toast.error("Failed to download QR code");
         });
     } else {
       toast.error("Business ID not found.");
@@ -1172,15 +1165,11 @@ const Profile: React.FC<{
                                 className="flex flex-col justify-center items-center gap-1.5 rounded-sm border border-stroke bg-white px-3 py-2 shadow-default dark:border-strokedark dark:bg-boxdark"
                                 key={index}
                               >
-                                {amenity?.icon && (
-                                  <Image
-                                    src={amenity.icon}
-                                    alt={amenity?.name || "Amenity"}
-                                    width={28}
-                                    height={28}
-                                    className="w-7 h-7"
-                                  />
-                                )}
+                                <img
+                                  src={amenity?.icon ? amenity?.icon : ""}
+                                  alt=""
+                                  className="w-7 h-7"
+                                />
                                 <p className="text-xs font-semibold tracking-wider">
                                   {amenity?.name ? amenity?.name : ""}
                                 </p>
@@ -1298,10 +1287,9 @@ const Profile: React.FC<{
                           <Link
                             href={website}
                             target="_blank"
+                            children={website}
                             className="text-primary"
-                          >
-                            {website}
-                          </Link>
+                          />
                         </li>
                       ) : null}
                       <li className="flex items-start gap-3 justify-start ">
@@ -1362,236 +1350,17 @@ const Profile: React.FC<{
                         </button>
                       </div>
                       <div className="w-75 h-75 rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-                        <Image
+                        <img
                           src={qr}
-                          alt="Business QR Code"
                           width={300}
                           height={300}
                           className="w-full h-full"
-                          unoptimized
                         />
                       </div>
                     </div>
                   </div>
                 </div>
                 <p className="my-4">{bio}</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-1 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-            <div className="rounded-sm border border-stroke bg-white px-5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Business Details Section */}
-                <div className="flex flex-col gap-4">
-                  <h5 className="text-xl font-bold text-black dark:text-white">
-                    Business Details
-                  </h5>
-                  <div className="flex flex-col gap-3">
-                    <div>
-                      <h3 className="text-2xl font-bold text-black dark:text-white mb-1">
-                        {businessName}
-                      </h3>
-                      <div className="flex items-center gap-2 mb-2">
-                        {user &&
-                        user.businessProfileRef &&
-                        user.businessProfileRef?.rating ? (
-                          <>
-                            {[...Array(5)].map((_, i) => (
-                              <svg
-                                key={i}
-                                width="16"
-                                height="16"
-                                viewBox="0 0 16 17"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M7.50175 1.15123C7.71632 0.794694 8.23322 0.794693 8.44779 1.15123L10.7617 4.99614C10.8388 5.12423 10.9645 5.21558 11.1102 5.24931L15.4819 6.26182C15.8873 6.35571 16.047 6.84732 15.7743 7.16156L12.8326 10.5504C12.7346 10.6632 12.6865 10.8111 12.6995 10.96L13.0875 15.4307C13.1234 15.8452 12.7053 16.1491 12.3221 15.9867L8.19013 14.2362C8.05248 14.1779 7.89706 14.1779 7.75941 14.2362L3.62745 15.9867C3.24429 16.1491 2.8261 15.8452 2.86208 15.4307L3.25008 10.96C3.263 10.8111 3.21498 10.6632 3.11698 10.5504L0.175285 7.16156C-0.0974985 6.84732 0.062233 6.35571 0.467628 6.26182L4.83939 5.24931C4.98503 5.21558 5.11076 5.12423 5.18785 4.99614L7.50175 1.15123Z"
-                                  fill="#F2C94C"
-                                />
-                              </svg>
-                            ))}
-                            <span className="text-black dark:text-white text-sm ml-1">
-                              {parseFloat(
-                                `${user.businessProfileRef.rating}`
-                              ).toFixed(1)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-gray-500 dark:text-gray-500 text-sm">
-                            No rating yet
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-500">
-                        {businessType} - {businessSubtype}
-                      </p>
-                    </div>
-                    {/* Amenities */}
-                    {amenities && amenities.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {amenities.map((amenity: any, index: number) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-1.5 rounded-sm border border-stroke bg-white px-3 py-2 shadow-default dark:border-strokedark dark:bg-boxdark"
-                          >
-                            {amenity?.icon && (
-                              <Image
-                                src={amenity.icon}
-                                alt={amenity.name || "Amenity"}
-                                width={20}
-                                height={20}
-                                className="w-5 h-5"
-                              />
-                            )}
-                            <p className="text-xs font-semibold tracking-wider">
-                              {amenity?.name || ""}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* Contact Information */}
-                    <div className="flex flex-col gap-2 mt-2">
-                      {businessPhoneNumber && (
-                        <div className="flex items-center gap-2">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122L9.65 10.5a.678.678 0 0 1-.58-.39l-.84-1.68a.678.678 0 0 1-.122-.58l.122-1.307a.678.678 0 0 0-.122-.58L6.5 4.5a.678.678 0 0 0-.58-.39l-1.307-.122a.678.678 0 0 0-.58.122L2.328 3.654z"
-                              fill="#60A5FA"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-500 dark:text-gray-500">
-                            Phone Number:
-                          </span>
-                          <span className="text-sm text-black dark:text-white">
-                            {businessPhoneNumber}
-                          </span>
-                        </div>
-                      )}
-                      {businessEmail && (
-                        <div className="flex items-center gap-2">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.123L2 9.268v4.991a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.268l-4.966 2.991Z"
-                              fill="#60A5FA"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-500 dark:text-gray-500">
-                            Email:
-                          </span>
-                          <span className="text-sm text-black dark:text-white">
-                            {businessEmail}
-                          </span>
-                        </div>
-                      )}
-                      {gstn && gstn !== "-" && (
-                        <div className="flex items-center gap-2">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"
-                              fill="#60A5FA"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-500 dark:text-gray-500">
-                            GSTIN:
-                          </span>
-                          <span className="text-sm text-black dark:text-white">
-                            {gstn}
-                          </span>
-                        </div>
-                      )}
-                      {businessAddress && (
-                        <div className="flex items-start gap-2">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="mt-0.5"
-                          >
-                            <path
-                              d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"
-                              fill="#60A5FA"
-                            />
-                          </svg>
-                          <div className="flex flex-col">
-                            <span className="text-sm text-gray-500 dark:text-gray-500">
-                              Address:
-                            </span>
-                            <span className="text-sm text-black dark:text-white">
-                              {businessAddress}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {/* Description */}
-                    {bio && bio !== "-" && (
-                      <p className="text-sm text-black dark:text-white mt-2">
-                        {bio}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {/* QR Code Section */}
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <h5 className="text-xl font-bold text-black dark:text-white">
-                      Download QR
-                    </h5>
-                    <button
-                      onClick={downloadQR}
-                      className="flex items-center justify-center gap-2 w-10 h-10 rounded-full bg-primary hover:bg-primary/80 transition-colors"
-                      title="Download QR Code"
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M10 2.5V12.5M10 12.5L6 8.5M10 12.5L14 8.5M2.5 15V16.25C2.5 17.2165 3.2835 18 4.25 18H15.75C16.7165 18 17.5 17.2165 17.5 16.25V15"
-                          stroke="white"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex justify-center items-center bg-white p-4 rounded-lg">
-                    <Image
-                      src={qr}
-                      alt="Business QR Code"
-                      width={300}
-                      height={300}
-                      className="w-full max-w-[300px] h-auto"
-                      unoptimized
-                    />
-                  </div>
-                </div>
               </div>
             </div>
           </div>
