@@ -131,7 +131,8 @@ export async function middleware(req: NextRequest) {
 
         // Protect hotel routes regardless of subdomain (if not on hotel login Page)
         if (isHotelRoute && pathname !== HOTEL_LOGIN_ROUTE) {
-            return NextResponse.redirect('https://hotels.thehotelmedia.com/hotels/login');
+            // Use current request URL for redirect to support localhost development
+            return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
         }
     }
 
