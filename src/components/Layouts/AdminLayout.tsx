@@ -5,6 +5,7 @@ import Header from "./Header";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import TanstackQueryProvider from "@/context/TanstackQueryProvider";
 import { InputProvider } from "@/context/SearchProvider";
+import useLocalStorage from "@/hooks/useLocalStorage";
 interface AdminLayoutSearchableProps {
   isSearchable: true;
   searchPlaceholder: string;
@@ -22,8 +23,8 @@ type MainLayoutProps =
   | MainLayoutNonSearchableProps;
 
 export default function AdminLayout(props: MainLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useLocalStorage("adminSidebarOpen", false);
+  const [isCollapsed, setIsCollapsed] = useLocalStorage("adminSidebarCollapsed", true);
 
   // Listen for sidebar collapse state changes (same tab)
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function AdminLayout(props: MainLayoutProps) {
     return () => {
       window.removeEventListener("sidebarCollapseChange", handleCustomEvent);
     };
-  }, []);
+  }, [setIsCollapsed]);
 
   return (
     <div className="dark:bg-boxdark-2 dark:text-bodydark">

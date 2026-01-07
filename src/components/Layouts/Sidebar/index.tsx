@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import SidebarItem from "./SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
+import useLocalStorage from "@/hooks/useLocalStorage";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -465,7 +466,7 @@ const menuGroups = [
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const pathname = usePathname();
   const [pageName, setPageName] = useState("dashboard");
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useLocalStorage("adminSidebarCollapsed", true);
 
   const toggleCollapse = () => {
     const newState = !isCollapsed;
