@@ -34,17 +34,61 @@ import toast from "react-hot-toast";
 
 async function getBusinessQr(businessID: string): Promise<any> {
   try {
-    const response = await apiRequest.get(
-      `/admin/business/${businessID}/generate-qr`,
-      {
+    // Try hotel-specific endpoint first, fallback to admin endpoint
+    let response;
+    try {
+      response = await apiRequest.get(`/business/${businessID}/generate-qr`, {
         responseType: "blob",
+        skipAuthError: true, // Prevent logout on 401/403 errors
+      } as any);
+    } catch (hotelError: any) {
+      // If hotel endpoint fails, try admin endpoint (for backward compatibility)
+      if (
+        hotelError?.response?.status === 401 ||
+        hotelError?.response?.status === 403
+      ) {
+        // Try admin endpoint as fallback
+        try {
+          response = await apiRequest.get(
+            `/admin/business/${businessID}/generate-qr`,
+            {
+              responseType: "blob",
+              skipAuthError: true, // Prevent logout on 401/403 errors
+            } as any
+          );
+        } catch (adminError: any) {
+          // If admin endpoint also fails with 401/403, throw user-friendly error
+          if (
+            adminError?.response?.status === 401 ||
+            adminError?.response?.status === 403
+          ) {
+            throw new Error(
+              "You don't have permission to access QR code. Please contact support."
+            );
+          }
+          throw adminError;
+        }
+      } else {
+        throw hotelError;
       }
-    );
-    if (response.status && response.data) {
+    }
+
+    if (response && response.status && response.data) {
       return response.data;
     }
     throw new Error("Invalid response data");
-  } catch (error) {
+  } catch (error: any) {
+    // If it's already a user-friendly error message, just throw it
+    if (error.message && !error.response) {
+      throw error;
+    }
+    // Don't re-throw 401/403 errors to prevent logout
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      console.error("QR code access denied:", error);
+      throw new Error(
+        "You don't have permission to access QR code. Please contact support."
+      );
+    }
     console.error(error);
     throw error;
   }
@@ -186,7 +230,9 @@ const Profile: React.FC<{}> = () => {
           setQR(encodeURIComponentToImage(qrData));
         })
         .catch((error) => {
-          console.log(error);
+          console.log("QR code fetch error:", error);
+          // Don't show error toast here to avoid annoying users
+          // The QR code will just show the default placeholder
         });
     }
   }, [data, emptyAnswer]);

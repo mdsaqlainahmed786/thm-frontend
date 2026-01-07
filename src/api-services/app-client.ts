@@ -49,6 +49,17 @@ apiRequest.interceptors.response.use(
         // Check if error.response exists before accessing its properties
         if (error.response) {
             console.log("If the error status", error.response.status, error.response.data);
+            
+            // Skip logout for requests marked with skipAuthError flag (e.g., QR code endpoints)
+            if (originalRequest.skipAuthError) {
+                return Promise.reject(error);
+            }
+            
+            // Don't logout for 403 (Forbidden) errors - these are permission issues, not auth issues
+            if (error.response.status === 403) {
+                return Promise.reject(error);
+            }
+            
             // If the error status is 401 and there is no originalRequest._retry flag,
             // it means the token has expired and we need to refresh it
             if (error.response.status === 401 && !originalRequest._retry) {
