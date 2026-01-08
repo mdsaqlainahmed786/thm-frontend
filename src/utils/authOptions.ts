@@ -53,8 +53,9 @@ const authOptions: AuthOptions = {
                     }
                     const user = response.data?.data;
                     const cookieStore = await cookies();
-                    cookieStore.set('X-Access-Token', user.accessToken, { secure: false });
-                    cookieStore.set('SessionToken', user.refreshToken, { secure: false });
+                    // Admin uses separate cookie names
+                    cookieStore.set('X-Admin-Access-Token', user.accessToken, { secure: false });
+                    cookieStore.set('AdminSessionToken', user.refreshToken, { secure: false });
                     return user;
                 } catch (error: any) {
                     const { response } = error;
@@ -206,6 +207,10 @@ const authOptions: AuthOptions = {
     events: {
         async signOut({ session, token }) {
             const cookieStore = await cookies();
+            // Clear admin cookies
+            cookieStore.delete('X-Admin-Access-Token');
+            cookieStore.delete('AdminSessionToken');
+            // Clear user/hotel cookies
             cookieStore.delete('X-Access-Token');
             cookieStore.delete('SessionToken');
         },

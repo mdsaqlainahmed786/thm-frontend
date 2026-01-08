@@ -15,11 +15,25 @@ const apiRequest = axios.create({
  */
 apiRequest.interceptors.request.use(
     async (config) => {
-        //FIXME Change to bearer token
-        const accessToken = getCookie('X-Access-Token');
+        // Determine if this is an admin request based on URL path
+        const isAdminRequest = typeof window !== 'undefined' && 
+            (window.location.pathname.startsWith('/dashboard') || 
+             window.location.pathname.startsWith('/admin/'));
+        
+        // Use appropriate token based on context
+        let accessToken;
+        let headerKey;
+        
+        if (isAdminRequest) {
+            accessToken = getCookie('X-Admin-Access-Token');
+            headerKey = 'X-Admin-Access-Token';
+        } else {
+            accessToken = getCookie('X-Access-Token');
+            headerKey = 'X-Access-Token';
+        }
+        
         if (accessToken) {
-            // console.log(accessToken);
-            config.headers['X-Access-Token'] = accessToken;
+            config.headers[headerKey] = accessToken;
         }
         // Ensure headers are set for CORS
         // Only set Content-Type for JSON requests.

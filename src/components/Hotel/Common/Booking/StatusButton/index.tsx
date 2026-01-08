@@ -10,19 +10,22 @@ const StatusButton: React.FC<{ onClick?: React.MouseEventHandler<HTMLButtonEleme
     let className = "text-white focus:ring-1 focus:outline-none font-medium rounded-[32px] text-xs px-3.5 py-1.5 text-center flex items-center";
     switch (status) {
         case "pending":
-            className += "bg-[#C29500] hover:bg-[#C29500] focus:[#C29500] dark:focus:ring-[#C29500] dark:bg-[#C29500] dark:hover:bg-[#C29500] relative"
+            className += " bg-[#C29500] hover:bg-[#C29500] focus:[#C29500] dark:focus:ring-[#C29500] dark:bg-[#C29500] dark:hover:bg-[#C29500] relative"
             break;
         case "canceled by business":
-            className += "bg-[#C10808] hover:bg-[#C10808] focus:[#C10808] dark:focus:ring-[#C10808] dark:bg-[#C10808] dark:hover:bg-[#C10808] relative"
+            className += " bg-[#C10808] hover:bg-[#C10808] focus:[#C10808] dark:focus:ring-[#C10808] dark:bg-[#C10808] dark:hover:bg-[#C10808] relative"
+            break;
+        case "canceled by user":
+            className += " bg-[#C10808] hover:bg-[#C10808] focus:[#C10808] dark:focus:ring-[#C10808] dark:bg-[#C10808] dark:hover:bg-[#C10808] relative"
             break;
         case "canceled":
-            className += "bg-[#C10808] hover:bg-[#C10808] focus:[#C10808] dark:focus:ring-[#C10808] dark:bg-[#C10808] dark:hover:bg-[#C10808] relative"
+            className += " bg-[#C10808] hover:bg-[#C10808] focus:[#C10808] dark:focus:ring-[#C10808] dark:bg-[#C10808] dark:hover:bg-[#C10808] relative"
             break;
         case "confirmed":
-            className += "bg-[#6F42C1] hover:bg-[#6F42C1] focus:[#6F42C1] dark:focus:ring-[#6F42C1] dark:bg-[#6F42C1] dark:hover:bg-[#6F42C1] relative"
+            className += " bg-[#6F42C1] hover:bg-[#6F42C1] focus:[#6F42C1] dark:focus:ring-[#6F42C1] dark:bg-[#6F42C1] dark:hover:bg-[#6F42C1] relative"
             break;
         case "created":
-            className += "bg-[#009300] hover:bg-[#009300] focus:[#009300] dark:focus:ring-[#009300] dark:bg-[#009300] dark:hover:bg-[#009300] relative"
+            className += " bg-[#009300] hover:bg-[#009300] focus:[#009300] dark:focus:ring-[#009300] dark:bg-[#009300] dark:hover:bg-[#009300] relative"
             break;
         default:
             break;

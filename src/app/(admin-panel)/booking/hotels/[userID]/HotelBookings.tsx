@@ -244,9 +244,11 @@ const HotelBookings = ({ userID, edit }: { userID: string, edit: boolean }) => {
 
                                                                         data.status === "canceled by business" ?
                                                                             <span className="text-meta-1 text-xs tracking-wide dark:text-meta-1">Canceled By Business</span> :
-                                                                            data.status === "created" ?
-                                                                                <span className="text-meta-10 text-xs tracking-wide dark:text-meta-10">Created</span> :
-                                                                                <span className="text-meta-4 text-xs tracking-wide dark:text-meta-9">{data.status}</span>
+                                                                            data.status === "canceled by user" ?
+                                                                                <span className="text-meta-1 text-xs tracking-wide dark:text-meta-1">Canceled By User</span> :
+                                                                                data.status === "created" ?
+                                                                                    <span className="text-meta-10 text-xs tracking-wide dark:text-meta-10">Created</span> :
+                                                                                    <span className="text-meta-4 text-xs tracking-wide dark:text-meta-9">{data.status}</span>
                                                                 }
                                                             </td>
                                                             <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
