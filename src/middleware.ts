@@ -52,9 +52,9 @@ export const config = {
 };
 
 export async function middleware(req: NextRequest) {
-    const token = await getToken({ req });
     const { pathname } = req.nextUrl;
     const host = req.headers.get('host') || "";
+    const cookieStore = await cookies();
 
     // Determine current subdomain status
     const isHotelSubdomain = host.startsWith('hotels.');
@@ -65,7 +65,6 @@ export async function middleware(req: NextRequest) {
 
     // 0. Login page redirects - check specific cookies for each login page (must be first)
     if (pathname === "/admin/login") {
-        const cookieStore = await cookies();
         const adminSessionToken = cookieStore.get('AdminSessionToken');
         if (adminSessionToken) {
             // Admin is logged in, redirect to dashboard
@@ -76,7 +75,6 @@ export async function middleware(req: NextRequest) {
     }
 
     if (pathname === HOTEL_LOGIN_ROUTE) {
-        const cookieStore = await cookies();
         const userSessionToken = cookieStore.get('SessionToken');
         if (userSessionToken) {
             // Hotel/user is logged in, redirect to hotel dashboard
@@ -104,53 +102,59 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL(pathname, 'https://hotels.thehotelmedia.com'));
     }
 
-    // 3. Subdomain-Specific Root Redirection
+    // 3. Hotel Route Authentication - Check SessionToken cookie directly (NOT NextAuth)
+    if (isHotelRoute && pathname !== HOTEL_LOGIN_ROUTE) {
+        const hotelSessionToken = cookieStore.get('SessionToken');
+        if (!hotelSessionToken) {
+            // No SessionToken cookie, redirect to hotel login
+            return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
+        }
+        // SessionToken exists, allow access to hotel routes
+        return NextResponse.next();
+    }
+
+    // 4. Admin Route Authentication - Use NextAuth token for admin routes
+    const isDashboardEndpoint = dashboardEndpoints.some((endpoint) => {
+        const regex = new RegExp(`^${endpoint.replace(/:path\*/g, '.*')}$`);
+        return regex.test(pathname);
+    });
+
+    // Only check NextAuth token for admin routes
+    const token = await getToken({ req });
+
+    // 5. Subdomain-Specific Root Redirection
     if (pathname === '/') {
         if (isHotelSubdomain) {
-            return NextResponse.redirect(new URL(token ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
+            const hotelSessionToken = cookieStore.get('SessionToken');
+            return NextResponse.redirect(new URL(hotelSessionToken ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
         }
         if (isAdminSubdomain) {
             return NextResponse.redirect(new URL(token ? DASHBOARD : LOGIN_ROUTE, req.url));
         }
     }
 
-    const isDashboardEndpoint = dashboardEndpoints.some((endpoint) => {
-        const regex = new RegExp(`^${endpoint.replace(/:path\*/g, '.*')}$`);
-        return regex.test(pathname);
-    });
-
-    // 4. Authentication & Role-based access
+    // 6. Admin Authentication & Role-based access
     if (token) {
-        // Redirection for authenticated users hitting root on their subdomains
-        if (pathname === "/" && !isApexDomain) {
-            const redirectUrl = (token.role === Role.ADMIN) ? DASHBOARD : HOTEL_DASHBOARD;
-            return NextResponse.redirect(new URL(redirectUrl, req.url));
-        }
-
-        // Prevent Admin users from accessing Hotel routes and vice-versa
-        if (token.role === Role.ADMIN && isHotelRoute) {
+        // Redirection for authenticated admin users hitting root
+        if (pathname === "/" && !isApexDomain && isAdminSubdomain) {
             return NextResponse.redirect(new URL(DASHBOARD, req.url));
         }
-        if (token.role !== Role.ADMIN && isDashboardEndpoint) {
+
+        // Protect admin dashboard routes - only allow admin role
+        if (isDashboardEndpoint && token.role !== Role.ADMIN) {
             return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
         }
     } else {
-        // 5. Unauthenticated protection
-
-        // On hotel subdomain, EVERYTHING requires hotel login (except the login page itself)
-        if (isHotelSubdomain && pathname !== HOTEL_LOGIN_ROUTE) {
-            return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
-        }
+        // 7. Unauthenticated protection for admin routes
 
         // On admin subdomain, protect dashboard routes
         if (isAdminSubdomain && isDashboardEndpoint) {
             return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
         }
 
-        // Protect hotel routes regardless of subdomain (if not on hotel login Page)
-        if (isHotelRoute && pathname !== HOTEL_LOGIN_ROUTE) {
-            // Use current request URL for redirect to support localhost development
-            return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
+        // Protect admin dashboard routes regardless of subdomain
+        if (isDashboardEndpoint && !isHotelRoute) {
+            return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
         }
     }
 

@@ -825,9 +825,9 @@ const Profile: React.FC<{}> = () => {
               <div className="flex flex-col gap-2.5 justify-between">
                 <div className="flex flex-col gap-2.5">
                   <div
-                    className="min-h-40 rounded-[14px] relative flex justify-center bg-cover bg-center bg-no-repeat"
+                    className="min-h-40  rounded-[14px] relative flex justify-center"
                     style={{
-                      backgroundImage: `url('${
+                      background: `url('${
                         data?.businessProfileRef?.coverImage || DefaultCoverPic
                       }')`,
                     }}
@@ -840,59 +840,49 @@ const Profile: React.FC<{}> = () => {
                       width={330}
                       height={160}
                       alt="Default cover image"
-                      className="w-14.5 h-14.5 rounded-full absolute -bottom-6 left-1/2 -translate-x-1/2 z-10 object-cover border-4 border-theme-black shadow-lg"
+                      className="w-14.5 h-14.5 rounded-full absolute -bottom-6 object-cover border-2 border-[#1C1C1C99]"
                     />
                   </div>
-                  <div className="flex flex-col gap-2 mt-10">
-                    <h5 className="text-xl sm:text-2xl font-bold dark:text-white text-white">
+                  <div className="flex justify-between">
+                    <h5 className="text-base font-bold dark:text-white text-white">
                       {(data &&
                         data.businessProfileRef &&
                         data.businessProfileRef?.name) ||
                         ""}
                     </h5>
-                    <div className="flex flex-wrap items-center gap-2 text-sm sm:text-base">
+                    <p className="text-xs font-normal dark:text-white text-white flex items-center gap-1">
                       {data &&
                       data?.businessProfileRef &&
                       data?.businessProfileRef?.businessTypeRef &&
                       data?.businessProfileRef?.businessTypeRef.name &&
                       data.businessProfileRef?.businessTypeRef.icon ? (
                         <>
-                          <div className="flex items-center gap-1.5">
+                          <span>
                             <Image
                               src={
                                 data?.businessProfileRef?.businessTypeRef.icon
                               }
-                              width={20}
-                              height={20}
-                              alt="Business type icon"
-                              className="w-5 h-5 object-contain"
+                              width={40}
+                              height={40}
+                              alt="Hotel image"
+                              className="h-4.5
+                                                         w-full mb-1.5"
                             />
-                            <span className="text-white/80 dark:text-white/80 font-medium">
-                              {data?.businessProfileRef?.businessTypeRef.name}
-                            </span>
-                          </div>
-                          {data &&
-                          data?.businessProfileRef &&
-                          data?.businessProfileRef?.businessSubtypeRef &&
-                          data?.businessProfileRef?.businessSubtypeRef.name ? (
-                            <span className="text-white/60 dark:text-white/60">
-                              {data?.businessProfileRef?.businessSubtypeRef.name}
-                            </span>
-                          ) : null}
+                          </span>
+                          <span>
+                            {data?.businessProfileRef?.businessTypeRef.name}
+                          </span>
                         </>
                       ) : (
-                        data &&
-                        data?.businessProfileRef &&
-                        data?.businessProfileRef?.businessSubtypeRef &&
-                        data?.businessProfileRef?.businessSubtypeRef.name ? (
-                          <span className="text-white/60 dark:text-white/60">
-                            {data?.businessProfileRef?.businessSubtypeRef.name}
-                          </span>
-                        ) : (
-                          ""
-                        )
+                        ""
                       )}
-                    </div>
+                      {data &&
+                      data?.businessProfileRef &&
+                      data?.businessProfileRef?.businessSubtypeRef &&
+                      data?.businessProfileRef?.businessSubtypeRef.name
+                        ? data?.businessProfileRef?.businessSubtypeRef.name
+                        : ""}
+                    </p>
                   </div>
                 </div>
                 <div className="flex justify-around">
