@@ -9,6 +9,7 @@ import { fetchHotelDashboard } from "@/api-services/hotel";
 import { PageTitle } from "@/components/Hotel/Layouts/AdminLayout";
 import { useSession } from "next-auth/react";
 import { fetchBookings } from "@/api-services/booking";
+import moment from "moment";
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
@@ -118,12 +119,19 @@ const Overview: React.FC<{}> = () => {
     placeholderData: keepPreviousData,
   });
 
-  // Fetch bookings for reservation status distribution (restaurants only)
+  // Fetch bookings for reservation status distribution (restaurants only) and chart data
   const { data: bookingsData, isFetching: isFetchingBookings } = useQuery({
     queryKey: ["bookings", "status-distribution"],
     queryFn: () => fetchBookings({ pageNumber: 1, limit: 1000 }),
     placeholderData: keepPreviousData,
     enabled: isRestaurant, // Only fetch for restaurants
+  });
+
+  // Fetch bookings for chart data (all business types)
+  const { data: chartBookingsData } = useQuery({
+    queryKey: ["bookings", "chart-data", duration],
+    queryFn: () => fetchBookings({ pageNumber: 1, limit: 1000 }),
+    placeholderData: keepPreviousData,
   });
 
   const availableRooms = data?.availableRooms ?? 0;
@@ -160,6 +168,126 @@ const Overview: React.FC<{}> = () => {
       total: confirmed + pending + cancelled + noShow,
     };
   }, [bookingsData, isRestaurant]);
+
+  // Calculate reservation stats over time for the line chart
+  const reservationChartData = useMemo(() => {
+    if (!chartBookingsData?.data) {
+      return {
+        labels: [],
+        series1: [],
+        series2: [],
+        totalReservations: 0,
+      };
+    }
+
+    const bookings = chartBookingsData.data;
+    const now = moment();
+    let startDate: moment.Moment;
+    let dateFormat: string;
+    let dateStep: moment.unitOfTime.DurationConstructor;
+
+    // Determine date range and format based on duration
+    switch (duration) {
+      case "1h":
+        startDate = moment().subtract(24, "hours");
+        dateFormat = "HH:mm";
+        dateStep = "hour";
+        break;
+      case "1d":
+        startDate = moment().subtract(7, "days");
+        dateFormat = "DD MMM";
+        dateStep = "day";
+        break;
+      case "1w":
+        startDate = moment().subtract(4, "weeks");
+        dateFormat = "DD MMM";
+        dateStep = "week";
+        break;
+      case "1m":
+        startDate = moment().subtract(6, "months");
+        dateFormat = "MMM YY";
+        dateStep = "month";
+        break;
+      case "1y":
+        startDate = moment().subtract(12, "months");
+        dateFormat = "MMM YY";
+        dateStep = "month";
+        break;
+      default:
+        startDate = moment().subtract(7, "days");
+        dateFormat = "DD MMM";
+        dateStep = "day";
+    }
+
+    // Initialize date buckets
+    const dateBuckets: { [key: string]: { new: number; confirmed: number } } = {};
+    const labels: string[] = [];
+    const currentDate = moment(startDate).startOf(dateStep === "hour" ? "hour" : dateStep === "day" ? "day" : dateStep === "week" ? "week" : "month");
+
+    while (currentDate.isSameOrBefore(now, dateStep === "hour" ? "hour" : dateStep === "day" ? "day" : dateStep === "week" ? "week" : "month")) {
+      const dateKey = currentDate.format(dateFormat);
+      labels.push(dateKey);
+      dateBuckets[dateKey] = { new: 0, confirmed: 0 };
+      currentDate.add(1, dateStep);
+    }
+
+    // Process bookings
+    bookings.forEach((booking) => {
+      const createdAt = moment(booking.createdAt);
+      const checkInDate = booking.checkIn ? moment(booking.checkIn) : null;
+      const status = booking.status?.toLowerCase() || "";
+
+      // Format the booking date according to the current duration format
+      let bookingDateKey: string | null = null;
+      let checkInDateKey: string | null = null;
+
+      // Format createdAt date
+      if (dateStep === "hour") {
+        bookingDateKey = createdAt.startOf("hour").format(dateFormat);
+      } else if (dateStep === "day") {
+        bookingDateKey = createdAt.startOf("day").format(dateFormat);
+      } else if (dateStep === "week") {
+        bookingDateKey = createdAt.startOf("week").format(dateFormat);
+      } else if (dateStep === "month") {
+        bookingDateKey = createdAt.startOf("month").format(dateFormat);
+      }
+
+      // Format checkIn date if available
+      if (checkInDate) {
+        if (dateStep === "hour") {
+          checkInDateKey = checkInDate.startOf("hour").format(dateFormat);
+        } else if (dateStep === "day") {
+          checkInDateKey = checkInDate.startOf("day").format(dateFormat);
+        } else if (dateStep === "week") {
+          checkInDateKey = checkInDate.startOf("week").format(dateFormat);
+        } else if (dateStep === "month") {
+          checkInDateKey = checkInDate.startOf("month").format(dateFormat);
+        }
+      }
+
+      // Count new reservations (by createdAt) - only if within date range
+      if (bookingDateKey && dateBuckets[bookingDateKey] && createdAt.isSameOrAfter(startDate) && createdAt.isSameOrBefore(now)) {
+        dateBuckets[bookingDateKey].new++;
+      }
+
+      // Count confirmed reservations (by checkIn date and status) - only if within date range
+      if (status === "confirmed" && checkInDateKey && dateBuckets[checkInDateKey] && checkInDate && checkInDate.isSameOrAfter(startDate) && checkInDate.isSameOrBefore(now)) {
+        dateBuckets[checkInDateKey].confirmed++;
+      }
+    });
+
+    // Convert to arrays for chart
+    const series1 = labels.map((label) => dateBuckets[label]?.new || 0);
+    const series2 = labels.map((label) => dateBuckets[label]?.confirmed || 0);
+    const totalReservations = bookings.length;
+
+    return {
+      labels,
+      series1,
+      series2,
+      totalReservations,
+    };
+  }, [chartBookingsData, duration]);
   return (
     <>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -353,42 +481,56 @@ const Overview: React.FC<{}> = () => {
                   stroke: {
                     curve: "smooth",
                   },
-
+                  fill: {
+                    type: "gradient",
+                    gradient: {
+                      shadeIntensity: 1,
+                      opacityFrom: 0.7,
+                      opacityTo: 0.3,
+                      stops: [0, 90, 100],
+                    },
+                  },
+                  colors: ["#3C50E0", "#10B981"],
                   title: {
-                    text: "1500",
+                    text: reservationChartData.totalReservations.toString(),
                     align: "left",
                   },
                   subtitle: {
                     text: "Reservation Stats",
                     align: "left",
                   },
-                  labels: [
-                    "01 Jan",
-                    "02 Jan",
-                    "3 Jan",
-                    "04 Jan",
-                    "05 Jan",
-                    "06 Jan",
-                    "07 Jan",
-                  ],
+                  labels: reservationChartData.labels,
                   xaxis: {
-                    type: "datetime",
+                    type: "category",
+                    labels: {
+                      style: {
+                        colors: "#ffffff",
+                      },
+                    },
                   },
                   yaxis: {
                     opposite: true,
+                    labels: {
+                      style: {
+                        colors: "#ffffff",
+                      },
+                    },
                   },
                   legend: {
                     horizontalAlign: "left",
+                    labels: {
+                      colors: "#ffffff",
+                    },
                   },
                 }}
                 series={[
                   {
-                    name: "series1",
-                    data: [31, 40, 0, 12, 85, 15],
+                    name: "New Reservations",
+                    data: reservationChartData.series1,
                   },
                   {
-                    name: "series2",
-                    data: [11, 32],
+                    name: "Confirmed Reservations",
+                    data: reservationChartData.series2,
                   },
                 ]}
                 type="area"
