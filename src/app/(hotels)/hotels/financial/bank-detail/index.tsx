@@ -149,7 +149,7 @@ export default function BankDetail() {
                                                 <ListIcon width={16} height={16} />
                                             </span>
                                             <select className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm" required={true} onChange={(e) => setFormInputs({ ...formInputs, bankName: e.target.value })} value={formInputs.bankName}>
-                                                <option value="" disabled={false} className="text-black dark:text-black">Select Room Type</option>
+                                                <option value="" disabled={false} className="text-black dark:text-black">Select Bank Type</option>
                                                 {
                                                     banks && banks.map((data, index) => (
                                                         <option key={index} value={data.name} className="text-black dark:text-black">{data.name}</option>
@@ -183,33 +183,6 @@ export default function BankDetail() {
                                     </div>
                                 </div>
 
-                                <div className="mb-3">
-                                    <Label id="description" >Description</Label>
-                                    {/* <textarea id="description" placeholder="" required={false} className="w-full rounded-2xl border border-theme-gray-1 bg-white px-4.5 py-3 text-white focus:border-primary focus-visible:outline-none dark:border-theme-gray-1 dark:bg-boxdark dark:text-white dark:focus:border-primary text-sm font-normal" name="description" value={formInputs.description} onChange={(e) => setFormInputs({ ...formInputs, description: e.target.value })} rows={4} ></textarea> */}
-                                </div>
-                                <label htmlFor="room-images" className="w-full rounded-theme-xl border border-theme-gray-1 bg-white px-3 py-2 text-white focus:border-primary focus-visible:outline-none dark:border-theme-gray-1 dark:bg-boxdark dark:text-white dark:focus:border-primary text-sm font-normal flex justify-between items-center mb-3">
-                                    <span>Room Images</span>
-                                    <input hidden={true} type="file" accept="images/*" className="hidden" id="room-images" multiple={true} onChange={handleImages} />
-                                    <label htmlFor="room-images" className="px-3 py-2 text-xs font-medium text-center text-white bg-primary/50  rounded-2xl hover:bg-primary/80 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-primary/50  dark:hover:bg-primary/80 dark:focus:ring-blue-800">
-                                        Browse
-                                    </label>
-                                </label>
-                                <div className="flex flex-wrap justify-start gap-2 w-full">
-                                    {/* {
-                                        formInputs.images && formInputs.images.map((file, index) => {
-                                            return (
-                                                <div key={index} className="flex justify-center items-center flex-col w-14 h-14 dark:bg-form-input dark:text-white relative rounded-xl">
-                                                    <button type="button" className="top-1 right-1 w-4 h-4 bg-primary absolute rounded-full text-white text-[10px] leading-[10px] flex justify-center items-center" onClick={() => removeFileFromArray(index)}>
-                                                        <svg className="h-3.5 w-3.5" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M15.5 5.5L5.5 15.5M15.5 15.5L10.5 10.5L5.5 5.5" className="stroke-white" strokeLinecap="round" strokeLinejoin="round" />
-                                                        </svg>
-                                                    </button>
-                                                    <img src={URL.createObjectURL(file)} alt="file" className="w-full h-full object-fit rounded-xl" />
-                                                </div>
-                                            )
-                                        })
-                                    } */}
-                                </div>
                             </div>
                             <div className="flex flex-wrap justify-end items-center gap-4">
                                 <button type="button" className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-theme-gray-1 dark:bg-theme-gray-1" onClick={() => setModal(false)}>
