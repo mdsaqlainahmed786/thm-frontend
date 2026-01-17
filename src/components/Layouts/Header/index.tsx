@@ -9,6 +9,10 @@ import Image from "next/image";
 import { useSearchInput } from "@/context/SearchProvider";
 import { useState } from "react";
 import { IoPersonAddOutline } from "react-icons/io5";
+import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchUser } from "@/api-services/user";
+
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
   isSearchable: boolean;
@@ -17,6 +21,22 @@ const Header = (props: {
 }) => {
   const { value, setValue } = useSearchInput();
   const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false);
+  const { data: session } = useSession();
+  
+  // Fetch current user's profile to get email
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user', session?.user?._id],
+    queryFn: () => {
+      if (session?.user?._id) {
+        return fetchUser(session.user._id);
+      }
+      return null;
+    },
+    enabled: !!session?.user?._id,
+  });
+
+  // Check if current user is root admin
+  const isRootAdmin = currentUser?.email === "admin@thehotelmedia.com";
   return (
     <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark-sidebar dark:drop-shadow-none">
       <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
@@ -142,16 +162,18 @@ const Header = (props: {
             <DarkModeSwitcher />
             {/* <!-- Dark Mode Toggler --> */}
 
-            {/* <!-- Add Admin Button --> */}
-            <li>
-              <button
-                onClick={() => setIsAddAdminModalOpen(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-stroke bg-white hover:bg-gray-100 dark:border-strokedark dark:bg-boxdark dark:hover:bg-meta-4"
-                title="Add Administrator"
-              >
-                <IoPersonAddOutline className="text-lg text-black dark:text-white" />
-              </button>
-            </li>
+            {/* <!-- Add Admin Button - Only visible to root admin --> */}
+            {isRootAdmin && (
+              <li>
+                <button
+                  onClick={() => setIsAddAdminModalOpen(true)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-stroke bg-white hover:bg-gray-100 dark:border-strokedark dark:bg-boxdark dark:hover:bg-meta-4"
+                  title="Add Administrator"
+                >
+                  <IoPersonAddOutline className="text-lg text-black dark:text-white" />
+                </button>
+              </li>
+            )}
             {/* <!-- Add Admin Button --> */}
 
             {/* <!-- Notification Menu Area --> */}

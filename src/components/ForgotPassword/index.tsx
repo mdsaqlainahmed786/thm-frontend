@@ -13,7 +13,7 @@ const ForgotPasswordForm = ({ isModal = false, onSuccess }: { isModal?: boolean,
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [otpValues, setOtpValues] = useState(["", "", "", "", ""]);
     const initialValues = {
-        email: '',
+        email: 'amitkesle@gmail.com',
         otp: "",
         resetToken: "",
         password: "",
@@ -134,7 +134,7 @@ const ForgotPasswordForm = ({ isModal = false, onSuccess }: { isModal?: boolean,
                 <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
                     Reset your password
                 </h2>
-                <span className="mb-1.5 block font-medium">Enter your user account's verified email address and we will send you a password reset link.</span>
+                <span className="mb-1.5 block font-medium text-black dark:text-white">Please note: The password reset OTP will be sent to the email address below.</span>
                 <form onSubmit={handleEmailSubmit} >
                     <div className="mb-4" >
                         <label className="mb-2.5 block font-medium text-black dark:text-white">
@@ -144,10 +144,11 @@ const ForgotPasswordForm = ({ isModal = false, onSuccess }: { isModal?: boolean,
                             <input
                                 type="email"
                                 placeholder="Enter your email"
-                                className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                                className="w-full rounded-lg border border-stroke bg-gray-100 dark:bg-gray-800 py-4 pl-6 pr-10 text-gray-500 dark:text-gray-400 outline-none cursor-not-allowed opacity-70 dark:border-gray-700"
                                 value={formInputs.email}
-                                onChange={(e) => setFormInputs({ ...formInputs, email: e.target.value })}
+                                readOnly={true}
                                 required={true}
+                                disabled={true}
                             />
                             <span className="absolute right-4 top-4">
                                 <svg
