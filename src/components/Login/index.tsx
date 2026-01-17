@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from 'next/navigation';
 import Link from "next/link";
 import { AuthenticationProvider } from "@/types/auth";
+import ForgotPasswordModal from "../ForgotPassword/ForgotPasswordModal";
 const SignInForm = () => {
     // const router = useRouter();
     const searchParams = useSearchParams();
@@ -15,6 +16,7 @@ const SignInForm = () => {
         password: "",
     }
     const [formInputs, setFormInputs] = useState(initialValues);
+    const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
     const validate = () => {
         const { email, password } = formInputs;
         const errors = {};
@@ -52,6 +54,7 @@ const SignInForm = () => {
         }
     }
     return (
+        <>
         <form onSubmit={handleSubmit}>
             <div className="mb-4" >
                 <label className="mb-2.5 block font-medium text-black dark:text-white">
@@ -168,12 +171,24 @@ const SignInForm = () => {
             <div className="mt-6 text-center">
                 <p>
                     {/* Forgot Password?{" "} */}
-                    <Link href="/auth/forgot-password" className="text-primary">
+                    {/* <Link href="/auth/forgot-password" className="text-primary">
                         Forgot Password?
-                    </Link>
+                    </Link> */}
+                    <button 
+                        type="button"
+                        onClick={() => setShowForgotPasswordModal(true)}
+                        className="text-primary hover:underline"
+                    >
+                        Forgot Password?
+                    </button>
                 </p>
             </div>
         </form>
+        <ForgotPasswordModal 
+            isOpen={showForgotPasswordModal}
+            onClose={() => setShowForgotPasswordModal(false)}
+        />
+        </>
     );
 }
 export default SignInForm;
