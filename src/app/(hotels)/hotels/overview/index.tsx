@@ -43,7 +43,7 @@ const roomAvailabilityOptions: ApexOptions = {
       breakpoint: 2600,
       options: {
         chart: {
-          width: 380,
+          width: "100%",
         },
       },
     },
@@ -85,7 +85,7 @@ const reservationStatusOptions: ApexOptions = {
       breakpoint: 2600,
       options: {
         chart: {
-          width: 380,
+          width: "100%",
         },
       },
     },
@@ -547,7 +547,7 @@ const Overview: React.FC<{}> = () => {
             <div className="mb-2">
               <div
                 id="chartReservationStatus"
-                className="mx-auto flex justify-center"
+                className="mx-auto flex justify-center w-full"
               >
                 <ReactApexChart
                   options={reservationStatusOptions}
@@ -610,7 +610,7 @@ const Overview: React.FC<{}> = () => {
               <PageTitle> Rooms Availability</PageTitle>
             </div>
             <div className="mb-2">
-              <div id="chartThree" className="mx-auto flex justify-center">
+              <div id="chartThree" className="mx-auto flex justify-center w-full">
                 <ReactApexChart
                   options={roomAvailabilityOptions}
                   series={[availableRooms, totalRooms - availableRooms]}
