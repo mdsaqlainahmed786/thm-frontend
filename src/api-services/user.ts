@@ -131,4 +131,24 @@ const fetchUserGrowth = async (params: { viewMode: "daily" | "monthly"; accountT
     }
 };
 
-export { fetchUser, fetchUsers, fetchUserGrowth }
+const addAdmin = async (username: string, adminPassword: string) => {
+    try {
+        const response = await apiRequest.post(`/admin/users/add-admin`, {
+            username,
+            adminPassword
+        });
+        if (response.status === 200 && response.data.status) {
+            const responseData = response.data.data;
+            toast.success("Admin added successfully");
+            return responseData as User;
+        } else {
+            toast.error("Something went wrong");
+            return null;
+        }
+    } catch (error) {
+        handleClientApiErrors(error);
+        return null;
+    }
+};
+
+export { fetchUser, fetchUsers, fetchUserGrowth, addAdmin }

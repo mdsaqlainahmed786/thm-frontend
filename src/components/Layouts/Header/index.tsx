@@ -1,10 +1,14 @@
+"use client";
 import Link from "next/link";
 import DarkModeSwitcher from "./DarkModeSwitcher";
 import DropdownMessage from "./DropdownMessage";
 import DropdownNotification from "./DropdownNotification";
 import DropdownUser from "./DropdownUser";
+import AddAdminModal from "./AddAdminModal";
 import Image from "next/image";
 import { useSearchInput } from "@/context/SearchProvider";
+import { useState } from "react";
+import { IoPersonAddOutline } from "react-icons/io5";
 const Header = (props: {
   sidebarOpen: string | boolean | undefined;
   isSearchable: boolean;
@@ -12,6 +16,7 @@ const Header = (props: {
   setSidebarOpen: (arg0: boolean) => void;
 }) => {
   const { value, setValue } = useSearchInput();
+  const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false);
   return (
     <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark-sidebar dark:drop-shadow-none">
       <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
@@ -137,6 +142,18 @@ const Header = (props: {
             <DarkModeSwitcher />
             {/* <!-- Dark Mode Toggler --> */}
 
+            {/* <!-- Add Admin Button --> */}
+            <li>
+              <button
+                onClick={() => setIsAddAdminModalOpen(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-stroke bg-white hover:bg-gray-100 dark:border-strokedark dark:bg-boxdark dark:hover:bg-meta-4"
+                title="Add Administrator"
+              >
+                <IoPersonAddOutline className="text-lg text-black dark:text-white" />
+              </button>
+            </li>
+            {/* <!-- Add Admin Button --> */}
+
             {/* <!-- Notification Menu Area --> */}
             <DropdownNotification />
             {/* <!-- Notification Menu Area --> */}
@@ -150,6 +167,13 @@ const Header = (props: {
           <DropdownUser />
           {/* <!-- User Area --> */}
         </div>
+
+        {/* <!-- Add Admin Modal --> */}
+        <AddAdminModal
+          isOpen={isAddAdminModalOpen}
+          onClose={() => setIsAddAdminModalOpen(false)}
+        />
+        {/* <!-- Add Admin Modal --> */}
       </div>
     </header>
   );
