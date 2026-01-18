@@ -7,13 +7,16 @@ import Image from "next/image";
 import SidebarItem from "./SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
+import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchUser } from "@/api-services/user";
 
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (arg: boolean) => void;
 }
 
-const menuGroups = [
+const getMenuGroups = (isRootAdmin: boolean = false) => [
   {
     name: "MENU",
     menuItems: [
@@ -78,6 +81,7 @@ const menuGroups = [
         children: [
           { label: "Individual User", route: "/users/individual" },
           { label: "Business User", route: "/users/business" },
+          ...(isRootAdmin ? [{ label: "Admin Users", route: "/users/admin" }] : []),
         ],
       },
       {
@@ -467,6 +471,25 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const pathname = usePathname();
   const [pageName, setPageName] = useState("dashboard");
   const [isCollapsed, setIsCollapsed] = useLocalStorage("adminSidebarCollapsed", true);
+  const { data: session } = useSession();
+  
+  // Fetch current user's profile to get email
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user', session?.user?._id],
+    queryFn: () => {
+      if (session?.user?._id) {
+        return fetchUser(session.user._id);
+      }
+      return null;
+    },
+    enabled: !!session?.user?._id,
+  });
+
+  // Check if current user is root admin
+  const isRootAdmin = currentUser?.email === "admin@thehotelmedia.com";
+  
+  // Generate menu groups based on root admin status
+  const menuGroups = getMenuGroups(isRootAdmin);
 
   const toggleCollapse = () => {
     const newState = !isCollapsed;
