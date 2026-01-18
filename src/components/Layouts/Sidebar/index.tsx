@@ -81,7 +81,7 @@ const getMenuGroups = (isRootAdmin: boolean = false) => [
         children: [
           { label: "Individual User", route: "/users/individual" },
           { label: "Business User", route: "/users/business" },
-          ...(isRootAdmin ? [{ label: "Admin Users", route: "/users/admin" }] : []),
+          ...(isRootAdmin ? [{ label: "Administrators", route: "/users/admin" }] : []),
         ],
       },
       {

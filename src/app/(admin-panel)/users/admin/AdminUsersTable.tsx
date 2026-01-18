@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { handleClientApiErrors } from "@/api-services/api-errors";
 import toast from "react-hot-toast";
 import { User } from "@/types/user";
@@ -9,17 +9,15 @@ import { useRouter } from "next/navigation";
 import moment from "moment";
 import Button from "@/components/Button";
 import { useSearchInput } from "@/context/SearchProvider";
-import { fetchAllUsers } from "@/api-services/user";
+import { fetchAllUsers, demoteAdmin } from "@/api-services/user";
 import { DefaultCoverPic } from "@/components/Profile";
-import TableSkeleton from "@/components/Loading/TableSkeleton";
 
 const AdminUsersTable: React.FC = () => {
   const { value } = useSearchInput();
   const route = useRouter();
+  const queryClient = useQueryClient();
   const [debouncedTerm, setDebouncedTerm] = useState("");
-  const [accountTypeFilter, setAccountTypeFilter] = useState<string>("");
-  const [roleFilter, setRoleFilter] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [demotingId, setDemotingId] = useState<string | null>(null);
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -38,27 +36,41 @@ const AdminUsersTable: React.FC = () => {
     isFetching,
     refetch,
   } = useQuery({
-    queryKey: [
-      "all-users",
-      debouncedTerm,
-      accountTypeFilter,
-      roleFilter,
-      sortOrder,
-    ],
+    queryKey: ["administrators"],
     queryFn: () => {
-      const params: { query?: string; accountType?: string; role?: string; sortOrder?: "asc" | "desc" } = {};
-      
-      if (debouncedTerm) params.query = debouncedTerm;
-      if (accountTypeFilter) params.accountType = accountTypeFilter;
-      if (roleFilter) params.role = roleFilter;
-      if (sortOrder) params.sortOrder = sortOrder;
-
-      return fetchAllUsers(params);
+      return fetchAllUsers();
     },
   });
 
-  // Filter users on client side if needed (backend already filters, but we keep this for local search)
-  const filteredUsers = data || [];
+  // Client-side filtering by search term only (backend always returns administrators)
+  const filteredUsers = (data || []).filter((user: User) => {
+    if (!debouncedTerm) return true;
+    const searchTerm = debouncedTerm.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(searchTerm) ||
+      user.username?.toLowerCase().includes(searchTerm) ||
+      user.email?.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  const handleDemoteAdmin = async (userID: string) => {
+    if (!confirm("Are you sure you want to demote this administrator to a regular user?")) {
+      return;
+    }
+
+    setDemotingId(userID);
+    try {
+      const result = await demoteAdmin(userID);
+      if (result) {
+        // Refetch administrators list
+        await queryClient.invalidateQueries({ queryKey: ["administrators"] });
+      }
+    } catch (error) {
+      // Error handling is done in the API service
+    } finally {
+      setDemotingId(null);
+    }
+  };
 
   return (
     <>
@@ -67,54 +79,11 @@ const AdminUsersTable: React.FC = () => {
           <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
             <div>
               <h4 className="text-title-sm2 font-bold text-black dark:text-white">
-                All Users
+                Administrators
               </h4>
               <p className="text-sm text-bodydark2 mt-1">
-                Total: {filteredUsers.length} users
+                Total: {filteredUsers.length} administrator{filteredUsers.length !== 1 ? 's' : ''}
               </p>
-            </div>
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <label className="mb-0 block font-medium tracking-wide text-black text-sm dark:text-white whitespace-nowrap">
-                  Account Type:
-                </label>
-                <select
-                  className="relative z-20 w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-4 py-1.5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[150px]"
-                  value={accountTypeFilter}
-                  onChange={(e) => setAccountTypeFilter(e.target.value)}
-                >
-                  <option value="">All Types</option>
-                  <option value="individual">Individual</option>
-                  <option value="business">Business</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="mb-0 block font-medium tracking-wide text-black text-sm dark:text-white whitespace-nowrap">
-                  Role:
-                </label>
-                <select
-                  className="relative z-20 w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-4 py-1.5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[120px]"
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                >
-                  <option value="">All Roles</option>
-                  <option value="administrator">Administrator</option>
-                  <option value="user">User</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="mb-0 block font-medium tracking-wide text-black text-sm dark:text-white whitespace-nowrap">
-                  Sort Order:
-                </label>
-                <select
-                  className="relative z-20 w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-4 py-1.5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[100px]"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-                >
-                  <option value="asc">Ascending</option>
-                  <option value="desc">Descending</option>
-                </select>
-              </div>
             </div>
           </div>
           <div className="max-w-full overflow-x-auto no-scrollbar">
@@ -123,9 +92,6 @@ const AdminUsersTable: React.FC = () => {
                 <tr className="bg-gray-2 text-left dark:bg-meta-4">
                   <th className="min-w-[220px] px-4 py-4 font-medium text-black dark:text-white xl:pl-11">
                     Name
-                  </th>
-                  <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white">
-                    Role
                   </th>
                   <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
                     Account Type
@@ -142,7 +108,7 @@ const AdminUsersTable: React.FC = () => {
                   <th className="min-w-[140px] px-4 py-4 font-medium text-black dark:text-white">
                     Created
                   </th>
-                  <th className="min-w-[100px] px-4 py-4 font-medium text-black dark:text-white">
+                  <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
                     Actions
                   </th>
                 </tr>
@@ -161,12 +127,8 @@ const AdminUsersTable: React.FC = () => {
                             <div className="flex-1 space-y-2">
                               <div className="h-4 w-32 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
                               <div className="h-3 w-24 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
-                              <div className="h-3 w-16 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
                             </div>
                           </div>
-                        </td>
-                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                          <div className="h-4 w-20 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
                         </td>
                         <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                           <div className="h-4 w-20 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
@@ -201,19 +163,21 @@ const AdminUsersTable: React.FC = () => {
                   </>
                 ) : isError ? (
                   <tr>
-                    <td colSpan={8} className="border-b border-[#eee] px-4 py-5 dark:border-strokedark text-center">
-                      <p className="text-red-500">Error loading users. Please try again.</p>
+                    <td colSpan={7} className="border-b border-[#eee] px-4 py-5 dark:border-strokedark text-center">
+                      <p className="text-red-500">Error loading administrators. Please try again.</p>
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="border-b border-[#eee] px-4 py-5 dark:border-strokedark text-center">
-                      <p className="text-black dark:text-white">No users found.</p>
+                    <td colSpan={7} className="border-b border-[#eee] px-4 py-5 dark:border-strokedark text-center">
+                      <p className="text-black dark:text-white">
+                        {debouncedTerm ? "No administrators found matching your search." : "No administrators found."}
+                      </p>
                     </td>
                   </tr>
                 ) : (
                   <>
-                    {filteredUsers.map((user, key) => {
+                    {filteredUsers.map((user: User, key: number) => {
                       return (
                         <tr key={key}>
                           <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
@@ -255,11 +219,6 @@ const AdminUsersTable: React.FC = () => {
                                 </p>
                               </div>
                             </div>
-                          </td>
-                          <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                            <p className="text-black dark:text-white text-sm font-medium capitalize">
-                              {user.role || "user"}
-                            </p>
                           </td>
                           <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                             <p className="text-xs font-medium capitalize text-black dark:text-white">
@@ -329,6 +288,50 @@ const AdminUsersTable: React.FC = () => {
                                   route.push(`/users/${user._id}`);
                                 }}
                               />
+                              <button
+                                onClick={() => handleDemoteAdmin(user._id)}
+                                disabled={demotingId === user._id}
+                                className="flex h-8 w-8 items-center justify-center rounded border border-danger bg-danger text-white hover:bg-danger/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Demote Administrator"
+                              >
+                                {demotingId === user._id ? (
+                                  <svg
+                                    className="animate-spin h-4 w-4"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                  </svg>
+                                ) : (
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                )}
+                              </button>
                             </div>
                           </td>
                         </tr>

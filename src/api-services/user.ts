@@ -152,21 +152,12 @@ const addAdmin = async (username: string, adminPassword: string) => {
 };
 
 /**
- * Fetch all users (root-admin only endpoint)
- * Optional query params: query, accountType, role, sortOrder (asc|desc)
+ * Fetch all administrators (root-admin only endpoint)
+ * No query params; always returns users with role administrator
  */
-const fetchAllUsers = async (params?: { query?: string; accountType?: string; role?: string; sortOrder?: "asc" | "desc" }) => {
+const fetchAllUsers = async () => {
     try {
-        const paramsKey = Object.keys(params || {});
-        const apiParams: { [key: string]: any } = {};
-        paramsKey && paramsKey.map((key) => {
-            if (key && params && params[key as keyof typeof params] && params[key as keyof typeof params] !== '') {
-                Object.assign(apiParams, { [key]: params[key as keyof typeof params] })
-            }
-        })
-        const response = await apiRequest.get(`/admin/users/fetch-users`, {
-            params: apiParams
-        });
+        const response = await apiRequest.get(`/admin/users/fetch-users`);
         if (response.status === 200 && response.data.status) {
             const responseData = response.data;
             return responseData.data as User[];
@@ -180,4 +171,24 @@ const fetchAllUsers = async (params?: { query?: string; accountType?: string; ro
     }
 }
 
-export { fetchUser, fetchUsers, fetchUserGrowth, addAdmin, fetchAllUsers }
+/**
+ * Demote administrator to user (root-admin only endpoint)
+ */
+const demoteAdmin = async (userID: string) => {
+    try {
+        const response = await apiRequest.put(`/admin/users/${userID}/demote-admin`);
+        if (response.status === 200 && response.data.status) {
+            const responseData = response.data.data;
+            toast.success("Administrator demoted successfully");
+            return responseData as User;
+        } else {
+            toast.error("Something went wrong");
+            return null;
+        }
+    } catch (error) {
+        handleClientApiErrors(error);
+        return null;
+    }
+};
+
+export { fetchUser, fetchUsers, fetchUserGrowth, addAdmin, fetchAllUsers, demoteAdmin }
