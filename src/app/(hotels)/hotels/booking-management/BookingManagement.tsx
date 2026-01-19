@@ -13,7 +13,7 @@ export default function BookingManagement() {
   console.log(session?.user);
   console.log(businessTypeName);
 
-  const isHotel = businessTypeName === "Hotel";
+  const isHotel = businessTypeName === "Hotel" || businessTypeName === "Home Stays";
   const isRestaurant = businessTypeName === "Restaurant";
   const pageTitle = isRestaurant ? "Table Management" : "Booking Management";
 

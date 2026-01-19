@@ -15,7 +15,7 @@ interface SidebarProps {
 }
 const getMenuGroups = (businessTypeName?: string) => {
   const isRestaurant = businessTypeName === "Restaurant";
-  const isHotel = businessTypeName === "Hotel";
+  const isHotel = businessTypeName === "Hotel" || businessTypeName === "Home Stays";
 
   const bookingLabel = isRestaurant ? "Table Management" : "Booking Management";
   const bookingRoute = isRestaurant
