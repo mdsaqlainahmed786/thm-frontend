@@ -552,6 +552,9 @@ const Profile: React.FC<{}> = () => {
                       background: `url('${
                         data?.businessProfileRef?.coverImage || DefaultCoverPic
                       }')`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
                     }}
                   >
                     <Image
