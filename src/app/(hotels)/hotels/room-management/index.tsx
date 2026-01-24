@@ -50,6 +50,9 @@ export default function RoomManagement() {
   };
   const [formInputs, setFormInputs] = useState(initialFormInputs);
   const [existingImages, setExistingImages] = useState<RoomImageRef[]>([]);
+  const [removedExistingImageIds, setRemovedExistingImageIds] = useState<
+    string[]
+  >([]);
   const [editMode, setEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -83,6 +86,7 @@ export default function RoomManagement() {
     if (!modal) {
       setIsSubmitting(false);
       setExistingImages([]);
+      setRemovedExistingImageIds([]);
     }
   }, [modal]);
 
@@ -126,6 +130,11 @@ export default function RoomManagement() {
       if (formInputs.images && formInputs.images.length !== 0) {
         formInputs.images.map((image) => {
           fromData.append("images", image);
+        });
+      }
+      if (editMode && removedExistingImageIds.length) {
+        removedExistingImageIds.forEach((id) => {
+          fromData.append("removedRoomImages", id);
         });
       }
       if (formInputs.amenities?.length) {
@@ -191,6 +200,12 @@ export default function RoomManagement() {
       ...formInputs,
       images: formInputs.images.filter((_, index) => index !== fileIndex),
     });
+  };
+  const removeExistingImage = (imageId: string) => {
+    setExistingImages((prev) => prev.filter((img) => img._id !== imageId));
+    setRemovedExistingImageIds((prev) =>
+      prev.includes(imageId) ? prev : [...prev, imageId]
+    );
   };
   const changeAminity = async (
     newValue:
@@ -749,28 +764,39 @@ export default function RoomManagement() {
                     Browse
                   </span>
                 </label>
-                {editMode && existingImages.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-xs text-white/70 mb-1">
-                      Existing images
-                    </p>
-                    <div className="flex flex-wrap justify-start gap-2 w-full">
-                      {existingImages.map((img) => (
-                        <div
-                          key={img._id}
-                          className="flex justify-center items-center flex-col w-14 h-14 dark:bg-form-input dark:text-white relative rounded-xl overflow-hidden"
-                        >
-                          <img
-                            src={img.thumbnailUrl || img.sourceUrl}
-                            alt="Room"
-                            className="w-full h-full object-cover rounded-xl"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 <div className="flex flex-wrap justify-start gap-2 w-full">
+                  {editMode &&
+                    existingImages.map((img) => (
+                      <div
+                        key={img._id}
+                        className="flex justify-center items-center flex-col w-14 h-14 dark:bg-form-input dark:text-white relative rounded-xl overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          className="top-1 right-1 w-4 h-4 bg-primary absolute rounded-full text-white text-[10px] leading-[10px] flex justify-center items-center"
+                          onClick={() => removeExistingImage(img._id)}
+                        >
+                          <svg
+                            className="h-3.5 w-3.5"
+                            viewBox="0 0 21 21"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M15.5 5.5L5.5 15.5M15.5 15.5L10.5 10.5L5.5 5.5"
+                              className="stroke-white"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </button>
+                        <img
+                          src={img.thumbnailUrl || img.sourceUrl}
+                          alt="Room"
+                          className="w-full h-full object-cover rounded-xl"
+                        />
+                      </div>
+                    ))}
                   {formInputs.images &&
                     formInputs.images.map((file, index) => {
                       return (
@@ -866,6 +892,7 @@ export default function RoomManagement() {
               setModal(!modal);
               setFormInputs(initialFormInputs);
               setExistingImages([]);
+              setRemovedExistingImageIds([]);
               setEditMode(false);
             }}
             svg={<SVG.Plus />}
@@ -959,6 +986,7 @@ export default function RoomManagement() {
                                     setEditMode(true);
                                     setModal(true);
                                     setExistingImages(room?.roomImagesRef ?? []);
+                                    setRemovedExistingImageIds([]);
                                     setFormInputs({
                                       ...initialFormInputs,
                                       _id: room?._id,
