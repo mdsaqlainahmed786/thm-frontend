@@ -199,6 +199,35 @@ const updateRoom = async (data: any, ID: string) => {
     }
 }
 
+const deleteRoomImage = async (roomID: string, imageID: string) => {
+    try {
+        // Try common endpoint patterns for deleting room images
+        const response = await apiRequest.delete(`/rooms/${roomID}/images/${imageID}`);
+        if (response.status === 200 && response.data.status) {
+            toast.success(response.data.message || "Image deleted successfully");
+            return response.data;
+        } else {
+            toast.error(response?.data?.message ?? ERROR_MESSAGE);
+            return response.data;
+        }
+    } catch (error) {
+        // If the specific endpoint doesn't exist, try alternative pattern
+        try {
+            const response = await apiRequest.delete(`/room-images/${imageID}`);
+            if (response.status === 200 && response.data.status) {
+                toast.success(response.data.message || "Image deleted successfully");
+                return response.data;
+            } else {
+                toast.error(response?.data?.message ?? ERROR_MESSAGE);
+                return response.data;
+            }
+        } catch (error2) {
+            handleClientApiErrors(error2);
+            return undefined;
+        }
+    }
+}
+
 const fetchRoom = async (ID: string) => {
     try {
         const response = await apiRequest.get(`/rooms/${ID}`);
@@ -366,4 +395,4 @@ const fetchBusinessNotifications = async () => {
     }
 }
 
-export { fetchHotelDashboard, fetchProfile, updateProfile, fetchLanguages, fetchBusinessQuestions, updateAmenity, fetchAmenities, createRoom, deleteRoom, updateRoom, fetchRoom, fetchBanks, fetchAccounts, setPrimaryAccount, createBankAccount, fetchBusinessNotifications, deleteAccount }
+export { fetchHotelDashboard, fetchProfile, updateProfile, fetchLanguages, fetchBusinessQuestions, updateAmenity, fetchAmenities, createRoom, deleteRoom, updateRoom, deleteRoomImage, fetchRoom, fetchBanks, fetchAccounts, setPrimaryAccount, createBankAccount, fetchBusinessNotifications, deleteAccount }

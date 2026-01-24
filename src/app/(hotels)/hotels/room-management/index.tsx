@@ -17,6 +17,7 @@ import {
   updateAmenity,
   updateRoom,
   fetchRoom,
+  deleteRoomImage,
 } from "@/api-services/hotel";
 import Select, { ActionMeta, MultiValue, SingleValue } from "react-select";
 import toast from "react-hot-toast";
@@ -141,11 +142,30 @@ export default function RoomManagement() {
           fromData.append("images", image);
         });
       }
-      if (editMode && removedExistingImageIds.length) {
-        removedExistingImageIds.forEach((id) => {
-          fromData.append("removedRoomImages", id);
-        });
+      // Delete removed images individually before updating room
+      if (editMode && removedExistingImageIds.length > 0) {
+        try {
+          // Delete each image individually using the delete endpoint
+          const deletePromises = removedExistingImageIds.map((imageId) =>
+            deleteRoomImage(formInputs._id, imageId)
+          );
+          const deleteResults = await Promise.all(deletePromises);
+          
+          // Check if all deletions were successful
+          const allDeleted = deleteResults.every((result) => result?.status);
+          if (!allDeleted) {
+            toast.error("Some images could not be deleted. Please try again.");
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Error deleting images:", error);
+          toast.error("Failed to delete images. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
       }
+      
       if (formInputs.amenities?.length) {
         // Extract amenity IDs and recursively flatten any nested arrays
         // NOTE: Backend currently expects a SINGLE amenity ObjectId, so we
@@ -215,7 +235,8 @@ export default function RoomManagement() {
     });
   };
   const removeExistingImage = (imageId: string) => {
-    setExistingImages((prev) => prev.filter((img) => img._id !== imageId));
+    // Just mark for deletion - don't delete from backend yet
+    // Only delete when "Update Room" is clicked
     setRemovedExistingImageIds((prev) =>
       prev.includes(imageId) ? prev : [...prev, imageId]
     );
@@ -853,7 +874,11 @@ export default function RoomManagement() {
                   type="button"
                   disabled={isSubmitting}
                   className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-theme-gray-1 dark:bg-theme-gray-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setModal(false)}
+                  onClick={() => {
+                    // Reset removed images when canceling - don't delete them
+                    setRemovedExistingImageIds([]);
+                    setModal(false);
+                  }}
                 >
                   <span className="text-sm font-normal font-quicksand">
                     Cancel
