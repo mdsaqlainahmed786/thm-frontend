@@ -112,6 +112,15 @@ export default function RoomManagement() {
         toast.error("Price per night should be greater than 0");
         return false;
       }
+      // Validate that there's at least one image (existing or new)
+      const remainingExistingImages = existingImages.filter(
+        (img) => !removedExistingImageIds.includes(img._id)
+      );
+      const totalImages = remainingExistingImages.length + formInputs.images.length;
+      if (totalImages === 0) {
+        toast.error("At least one image is required");
+        return false;
+      }
       setIsSubmitting(true);
       const fromData = new FormData();
       fromData.append("price", parseFloat(formInputs.price as any).toFixed(2));
@@ -162,6 +171,8 @@ export default function RoomManagement() {
         const data = await updateRoom(fromData, formInputs._id);
         if (data.status) {
           setFormInputs(initialFormInputs);
+          setExistingImages([]);
+          setRemovedExistingImageIds([]);
           setModal(false);
           refetch();
         }
@@ -169,6 +180,8 @@ export default function RoomManagement() {
         const data = await createRoom(fromData);
         if (data.status) {
           setFormInputs(initialFormInputs);
+          setExistingImages([]);
+          setRemovedExistingImageIds([]);
           setModal(false);
           refetch();
         }
@@ -766,37 +779,39 @@ export default function RoomManagement() {
                 </label>
                 <div className="flex flex-wrap justify-start gap-2 w-full">
                   {editMode &&
-                    existingImages.map((img) => (
-                      <div
-                        key={img._id}
-                        className="flex justify-center items-center flex-col w-14 h-14 dark:bg-form-input dark:text-white relative rounded-xl overflow-hidden"
-                      >
-                        <button
-                          type="button"
-                          className="top-1 right-1 w-4 h-4 bg-primary absolute rounded-full text-white text-[10px] leading-[10px] flex justify-center items-center"
-                          onClick={() => removeExistingImage(img._id)}
+                    existingImages
+                      .filter((img) => !removedExistingImageIds.includes(img._id))
+                      .map((img) => (
+                        <div
+                          key={img._id}
+                          className="flex justify-center items-center flex-col w-14 h-14 dark:bg-form-input dark:text-white relative rounded-xl overflow-hidden"
                         >
-                          <svg
-                            className="h-3.5 w-3.5"
-                            viewBox="0 0 21 21"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                          <button
+                            type="button"
+                            className="top-1 right-1 w-4 h-4 bg-primary absolute rounded-full text-white text-[10px] leading-[10px] flex justify-center items-center z-10"
+                            onClick={() => removeExistingImage(img._id)}
                           >
-                            <path
-                              d="M15.5 5.5L5.5 15.5M15.5 15.5L10.5 10.5L5.5 5.5"
-                              className="stroke-white"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                        <img
-                          src={img.thumbnailUrl || img.sourceUrl}
-                          alt="Room"
-                          className="w-full h-full object-cover rounded-xl"
-                        />
-                      </div>
-                    ))}
+                            <svg
+                              className="h-3.5 w-3.5"
+                              viewBox="0 0 21 21"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M15.5 5.5L5.5 15.5M15.5 15.5L10.5 10.5L5.5 5.5"
+                                className="stroke-white"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          <img
+                            src={img.thumbnailUrl || img.sourceUrl}
+                            alt="Room"
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        </div>
+                      ))}
                   {formInputs.images &&
                     formInputs.images.map((file, index) => {
                       return (
