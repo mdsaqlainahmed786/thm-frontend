@@ -16,9 +16,11 @@ import {
   deleteRoom,
   updateAmenity,
   updateRoom,
+  fetchRoom,
 } from "@/api-services/hotel";
 import Select, { ActionMeta, MultiValue, SingleValue } from "react-select";
 import toast from "react-hot-toast";
+import { RoomImageRef } from "@/types/room";
 export default function RoomManagement() {
   const [pageNo, setPageNo] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -47,6 +49,7 @@ export default function RoomManagement() {
     totalRooms: 0,
   };
   const [formInputs, setFormInputs] = useState(initialFormInputs);
+  const [existingImages, setExistingImages] = useState<RoomImageRef[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -79,6 +82,7 @@ export default function RoomManagement() {
   useEffect(() => {
     if (!modal) {
       setIsSubmitting(false);
+      setExistingImages([]);
     }
   }, [modal]);
 
@@ -745,6 +749,27 @@ export default function RoomManagement() {
                     Browse
                   </span>
                 </label>
+                {editMode && existingImages.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-xs text-white/70 mb-1">
+                      Existing images
+                    </p>
+                    <div className="flex flex-wrap justify-start gap-2 w-full">
+                      {existingImages.map((img) => (
+                        <div
+                          key={img._id}
+                          className="flex justify-center items-center flex-col w-14 h-14 dark:bg-form-input dark:text-white relative rounded-xl overflow-hidden"
+                        >
+                          <img
+                            src={img.thumbnailUrl || img.sourceUrl}
+                            alt="Room"
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="flex flex-wrap justify-start gap-2 w-full">
                   {formInputs.images &&
                     formInputs.images.map((file, index) => {
@@ -840,6 +865,7 @@ export default function RoomManagement() {
             onClick={() => {
               setModal(!modal);
               setFormInputs(initialFormInputs);
+              setExistingImages([]);
               setEditMode(false);
             }}
             svg={<SVG.Plus />}
@@ -932,8 +958,9 @@ export default function RoomManagement() {
 
                                     setEditMode(true);
                                     setModal(true);
+                                    setExistingImages(room?.roomImagesRef ?? []);
                                     setFormInputs({
-                                      ...formInputs,
+                                      ...initialFormInputs,
                                       _id: room?._id,
                                       title: room?.title,
                                       description: room?.description,
@@ -946,6 +973,22 @@ export default function RoomManagement() {
                                       totalRooms: room?.totalRooms,
                                       amenities: selectedAmenities,
                                     });
+                                    // Fallback: list endpoint may not include roomImagesRef (or may omit images),
+                                    // so fetch room details.
+                                    if (
+                                      !room?.roomImagesRef ||
+                                      room.roomImagesRef.length === 0
+                                    ) {
+                                      fetchRoom(room._id)
+                                        .then((roomDetails) => {
+                                          setExistingImages(
+                                            roomDetails?.roomImagesRef ?? []
+                                          );
+                                        })
+                                        .catch(() => {
+                                          // ignore
+                                        });
+                                    }
                                   }}
                                 />
                                 <Button.Hotel.Delete

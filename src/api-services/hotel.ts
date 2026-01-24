@@ -4,6 +4,7 @@ import { ERROR_MESSAGE, handleClientApiErrors } from "./api-errors";
 import { User, UserProfile } from "@/types/user";
 import { Amenity } from "@/types/amenity";
 import { UsersRef } from "@/types/subscription";
+import { Room } from "@/types/room";
 const fetchHotelDashboard = async (params: { [key: string]: any }) => {
     try {
         const paramsKey = Object.keys(params);
@@ -198,6 +199,22 @@ const updateRoom = async (data: any, ID: string) => {
     }
 }
 
+const fetchRoom = async (ID: string) => {
+    try {
+        const response = await apiRequest.get(`/rooms/${ID}`);
+        if (response.status === 200 && response.data.status) {
+            const responseData = response.data.data;
+            return responseData as Room;
+        } else {
+            toast.error(response?.data?.message ?? ERROR_MESSAGE);
+            return undefined;
+        }
+    } catch (error) {
+        handleClientApiErrors(error)
+        return undefined;
+    }
+}
+
 const fetchBanks = async () => {
     try {
         const response = await apiRequest.get(`/banks`);
@@ -349,4 +366,4 @@ const fetchBusinessNotifications = async () => {
     }
 }
 
-export { fetchHotelDashboard, fetchProfile, updateProfile, fetchLanguages, fetchBusinessQuestions, updateAmenity, fetchAmenities, createRoom, deleteRoom, updateRoom, fetchBanks, fetchAccounts, setPrimaryAccount, createBankAccount, fetchBusinessNotifications, deleteAccount }
+export { fetchHotelDashboard, fetchProfile, updateProfile, fetchLanguages, fetchBusinessQuestions, updateAmenity, fetchAmenities, createRoom, deleteRoom, updateRoom, fetchRoom, fetchBanks, fetchAccounts, setPrimaryAccount, createBankAccount, fetchBusinessNotifications, deleteAccount }

@@ -16,4 +16,12 @@ export interface Room {
     createdAt: string
     updatedAt: string
     totalRooms: number
+    roomImagesRef?: RoomImageRef[]
+}
+
+export interface RoomImageRef {
+    _id: string
+    isCoverImage: boolean
+    sourceUrl: string
+    thumbnailUrl: string
 }
