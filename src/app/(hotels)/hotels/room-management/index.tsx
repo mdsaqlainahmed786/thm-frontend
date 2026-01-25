@@ -18,11 +18,14 @@ import {
   updateRoom,
   fetchRoom,
   deleteRoomImage,
+  fetchAccounts,
 } from "@/api-services/hotel";
 import Select, { ActionMeta, MultiValue, SingleValue } from "react-select";
 import toast from "react-hot-toast";
 import { RoomImageRef } from "@/types/room";
+import { useRouter } from "next/navigation";
 export default function RoomManagement() {
+  const router = useRouter();
   const [pageNo, setPageNo] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResources, setTotalResources] = useState(0);
@@ -74,6 +77,11 @@ export default function RoomManagement() {
     queryFn: () => fetchAmenities({ documentLimit: 122 }),
     placeholderData: keepPreviousData,
   });
+  const { data: bankAccounts } = useQuery({
+    queryKey: ["bankAccounts"],
+    queryFn: () => fetchAccounts(),
+    placeholderData: keepPreviousData,
+  });
   const loading = isPending || isFetching;
   useEffect(() => {
     if (data) {
@@ -105,6 +113,19 @@ export default function RoomManagement() {
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
+      
+      // Check for validated bank accounts only when creating a new room (not editing)
+      if (!editMode) {
+        const accounts = bankAccounts || [];
+        const hasValidatedAccount = accounts.some((account) => account.isVerified === true);
+        
+        if (!hasValidatedAccount) {
+          toast.error("You need to have a valid bank account details to proceed");
+          router.push("/hotels/financial/bank-detail");
+          return false;
+        }
+      }
+      
       if (
         formInputs.price == null ||
         isNaN(formInputs.price) ||
@@ -928,6 +949,16 @@ export default function RoomManagement() {
           <Button.Hotel.Button
             name="Add Room"
             onClick={() => {
+              // Check for validated bank accounts before opening the modal
+              const accounts = bankAccounts || [];
+              const hasValidatedAccount = accounts.some((account) => account.isVerified === true);
+              
+              if (!hasValidatedAccount) {
+                toast.error("You need to have a valid bank account details to proceed");
+                router.push("/hotels/financial/bank-detail");
+                return;
+              }
+              
               setModal(!modal);
               setFormInputs(initialFormInputs);
               setExistingImages([]);
