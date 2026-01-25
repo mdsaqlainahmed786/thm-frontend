@@ -77,8 +77,8 @@ export default function RoomManagement() {
     queryFn: () => fetchAmenities({ documentLimit: 122 }),
     placeholderData: keepPreviousData,
   });
-  const { data: bankAccounts } = useQuery({
-    queryKey: ["bankAccounts"],
+  const { data: bankAccounts, isLoading: isLoadingBankAccounts } = useQuery({
+    queryKey: ["accounts"],
     queryFn: () => fetchAccounts(),
     placeholderData: keepPreviousData,
   });
@@ -116,7 +116,14 @@ export default function RoomManagement() {
       
       // Check for bank accounts only when creating a new room (not editing)
       if (!editMode) {
-        const accounts = bankAccounts || [];
+        // Wait for bank accounts to load if still loading
+        if (isLoadingBankAccounts) {
+          toast.error("Please wait while we check your bank accounts...");
+          return false;
+        }
+        
+        // Check if bank accounts exist
+        const accounts = Array.isArray(bankAccounts) ? bankAccounts : [];
         const hasBankAccount = accounts.length > 0;
         
         if (!hasBankAccount) {
@@ -950,7 +957,14 @@ export default function RoomManagement() {
             name="Add Room"
             onClick={() => {
               // Check for bank accounts before opening the modal
-              const accounts = bankAccounts || [];
+              // Wait for bank accounts to load if still loading
+              if (isLoadingBankAccounts) {
+                toast.error("Please wait while we check your bank accounts...");
+                return;
+              }
+              
+              // Check if bank accounts exist
+              const accounts = Array.isArray(bankAccounts) ? bankAccounts : [];
               const hasBankAccount = accounts.length > 0;
               
               if (!hasBankAccount) {
