@@ -2,7 +2,7 @@
 import { PageContent, PageTitle } from "@/components/Hotel/Layouts/AdminLayout";
 import Button from "@/components/Button";
 import SVG from "@/components/SVG";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import Loading from "@/components/Loading";
 import { useState, useEffect } from "react";
 import Label from "@/components/Hotel/Common/UI/Label";
@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import Image from "next/image";
 import { setPrimaryAccount } from "@/api-services/hotel";
 export default function BankDetail() {
+    const queryClient = useQueryClient();
     const [pageNo, setPageNo] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalResources, setTotalResources] = useState(0);
@@ -82,6 +83,8 @@ export default function BankDetail() {
                     setFormInputs(initialFormInputs);
                     setModal(false);
                     refetch();
+                    // Invalidate the accounts query cache so other pages get fresh data
+                    queryClient.invalidateQueries({ queryKey: ["accounts"] });
                 }
             }
         } catch (error) {
@@ -94,6 +97,8 @@ export default function BankDetail() {
             if (data.status) {
                 toast.success(data.message);
                 refetch();
+                // Invalidate the accounts query cache so other pages get fresh data
+                queryClient.invalidateQueries({ queryKey: ["accounts"] });
             } else {
                 toast.error(data.message);
             }

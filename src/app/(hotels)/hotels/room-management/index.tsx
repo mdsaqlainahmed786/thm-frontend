@@ -3,7 +3,7 @@ import { PageContent, PageTitle } from "@/components/Hotel/Layouts/AdminLayout";
 import Button from "@/components/Button";
 import SVG from "@/components/SVG";
 import { fetchRooms } from "@/api-services/booking";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import Loading from "@/components/Loading";
 import { useState, useEffect } from "react";
 import Paginator from "@/components/Paginator";
@@ -26,6 +26,7 @@ import { RoomImageRef } from "@/types/room";
 import { useRouter } from "next/navigation";
 export default function RoomManagement() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [pageNo, setPageNo] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResources, setTotalResources] = useState(0);
@@ -77,10 +78,12 @@ export default function RoomManagement() {
     queryFn: () => fetchAmenities({ documentLimit: 122 }),
     placeholderData: keepPreviousData,
   });
-  const { data: bankAccounts, isLoading: isLoadingBankAccounts } = useQuery({
+  const { data: bankAccounts, isLoading: isLoadingBankAccounts, refetch: refetchBankAccounts } = useQuery({
     queryKey: ["accounts"],
     queryFn: () => fetchAccounts(),
     placeholderData: keepPreviousData,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
   const loading = isPending || isFetching;
   useEffect(() => {
@@ -89,6 +92,11 @@ export default function RoomManagement() {
       setTotalPages(data?.totalPages ?? 0);
     }
   }, [data]);
+
+  // Refetch bank accounts when component mounts to ensure fresh data
+  useEffect(() => {
+    refetchBankAccounts();
+  }, [refetchBankAccounts]);
 
   // Reset submitting state when modal closes
   useEffect(() => {
@@ -116,14 +124,11 @@ export default function RoomManagement() {
       
       // Check for bank accounts only when creating a new room (not editing)
       if (!editMode) {
-        // Wait for bank accounts to load if still loading
-        if (isLoadingBankAccounts) {
-          toast.error("Please wait while we check your bank accounts...");
-          return false;
-        }
+        // Refetch bank accounts to ensure we have the latest data
+        const { data: freshBankAccounts } = await refetchBankAccounts();
         
         // Check if bank accounts exist
-        const accounts = Array.isArray(bankAccounts) ? bankAccounts : [];
+        const accounts = Array.isArray(freshBankAccounts) ? freshBankAccounts : [];
         const hasBankAccount = accounts.length > 0;
         
         if (!hasBankAccount) {
@@ -955,16 +960,12 @@ export default function RoomManagement() {
         <div>
           <Button.Hotel.Button
             name="Add Room"
-            onClick={() => {
-              // Check for bank accounts before opening the modal
-              // Wait for bank accounts to load if still loading
-              if (isLoadingBankAccounts) {
-                toast.error("Please wait while we check your bank accounts...");
-                return;
-              }
+            onClick={async () => {
+              // Refetch bank accounts to ensure we have the latest data
+              const { data: freshBankAccounts } = await refetchBankAccounts();
               
               // Check if bank accounts exist
-              const accounts = Array.isArray(bankAccounts) ? bankAccounts : [];
+              const accounts = Array.isArray(freshBankAccounts) ? freshBankAccounts : [];
               const hasBankAccount = accounts.length > 0;
               
               if (!hasBankAccount) {
