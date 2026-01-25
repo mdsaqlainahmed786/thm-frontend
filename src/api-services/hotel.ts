@@ -72,17 +72,17 @@ const updateProfile = async (data: any) => {
 
 const fetchLanguages = async () => {
     try {
-        const response = await apiRequest.get(`/languages`);
-        if (response.status === 200 && response.data.status) {
-            const responseData = response.data.data as {
-                countries: string[];
-                languageCode: string;
-                languageName: string;
-            }[];
-            return responseData.filter((item) => item.countries.includes("India"));
-        } else {
-            return [];
-        }
+        // const response = await apiRequest.get(`/languages`);
+        // if (response.status === 200 && response.data.status) {
+        //     const responseData = response.data.data as {
+        //         countries: string[];
+        //         languageCode: string;
+        //         languageName: string;
+        //     }[];
+            return []
+        // } else {
+        //     return [];
+        // }
     } catch (error) {
         handleClientApiErrors(error)
         return undefined;
