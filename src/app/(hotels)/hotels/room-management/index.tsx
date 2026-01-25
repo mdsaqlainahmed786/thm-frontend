@@ -168,8 +168,6 @@ export default function RoomManagement() {
       
       if (formInputs.amenities?.length) {
         // Extract amenity IDs and recursively flatten any nested arrays
-        // NOTE: Backend currently expects a SINGLE amenity ObjectId, so we
-        // send only the first valid ID to avoid CastError on the server.
         const amenityIds: string[] = [];
 
         formInputs.amenities.forEach((a) => {
@@ -177,13 +175,14 @@ export default function RoomManagement() {
           amenityIds.push(...flattened);
         });
 
-        const firstValidId =
-          amenityIds.find(
-            (id) => typeof id === "string" && id.trim().length > 0
-          ) ?? "";
+        // Filter out invalid IDs and get all valid amenity IDs
+        const validAmenityIds = amenityIds.filter(
+          (id) => typeof id === "string" && id.trim().length > 0
+        );
 
-        if (firstValidId) {
-          fromData.append("amenities", firstValidId);
+        // Send all selected amenities as a JSON string array
+        if (validAmenityIds.length > 0) {
+          fromData.append("amenities", JSON.stringify(validAmenityIds));
         }
       }
 
