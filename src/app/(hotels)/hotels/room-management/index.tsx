@@ -1007,16 +1007,27 @@ export default function RoomManagement() {
                                 <Button.Hotel.Edit
                                   name="Edit"
                                   svg={<SVG.Edit />}
-                                  onClick={() => {
-                                    const selectedAmenities = amenities?.length
+                                  onClick={async () => {
+                                    // Always fetch room details to get complete data including amenities and images
+                                    const roomDetails = await fetchRoom(room._id);
+                                    
+                                    // Get amenities from room data (could be from list or details)
+                                    const roomAmenities = roomDetails?.amenities || room?.amenities || [];
+                                    
+                                    // Convert room amenities to array of strings for comparison
+                                    const roomAmenityIds = Array.isArray(roomAmenities)
+                                      ? roomAmenities
+                                          .flat()
+                                          .map((id: any) => id?.toString() || id)
+                                      : [];
+                                    
+                                    // Match amenities with available amenities list
+                                    const selectedAmenities = amenities?.length && roomAmenityIds.length
                                       ? amenities
-                                          .filter((a) =>
-                                            Array.isArray(room?.amenities)
-                                              ? room.amenities
-                                                  .flat()
-                                                  .includes(a._id.toString())
-                                              : false
-                                          )
+                                          .filter((a) => {
+                                            const amenityId = a._id?.toString();
+                                            return roomAmenityIds.includes(amenityId);
+                                          })
                                           .map((a) => ({
                                             value: a._id.toString(),
                                             label: a.name,
@@ -1025,38 +1036,22 @@ export default function RoomManagement() {
 
                                     setEditMode(true);
                                     setModal(true);
-                                    setExistingImages(room?.roomImagesRef ?? []);
+                                    setExistingImages(roomDetails?.roomImagesRef ?? room?.roomImagesRef ?? []);
                                     setRemovedExistingImageIds([]);
                                     setFormInputs({
                                       ...initialFormInputs,
                                       _id: room?._id,
-                                      title: room?.title,
-                                      description: room?.description,
-                                      roomType: room?.roomType,
-                                      mealPlan: room?.mealPlan,
-                                      children: room?.children,
-                                      adults: room?.adults,
-                                      price: room?.pricePerNight,
-                                      bedType: room?.bedType,
-                                      totalRooms: room?.totalRooms,
+                                      title: roomDetails?.title || room?.title,
+                                      description: roomDetails?.description || room?.description,
+                                      roomType: roomDetails?.roomType || room?.roomType,
+                                      mealPlan: roomDetails?.mealPlan || room?.mealPlan,
+                                      children: roomDetails?.children ?? room?.children,
+                                      adults: roomDetails?.adults ?? room?.adults,
+                                      price: roomDetails?.pricePerNight ?? room?.pricePerNight,
+                                      bedType: roomDetails?.bedType || room?.bedType,
+                                      totalRooms: roomDetails?.totalRooms ?? room?.totalRooms,
                                       amenities: selectedAmenities,
                                     });
-                                    // Fallback: list endpoint may not include roomImagesRef (or may omit images),
-                                    // so fetch room details.
-                                    if (
-                                      !room?.roomImagesRef ||
-                                      room.roomImagesRef.length === 0
-                                    ) {
-                                      fetchRoom(room._id)
-                                        .then((roomDetails) => {
-                                          setExistingImages(
-                                            roomDetails?.roomImagesRef ?? []
-                                          );
-                                        })
-                                        .catch(() => {
-                                          // ignore
-                                        });
-                                    }
                                   }}
                                 />
                                 <Button.Hotel.Delete
