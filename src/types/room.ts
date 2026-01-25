@@ -5,7 +5,7 @@ export interface Room {
     children: number
     maxOccupancy: number
     availability: boolean
-    amenities: string[]
+    amenities: string[] | Array<{ _id: string; name: string; category?: string }>
     roomType: string
     businessProfileID: string
     title: string

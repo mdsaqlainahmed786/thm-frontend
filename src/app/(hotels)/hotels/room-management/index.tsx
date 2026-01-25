@@ -1014,11 +1014,20 @@ export default function RoomManagement() {
                                     // Get amenities from room data (could be from list or details)
                                     const roomAmenities = roomDetails?.amenities || room?.amenities || [];
                                     
-                                    // Convert room amenities to array of strings for comparison
+                                    // Convert room amenities to array of IDs
+                                    // Amenities can be either: array of strings/IDs OR array of objects with _id property
                                     const roomAmenityIds = Array.isArray(roomAmenities)
                                       ? roomAmenities
                                           .flat()
-                                          .map((id: any) => id?.toString() || id)
+                                          .map((item: any) => {
+                                            // If it's an object with _id, extract the _id
+                                            if (item && typeof item === 'object' && item._id) {
+                                              return item._id.toString();
+                                            }
+                                            // If it's already a string/ID, use it directly
+                                            return item?.toString() || item;
+                                          })
+                                          .filter((id: any) => id) // Remove any null/undefined values
                                       : [];
                                     
                                     // Match amenities with available amenities list
