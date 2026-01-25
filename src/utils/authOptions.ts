@@ -6,6 +6,17 @@ import { cookies } from 'next/headers'
 import { AuthenticationProvider } from "@/types/auth";
 import { LOGIN_ROUTE } from "@/types/auth";
 
+// Cookie options for Safari compatibility
+// Access tokens need to be readable by JavaScript (for axios interceptors)
+// Refresh tokens are read server-side only, but we keep them consistent
+const getCookieOptions = () => ({
+    secure: process.env.NODE_ENV === 'production', // true in production (HTTPS), false in development
+    sameSite: 'lax' as const, // Required for Safari compatibility
+    path: '/', // Ensure cookies work across all routes
+    maxAge: 60 * 60 * 24 * 7, // 7 days in seconds (604800)
+    // Note: httpOnly is NOT set because access tokens need to be readable by JavaScript
+});
+
 // Helper function to decode JWT token
 function decodeJWT(token: string): any {
     try {
@@ -54,8 +65,9 @@ const authOptions: AuthOptions = {
                     const user = response.data?.data;
                     const cookieStore = await cookies();
                     // Admin uses separate cookie names
-                    cookieStore.set('X-Admin-Access-Token', user.accessToken, { secure: false });
-                    cookieStore.set('AdminSessionToken', user.refreshToken, { secure: false });
+                    const cookieOptions = getCookieOptions();
+                    cookieStore.set('X-Admin-Access-Token', user.accessToken, cookieOptions);
+                    cookieStore.set('AdminSessionToken', user.refreshToken, cookieOptions);
                     return user;
                 } catch (error: any) {
                     const { response } = error;
@@ -100,8 +112,9 @@ const authOptions: AuthOptions = {
                         throw new Error("You don't have the right permission to access this page.")
                     }
                     const cookieStore = await cookies();
-                    cookieStore.set('X-Access-Token', user.accessToken, { secure: false });
-                    cookieStore.set('SessionToken', user.refreshToken, { secure: false });
+                    const cookieOptions = getCookieOptions();
+                    cookieStore.set('X-Access-Token', user.accessToken, cookieOptions);
+                    cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
                     return user;
                 } catch (error: any) {
                     const { response } = error;

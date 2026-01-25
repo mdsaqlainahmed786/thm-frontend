@@ -3,6 +3,17 @@ import { cookies } from 'next/headers';
 import axios from 'axios';
 import AppConfig from '@/config/constants';
 
+// Cookie options for Safari compatibility
+// Access tokens need to be readable by JavaScript (for axios interceptors)
+// Refresh tokens are read server-side only, but we keep them consistent
+const getCookieOptions = () => ({
+    secure: process.env.NODE_ENV === 'production', // true in production (HTTPS), false in development
+    sameSite: 'lax' as const, // Required for Safari compatibility
+    path: '/', // Ensure cookies work across all routes
+    maxAge: 60 * 60 * 24 * 7, // 7 days in seconds (604800)
+    // Note: httpOnly is NOT set because access tokens need to be readable by JavaScript
+});
+
 export async function POST(request: NextRequest) {
     try {
         const cookieStore = await cookies();
@@ -34,13 +45,10 @@ export async function POST(request: NextRequest) {
 
                 const user = response.data?.data;
                 if (user?.accessToken) {
-                    cookieStore.set('X-Admin-Access-Token', user.accessToken, {
-                        secure: false,
-                    });
+                    const cookieOptions = getCookieOptions();
+                    cookieStore.set('X-Admin-Access-Token', user.accessToken, cookieOptions);
                     if (user.refreshToken) {
-                        cookieStore.set('AdminSessionToken', user.refreshToken, {
-                            secure: false,
-                        });
+                        cookieStore.set('AdminSessionToken', user.refreshToken, cookieOptions);
                     }
                 }
 
@@ -78,13 +86,10 @@ export async function POST(request: NextRequest) {
 
                 const user = response.data?.data;
                 if (user?.accessToken) {
-                    cookieStore.set('X-Access-Token', user.accessToken, {
-                        secure: false,
-                    });
+                    const cookieOptions = getCookieOptions();
+                    cookieStore.set('X-Access-Token', user.accessToken, cookieOptions);
                     if (user.refreshToken) {
-                        cookieStore.set('SessionToken', user.refreshToken, {
-                            secure: false,
-                        });
+                        cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
                     }
                 }
 
