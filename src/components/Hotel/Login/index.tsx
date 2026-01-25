@@ -11,6 +11,7 @@ const LoginInForm = () => {
         password: "",
     }
     const [formInputs, setFormInputs] = useState(initialValues);
+    const [isLoading, setIsLoading] = useState(false);
     const validate = () => {
         const { email, password } = formInputs;
         const errors: any = {};
@@ -36,6 +37,7 @@ const LoginInForm = () => {
         e.preventDefault();
         const isValid = validate();
         if (isValid) {
+            setIsLoading(true);
             try {
                 const data = await signIn(AuthenticationProvider.HOTEL, {
                     email: formInputs.email,
@@ -45,6 +47,7 @@ const LoginInForm = () => {
                 })
                 if (data?.error) {
                     toast.error(data?.error);
+                    setIsLoading(false);
                     return;
                 } else {
                     toast.success("Logged in");
@@ -53,6 +56,7 @@ const LoginInForm = () => {
             } catch (error: any) {
                 const errorData = error?.message ?? "Something went wrong while checking your credentials. Please try again later."
                 toast.error(errorData);
+                setIsLoading(false);
                 return errorData;
             }
         } else {
@@ -105,9 +109,11 @@ const LoginInForm = () => {
                     </div>
                 </div>
             </div>
-            <button type="submit"
-                className="w-full text-white hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-theme-lg text-sm sm:text-lg px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 bg-primary/50">
-                Sign in
+            <button 
+                type="submit"
+                disabled={isLoading}
+                className={`w-full text-white hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-theme-lg text-sm sm:text-lg px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 bg-primary/50 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                {isLoading ? 'Signing...' : 'Sign in'}
             </button>
         </form>
     );
