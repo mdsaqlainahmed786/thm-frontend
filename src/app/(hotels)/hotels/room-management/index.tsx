@@ -114,12 +114,12 @@ export default function RoomManagement() {
     try {
       e.preventDefault();
       
-      // Check for validated bank accounts only when creating a new room (not editing)
+      // Check for bank accounts only when creating a new room (not editing)
       if (!editMode) {
         const accounts = bankAccounts || [];
-        const hasValidatedAccount = accounts.some((account) => account.isVerified === true);
+        const hasBankAccount = accounts.length > 0;
         
-        if (!hasValidatedAccount) {
+        if (!hasBankAccount) {
           toast.error("You need to have a valid bank account details to proceed");
           router.push("/hotels/financial/bank-detail");
           return false;
@@ -949,11 +949,11 @@ export default function RoomManagement() {
           <Button.Hotel.Button
             name="Add Room"
             onClick={() => {
-              // Check for validated bank accounts before opening the modal
+              // Check for bank accounts before opening the modal
               const accounts = bankAccounts || [];
-              const hasValidatedAccount = accounts.some((account) => account.isVerified === true);
+              const hasBankAccount = accounts.length > 0;
               
-              if (!hasValidatedAccount) {
+              if (!hasBankAccount) {
                 toast.error("You need to have a valid bank account details to proceed");
                 router.push("/hotels/financial/bank-detail");
                 return;
