@@ -299,7 +299,8 @@ const authOptions: AuthOptions = {
     session: {
         strategy: "jwt"
     },
-    secret: "rCpp0FxsnpdW76Nyb7BUdddd",
+    // IMPORTANT: keep this in env in prod; fallback prevents token decode mismatch in middleware
+    secret: process.env.NEXTAUTH_SECRET || "rCpp0FxsnpdW76Nyb7BUdddd",
     pages: {
         signIn: LOGIN_ROUTE,
     },

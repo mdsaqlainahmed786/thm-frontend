@@ -53,7 +53,12 @@ export const config = {
 
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
-    const host = req.headers.get('host') || "";
+    // Behind proxies/CDNs, `host` can be unreliable. Prefer forwarded host.
+    const forwardedHost = req.headers.get('x-forwarded-host');
+    const host = (forwardedHost || req.headers.get('host') || "")
+        .split(',')[0]
+        .trim()
+        .toLowerCase();
     const cookieStore = await cookies();
 
     // Determine current subdomain status
@@ -101,7 +106,11 @@ export async function middleware(req: NextRequest) {
     // Read NextAuth token once (used for both admin + hotel auth).
     // This lets us authorize hotel routes even when refresh tokens are httpOnly on API domain
     // (or not returned at all) as long as NextAuth session is valid.
-    const nextAuthToken = await getToken({ req });
+    // IMPORTANT: getToken() must use the same secret as NextAuth, otherwise it always returns null.
+    const nextAuthToken = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET || "rCpp0FxsnpdW76Nyb7BUdddd",
+    });
 
     // 0. Login page redirects - check specific cookies for each login page (must be first)
     if (pathname === "/admin/login") {
@@ -125,7 +134,7 @@ export async function middleware(req: NextRequest) {
         });
         if (userSessionToken || nextAuthToken) {
             // Hotel/user is logged in, redirect to hotel dashboard
-            console.log('[MIDDLEWARE] SessionToken found, redirecting to dashboard');
+            console.log('[MIDDLEWARE] Auth found (SessionToken or NextAuth), redirecting to dashboard');
             return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
         }
         // No hotel session, allow access to hotel login page
@@ -171,7 +180,7 @@ export async function middleware(req: NextRequest) {
             return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
         }
         // SessionToken exists, allow access to hotel routes
-        console.log('[MIDDLEWARE] SessionToken found, allowing access to hotel route');
+        console.log('[MIDDLEWARE] Auth found (SessionToken or NextAuth), allowing access to hotel route');
         return NextResponse.next();
     }
 
