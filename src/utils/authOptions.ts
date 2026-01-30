@@ -77,13 +77,21 @@ const authOptions: AuthOptions = {
                         hasRefreshToken: !!user?.refreshToken
                     });
                     
-                    if (!user?.accessToken || !user?.refreshToken) {
-                        console.error('[AUTH] Missing tokens in admin user object');
-                        throw new Error("Invalid response from server: missing tokens");
+                    // Some backends return refresh token via Set-Cookie (httpOnly), not JSON.
+                    // We require an accessToken here (used by client-side axios). Refresh token is optional.
+                    if (!user?.accessToken) {
+                        console.error('[AUTH] Missing accessToken in admin user object');
+                        throw new Error("Invalid response from server: missing access token");
                     }
+                    const setCookieHeader = (response.headers as any)?.['set-cookie'];
+                    console.log('[AUTH] Admin login response set-cookie header present:', !!setCookieHeader);
                     
                     cookieStore.set('X-Admin-Access-Token', user.accessToken, cookieOptions);
-                    cookieStore.set('AdminSessionToken', user.refreshToken, cookieOptions);
+                    if (user?.refreshToken) {
+                        cookieStore.set('AdminSessionToken', user.refreshToken, cookieOptions);
+                    } else {
+                        console.warn('[AUTH] Admin refreshToken missing in JSON; not setting AdminSessionToken cookie from response body');
+                    }
                     
                     // Verify cookies were set
                     const setAdminAccessToken = cookieStore.get('X-Admin-Access-Token');
@@ -181,16 +189,24 @@ const authOptions: AuthOptions = {
                         refreshTokenLength: user?.refreshToken?.length
                     });
                     
-                    if (!user?.accessToken || !user?.refreshToken) {
-                        console.error('[AUTH] Missing tokens in user object:', {
+                    // Some backends return refresh token via Set-Cookie (httpOnly), not JSON.
+                    // We require an accessToken here (used by client-side axios). Refresh token is optional.
+                    if (!user?.accessToken) {
+                        console.error('[AUTH] Missing accessToken in user object:', {
                             hasAccessToken: !!user?.accessToken,
                             hasRefreshToken: !!user?.refreshToken
                         });
-                        throw new Error("Invalid response from server: missing tokens");
+                        throw new Error("Invalid response from server: missing access token");
                     }
+                    const setCookieHeader = (response.headers as any)?.['set-cookie'];
+                    console.log('[AUTH] Hotel login response set-cookie header present:', !!setCookieHeader);
                     
                     cookieStore.set('X-Access-Token', user.accessToken, cookieOptions);
-                    cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
+                    if (user?.refreshToken) {
+                        cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
+                    } else {
+                        console.warn('[AUTH] Hotel refreshToken missing in JSON; not setting SessionToken cookie from response body');
+                    }
                     
                     // Verify cookies were set
                     const setAccessToken = cookieStore.get('X-Access-Token');

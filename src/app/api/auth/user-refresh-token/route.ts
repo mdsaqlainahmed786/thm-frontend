@@ -76,6 +76,8 @@ export async function POST(request: NextRequest) {
                     cookieStore.set('X-Admin-Access-Token', user.accessToken, cookieOptions);
                     if (user.refreshToken) {
                         cookieStore.set('AdminSessionToken', user.refreshToken, cookieOptions);
+                    } else {
+                        console.warn('[REFRESH-TOKEN] Admin refreshToken missing in JSON; leaving AdminSessionToken cookie unchanged');
                     }
                     console.log('[REFRESH-TOKEN] Admin tokens refreshed successfully');
                 }
@@ -134,6 +136,8 @@ export async function POST(request: NextRequest) {
                     cookieStore.set('X-Access-Token', user.accessToken, cookieOptions);
                     if (user.refreshToken) {
                         cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
+                    } else {
+                        console.warn('[REFRESH-TOKEN] Hotel refreshToken missing in JSON; leaving SessionToken cookie unchanged');
                     }
                     console.log('[REFRESH-TOKEN] Hotel tokens refreshed successfully');
                 }
