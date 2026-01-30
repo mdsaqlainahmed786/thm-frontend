@@ -8,14 +8,38 @@ import { LOGIN_ROUTE } from "@/types/auth";
 
 // Cookie options for Safari compatibility
 // Access tokens need to be readable by JavaScript (for axios interceptors)
-// Refresh tokens are read server-side only, but we keep them consistent
-const getCookieOptions = () => ({
+// Refresh tokens should be httpOnly (server-only)
+const getAccessCookieOptions = () => ({
     secure: process.env.NODE_ENV === 'production', // true in production (HTTPS), false in development
     sameSite: 'lax' as const, // Required for Safari compatibility
     path: '/', // Ensure cookies work across all routes
     maxAge: 60 * 60 * 24 * 7, // 7 days in seconds (604800)
     // Note: httpOnly is NOT set because access tokens need to be readable by JavaScript
 });
+
+const getRefreshCookieOptions = () => ({
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+    httpOnly: true,
+});
+
+function extractCookieValue(setCookieHeader: string[] | string | undefined, cookieName: string): string | undefined {
+    if (!setCookieHeader) return undefined;
+    const cookiesArr = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
+    for (const cookieStr of cookiesArr) {
+        // Example: "SessionToken=abc123; Path=/; HttpOnly; Secure; SameSite=Lax"
+        if (typeof cookieStr !== 'string') continue;
+        const prefix = `${cookieName}=`;
+        if (cookieStr.startsWith(prefix)) {
+            const valuePart = cookieStr.slice(prefix.length);
+            const value = valuePart.split(';')[0];
+            return value || undefined;
+        }
+    }
+    return undefined;
+}
 
 // Helper function to decode JWT token
 function decodeJWT(token: string): any {
@@ -71,7 +95,8 @@ const authOptions: AuthOptions = {
                     cookieStore.delete('SessionToken');
                     
                     // Admin uses separate cookie names
-                    const cookieOptions = getCookieOptions();
+                    const accessCookieOptions = getAccessCookieOptions();
+                    const refreshCookieOptions = getRefreshCookieOptions();
                     console.log('[AUTH] Setting admin cookies:', {
                         hasAccessToken: !!user?.accessToken,
                         hasRefreshToken: !!user?.refreshToken
@@ -83,14 +108,20 @@ const authOptions: AuthOptions = {
                         console.error('[AUTH] Missing accessToken in admin user object');
                         throw new Error("Invalid response from server: missing access token");
                     }
-                    const setCookieHeader = (response.headers as any)?.['set-cookie'];
+                    const setCookieHeader = (response.headers as any)?.['set-cookie'] as string[] | string | undefined;
                     console.log('[AUTH] Admin login response set-cookie header present:', !!setCookieHeader);
                     
-                    cookieStore.set('X-Admin-Access-Token', user.accessToken, cookieOptions);
-                    if (user?.refreshToken) {
-                        cookieStore.set('AdminSessionToken', user.refreshToken, cookieOptions);
+                    cookieStore.set('X-Admin-Access-Token', user.accessToken, accessCookieOptions);
+                    const adminRefreshTokenFromBody = user?.refreshToken as string | undefined;
+                    const adminRefreshTokenFromCookie =
+                        extractCookieValue(setCookieHeader, 'AdminSessionToken') ??
+                        extractCookieValue(setCookieHeader, 'adminRefreshToken') ??
+                        extractCookieValue(setCookieHeader, 'refreshToken');
+                    const adminRefreshToken = adminRefreshTokenFromBody || adminRefreshTokenFromCookie;
+                    if (adminRefreshToken) {
+                        cookieStore.set('AdminSessionToken', adminRefreshToken, refreshCookieOptions);
                     } else {
-                        console.warn('[AUTH] Admin refreshToken missing in JSON; not setting AdminSessionToken cookie from response body');
+                        console.warn('[AUTH] Admin refreshToken missing in JSON and Set-Cookie; AdminSessionToken will not be set');
                     }
                     
                     // Verify cookies were set
@@ -177,12 +208,13 @@ const authOptions: AuthOptions = {
                     cookieStore.delete('X-Admin-Access-Token');
                     cookieStore.delete('AdminSessionToken');
                     
-                    const cookieOptions = getCookieOptions();
+                    const accessCookieOptions = getAccessCookieOptions();
+                    const refreshCookieOptions = getRefreshCookieOptions();
                     console.log('[AUTH] Setting hotel cookies with options:', {
-                        secure: cookieOptions.secure,
-                        sameSite: cookieOptions.sameSite,
-                        path: cookieOptions.path,
-                        maxAge: cookieOptions.maxAge,
+                        secure: accessCookieOptions.secure,
+                        sameSite: accessCookieOptions.sameSite,
+                        path: accessCookieOptions.path,
+                        maxAge: accessCookieOptions.maxAge,
                         hasAccessToken: !!user?.accessToken,
                         hasRefreshToken: !!user?.refreshToken,
                         accessTokenLength: user?.accessToken?.length,
@@ -198,14 +230,22 @@ const authOptions: AuthOptions = {
                         });
                         throw new Error("Invalid response from server: missing access token");
                     }
-                    const setCookieHeader = (response.headers as any)?.['set-cookie'];
+                    const setCookieHeader = (response.headers as any)?.['set-cookie'] as string[] | string | undefined;
                     console.log('[AUTH] Hotel login response set-cookie header present:', !!setCookieHeader);
                     
-                    cookieStore.set('X-Access-Token', user.accessToken, cookieOptions);
-                    if (user?.refreshToken) {
-                        cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
+                    cookieStore.set('X-Access-Token', user.accessToken, accessCookieOptions);
+                    const refreshTokenFromBody = user?.refreshToken as string | undefined;
+                    // Backend seems to set refresh token via Set-Cookie on API host; we mirror it into our own SessionToken cookie
+                    const refreshTokenFromCookie =
+                        extractCookieValue(setCookieHeader, 'SessionToken') ??
+                        extractCookieValue(setCookieHeader, 'userRefreshToken') ??
+                        extractCookieValue(setCookieHeader, 'refreshToken');
+                    const refreshToken = refreshTokenFromBody || refreshTokenFromCookie;
+                    if (refreshToken) {
+                        cookieStore.set('SessionToken', refreshToken, refreshCookieOptions);
+                        console.log('[AUTH] SessionToken set from', refreshTokenFromBody ? 'response body' : 'set-cookie header');
                     } else {
-                        console.warn('[AUTH] Hotel refreshToken missing in JSON; not setting SessionToken cookie from response body');
+                        console.warn('[AUTH] Hotel refreshToken missing in JSON and Set-Cookie; SessionToken will not be set (middleware will redirect)');
                     }
                     
                     // Verify cookies were set
