@@ -3,7 +3,7 @@ import { PageContent, PageTitle } from "@/components/Hotel/Layouts/AdminLayout";
 import Button from "@/components/Button";
 import SVG from "@/components/SVG";
 import { fetchRooms } from "@/api-services/booking";
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Loading from "@/components/Loading";
 import { useState, useEffect } from "react";
 import Paginator from "@/components/Paginator";
@@ -18,15 +18,11 @@ import {
   updateRoom,
   fetchRoom,
   deleteRoomImage,
-  fetchAccounts,
 } from "@/api-services/hotel";
 import Select, { ActionMeta, MultiValue, SingleValue } from "react-select";
 import toast from "react-hot-toast";
 import { RoomImageRef } from "@/types/room";
-import { useRouter } from "next/navigation";
 export default function RoomManagement() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const [pageNo, setPageNo] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResources, setTotalResources] = useState(0);
@@ -78,13 +74,6 @@ export default function RoomManagement() {
     queryFn: () => fetchAmenities({ documentLimit: 122 }),
     placeholderData: keepPreviousData,
   });
-  const { data: bankAccounts, isLoading: isLoadingBankAccounts, refetch: refetchBankAccounts } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: () => fetchAccounts(),
-    placeholderData: keepPreviousData,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-  });
   const loading = isPending || isFetching;
   useEffect(() => {
     if (data) {
@@ -92,11 +81,6 @@ export default function RoomManagement() {
       setTotalPages(data?.totalPages ?? 0);
     }
   }, [data]);
-
-  // Refetch bank accounts when component mounts to ensure fresh data
-  useEffect(() => {
-    refetchBankAccounts();
-  }, [refetchBankAccounts]);
 
   // Reset submitting state when modal closes
   useEffect(() => {
@@ -121,22 +105,6 @@ export default function RoomManagement() {
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
-      
-      // Check for bank accounts only when creating a new room (not editing)
-      if (!editMode) {
-        // Refetch bank accounts to ensure we have the latest data
-        const { data: freshBankAccounts } = await refetchBankAccounts();
-        
-        // Check if bank accounts exist
-        const accounts = Array.isArray(freshBankAccounts) ? freshBankAccounts : [];
-        const hasBankAccount = accounts.length > 0;
-        
-        if (!hasBankAccount) {
-          toast.error("You need to have a valid bank account details to proceed");
-          router.push("/hotels/financial/bank-detail");
-          return false;
-        }
-      }
       
       if (
         formInputs.price == null ||
@@ -960,20 +928,7 @@ export default function RoomManagement() {
         <div>
           <Button.Hotel.Button
             name="Add Room"
-            onClick={async () => {
-              // Refetch bank accounts to ensure we have the latest data
-              const { data: freshBankAccounts } = await refetchBankAccounts();
-              
-              // Check if bank accounts exist
-              const accounts = Array.isArray(freshBankAccounts) ? freshBankAccounts : [];
-              const hasBankAccount = accounts.length > 0;
-              
-              if (!hasBankAccount) {
-                toast.error("You need to have a valid bank account details to proceed");
-                router.push("/hotels/financial/bank-detail");
-                return;
-              }
-              
+            onClick={() => {
               setModal(!modal);
               setFormInputs(initialFormInputs);
               setExistingImages([]);
