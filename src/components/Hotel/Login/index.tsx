@@ -1,11 +1,34 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { signIn } from "next-auth/react";
 import { AuthenticationProvider, HOTEL_DASHBOARD } from "@/types/auth";
 import { useRouter } from "next/navigation";
 const LoginInForm = () => {
     const router = useRouter();
+    
+    // Monitor cookie changes for debugging
+    useEffect(() => {
+        const checkCookies = () => {
+            if (typeof window !== 'undefined') {
+                const sessionToken = document.cookie.split('; ').find(row => row.startsWith('SessionToken='));
+                const accessToken = document.cookie.split('; ').find(row => row.startsWith('X-Access-Token='));
+                console.log('[LOGIN-COMPONENT] Cookie monitor:', {
+                    hasSessionToken: !!sessionToken,
+                    hasAccessToken: !!accessToken,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        };
+        
+        // Check cookies on mount
+        checkCookies();
+        
+        // Monitor cookies periodically (for debugging)
+        const interval = setInterval(checkCookies, 1000);
+        
+        return () => clearInterval(interval);
+    }, []);
     const initialValues = {
         email: '',
         password: "",
@@ -35,31 +58,65 @@ const LoginInForm = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        console.log('[LOGIN] Form submitted at:', new Date().toISOString());
         const isValid = validate();
+        console.log('[LOGIN] Form validation result:', isValid);
         if (isValid) {
             setIsLoading(true);
+            console.log('[LOGIN] Starting signIn process with email:', formInputs.email);
             try {
+                const signInStartTime = Date.now();
                 const data = await signIn(AuthenticationProvider.HOTEL, {
                     email: formInputs.email,
                     password: formInputs.password,
                     redirect: false,
                     // callbackUrl: '/hotels/overview'
                 })
+                const signInDuration = Date.now() - signInStartTime;
+                console.log('[LOGIN] signIn completed in', signInDuration, 'ms');
+                console.log('[LOGIN] signIn response data:', {
+                    error: data?.error,
+                    ok: data?.ok,
+                    status: data?.status,
+                    url: data?.url,
+                    hasError: !!data?.error,
+                    hasOk: data?.ok !== undefined
+                });
+                
                 if (data?.error) {
+                    console.error('[LOGIN] SignIn error detected:', data.error);
                     toast.error(data?.error);
                     setIsLoading(false);
                     return;
                 } else {
+                    console.log('[LOGIN] SignIn successful, checking cookies...');
+                    // Check if cookies are set
+                    if (typeof window !== 'undefined') {
+                        const sessionToken = document.cookie.split('; ').find(row => row.startsWith('SessionToken='));
+                        const accessToken = document.cookie.split('; ').find(row => row.startsWith('X-Access-Token='));
+                        console.log('[LOGIN] Cookie check - SessionToken exists:', !!sessionToken);
+                        console.log('[LOGIN] Cookie check - X-Access-Token exists:', !!accessToken);
+                        console.log('[LOGIN] All cookies:', document.cookie);
+                    }
+                    console.log('[LOGIN] Pushing to dashboard:', HOTEL_DASHBOARD);
                     toast.success("Logged in");
+                    setIsLoading(false);
                     router.push(HOTEL_DASHBOARD);
+                    console.log('[LOGIN] Router.push called, waiting for navigation...');
                 }
             } catch (error: any) {
+                console.error('[LOGIN] Exception during signIn:', {
+                    message: error?.message,
+                    stack: error?.stack,
+                    error: error
+                });
                 const errorData = error?.message ?? "Something went wrong while checking your credentials. Please try again later."
                 toast.error(errorData);
                 setIsLoading(false);
                 return errorData;
             }
         } else {
+            console.log('[LOGIN] Form validation failed');
             toast.error('Form has errors. Please correct them');
         }
     }

@@ -79,7 +79,7 @@ const fetchLanguages = async () => {
         //         languageCode: string;
         //         languageName: string;
         //     }[];
-            return []
+        return []
         // } else {
         //     return [];
         // }
@@ -347,8 +347,13 @@ const fetchBusinessNotifications = async () => {
         ]);
 
         if (notifications.status === 200 && notifications.data.status && notificationsMeta.status === 200 && notificationsMeta.data.status) {
-            // console.log(notifications.data.data)
-            console.log(notificationsMeta?.data?.data?.notifications.hasUnreadMessages)
+            const hasUnreadMessages = notificationsMeta?.data?.data?.notifications?.hasUnreadMessages;
+            console.log('[NOTIFICATIONS] Fetch successful:', {
+                notificationsCount: notifications?.data?.data?.length ?? 0,
+                hasUnreadMessages: hasUnreadMessages,
+                notificationsMetaData: notificationsMeta?.data?.data,
+                notificationsObject: notificationsMeta?.data?.data?.notifications
+            });
             const data = {
                 notifications: notifications?.data?.data ?? [],
                 notificationsCount: notificationsMeta?.data?.data?.notifications?.count ?? 0,

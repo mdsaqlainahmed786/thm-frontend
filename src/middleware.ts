@@ -76,11 +76,19 @@ export async function middleware(req: NextRequest) {
 
     if (pathname === HOTEL_LOGIN_ROUTE) {
         const userSessionToken = cookieStore.get('SessionToken');
+        console.log('[MIDDLEWARE] Hotel login route check:', {
+            pathname,
+            hasSessionToken: !!userSessionToken,
+            sessionTokenValue: userSessionToken?.value ? 'exists' : 'missing',
+            host
+        });
         if (userSessionToken) {
             // Hotel/user is logged in, redirect to hotel dashboard
+            console.log('[MIDDLEWARE] SessionToken found, redirecting to dashboard');
             return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
         }
         // No hotel session, allow access to hotel login page
+        console.log('[MIDDLEWARE] No SessionToken, allowing access to login page');
         return NextResponse.next();
     }
 
@@ -105,11 +113,20 @@ export async function middleware(req: NextRequest) {
     // 3. Hotel Route Authentication - Check SessionToken cookie directly (NOT NextAuth)
     if (isHotelRoute && pathname !== HOTEL_LOGIN_ROUTE) {
         const hotelSessionToken = cookieStore.get('SessionToken');
+        console.log('[MIDDLEWARE] Hotel route authentication check:', {
+            pathname,
+            isHotelRoute,
+            hasSessionToken: !!hotelSessionToken,
+            sessionTokenValue: hotelSessionToken?.value ? 'exists' : 'missing',
+            host
+        });
         if (!hotelSessionToken) {
             // No SessionToken cookie, redirect to hotel login
+            console.log('[MIDDLEWARE] No SessionToken found, redirecting to login');
             return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
         }
         // SessionToken exists, allow access to hotel routes
+        console.log('[MIDDLEWARE] SessionToken found, allowing access to hotel route');
         return NextResponse.next();
     }
 
@@ -126,9 +143,17 @@ export async function middleware(req: NextRequest) {
     if (pathname === '/') {
         if (isHotelSubdomain) {
             const hotelSessionToken = cookieStore.get('SessionToken');
+            console.log('[MIDDLEWARE] Root path on hotel subdomain:', {
+                hasSessionToken: !!hotelSessionToken,
+                redirectingTo: hotelSessionToken ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE
+            });
             return NextResponse.redirect(new URL(hotelSessionToken ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
         }
         if (isAdminSubdomain) {
+            console.log('[MIDDLEWARE] Root path on admin subdomain:', {
+                hasToken: !!token,
+                redirectingTo: token ? DASHBOARD : LOGIN_ROUTE
+            });
             return NextResponse.redirect(new URL(token ? DASHBOARD : LOGIN_ROUTE, req.url));
         }
     }

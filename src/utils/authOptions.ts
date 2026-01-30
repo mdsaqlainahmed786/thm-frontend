@@ -90,8 +90,17 @@ const authOptions: AuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials, req) {
+                console.log('[AUTH] HOTEL authorize called at:', new Date().toISOString());
+                console.log('[AUTH] Credentials received:', {
+                    hasEmail: !!credentials?.email,
+                    emailLength: credentials?.email?.length,
+                    hasPassword: !!credentials?.password,
+                    passwordLength: credentials?.password?.length
+                });
                 try {
                     //Backend api for login
+                    console.log('[AUTH] Making API request to:', `${AppConfig.API_ENDPOINT}/auth/login`);
+                    const apiStartTime = Date.now();
                     const response = await axios({
                         url: `${AppConfig.API_ENDPOINT}/auth/login`,
                         method: "POST",
@@ -104,19 +113,53 @@ const authOptions: AuthOptions = {
                         },
                         withCredentials: true
                     });
+                    const apiDuration = Date.now() - apiStartTime;
+                    console.log('[AUTH] API response received in', apiDuration, 'ms');
+                    console.log('[AUTH] API response status:', response.status);
+                    console.log('[AUTH] API response data status:', response.data?.status);
+                    console.log('[AUTH] API response statusCode:', response.data?.statusCode);
+                    
                     if (!response.data?.status && response.data?.statusCode !== 200) {
+                        console.error('[AUTH] API returned error status:', response.data?.message);
                         throw new Error(response.data?.message ?? "Something went wrong");
                     }
                     const user = response.data?.data;
+                    console.log('[AUTH] User data received:', {
+                        hasUser: !!user,
+                        hasAccessToken: !!user?.accessToken,
+                        hasRefreshToken: !!user?.refreshToken,
+                        accountType: user?.accountType,
+                        userId: user?.id || user?._id,
+                        userName: user?.name
+                    });
+                    
                     if (user && user.accountType && user.accountType !== "business") {
+                        console.error('[AUTH] Account type mismatch:', user.accountType);
                         throw new Error("You don't have the right permission to access this page.")
                     }
                     const cookieStore = await cookies();
                     const cookieOptions = getCookieOptions();
+                    console.log('[AUTH] Setting cookies with options:', {
+                        secure: cookieOptions.secure,
+                        sameSite: cookieOptions.sameSite,
+                        path: cookieOptions.path,
+                        maxAge: cookieOptions.maxAge,
+                        hasAccessToken: !!user?.accessToken,
+                        hasRefreshToken: !!user?.refreshToken
+                    });
                     cookieStore.set('X-Access-Token', user.accessToken, cookieOptions);
                     cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
+                    console.log('[AUTH] Cookies set successfully');
+                    console.log('[AUTH] Returning user object');
                     return user;
                 } catch (error: any) {
+                    console.error('[AUTH] Error in authorize:', {
+                        message: error?.message,
+                        hasResponse: !!error?.response,
+                        responseStatus: error?.response?.status,
+                        responseData: error?.response?.data,
+                        stack: error?.stack
+                    });
                     const { response } = error;
                     if (response) {
                         const { data } = response;
@@ -140,17 +183,35 @@ const authOptions: AuthOptions = {
     callbacks: {
         //step 2
         async session({ session, token, user, newSession, trigger }) {
+            console.log('[SESSION] Session callback called:', {
+                trigger,
+                hasToken: !!token,
+                hasUser: !!user,
+                hasNewSession: !!newSession,
+                hasSession: !!session
+            });
+            
             if (trigger === "update" && newSession?.name) {
-                console.log(newSession, "new Session");
+                console.log('[SESSION] Updating session name:', newSession);
                 session.user.name = newSession.name
             }
             if (trigger === "update" && newSession?.username) {
+                console.log('[SESSION] Updating session username:', newSession.username);
                 session.user.username = newSession.username
             }
             if (trigger === "update" && newSession?.profilePic) {
+                console.log('[SESSION] Updating session profilePic:', newSession.profilePic);
                 session.user.profilePic = newSession.profilePic
             }
             if (token) {
+                console.log('[SESSION] Setting session from token:', {
+                    hasId: !!token._id,
+                    hasName: !!token.name,
+                    hasAccessToken: !!token.accessToken,
+                    hasRole: !!token.role,
+                    accountType: token.accountType,
+                    hasBusinessName: !!token.businessName
+                });
                 session.user._id = token._id;
                 session.user.name = token.name;
                 session.user.profilePic = token.profilePic;
@@ -160,12 +221,35 @@ const authOptions: AuthOptions = {
                 session.user.accountType = token.accountType;
                 session.user.businessName = token.businessName;
                 session.user.businessTypeName = token.businessTypeName;
+                console.log('[SESSION] Session user object set:', {
+                    id: session.user._id,
+                    name: session.user.name,
+                    role: session.user.role,
+                    accountType: session.user.accountType
+                });
+            } else {
+                console.warn('[SESSION] No token provided to session callback');
             }
+            console.log('[SESSION] Returning session');
             return session;
         },
         //step 1
         async jwt({ token, user, account, profile, trigger, session }) {
+            console.log('[JWT] JWT callback called:', {
+                trigger,
+                hasUser: !!user,
+                hasToken: !!token,
+                hasAccount: !!account,
+                accountProvider: account?.provider,
+                hasSession: !!session
+            });
+            
             if (trigger === "update") {
+                console.log('[JWT] Trigger is update, session data:', {
+                    hasName: !!session?.name,
+                    hasUsername: !!session?.username,
+                    hasProfilePic: !!session?.profilePic
+                });
                 if (session.name) {
                     token.name = session.name;
                 }
@@ -177,6 +261,14 @@ const authOptions: AuthOptions = {
                 }
             }
             if (user) {
+                console.log('[JWT] User object present, setting token properties:', {
+                    hasRole: !!user.role,
+                    hasId: !!user.id,
+                    hasName: !!user.name,
+                    hasAccessToken: !!user.accessToken,
+                    accountType: user.accountType,
+                    provider: account?.provider
+                });
                 token.role = user.role;
                 token._id = user.id;
                 token.name = user.name;
@@ -185,25 +277,51 @@ const authOptions: AuthOptions = {
                 token.username = user.username;
                 token.accountType = user.accountType;
                 if (account && account.provider === AuthenticationProvider.HOTEL) {
+                    console.log('[JWT] Processing HOTEL provider token');
                     let decodedToken: any = null;
                     if (user.accessToken) {
                         decodedToken = decodeJWT(user.accessToken);
+                        console.log('[JWT] Decoded token:', {
+                            hasDecodedToken: !!decodedToken,
+                            hasBusinessTypeName: !!decodedToken?.businessTypeName,
+                            hasBusinessName: !!decodedToken?.businessName
+                        });
+                    } else {
+                        console.warn('[JWT] No accessToken in user object');
                     }
 
                     let businessTypeName = user?.businessProfileRef?.businessTypeRef?.name || "";
                     if (!businessTypeName && decodedToken?.businessTypeName) {
                         businessTypeName = decodedToken.businessTypeName;
+                        console.log('[JWT] Using businessTypeName from decoded token:', businessTypeName);
+                    } else {
+                        console.log('[JWT] Using businessTypeName from user object:', businessTypeName);
                     }
 
                     let businessName = user?.businessProfileRef?.name || "";
                     if (!businessName && decodedToken?.businessName) {
                         businessName = decodedToken.businessName;
+                        console.log('[JWT] Using businessName from decoded token:', businessName);
+                    } else {
+                        console.log('[JWT] Using businessName from user object:', businessName);
                     }
 
                     token.businessName = businessName;
                     token.businessTypeName = businessTypeName;
+                    console.log('[JWT] Final token business info:', {
+                        businessName: token.businessName,
+                        businessTypeName: token.businessTypeName
+                    });
                 }
+            } else {
+                console.log('[JWT] No user object, returning existing token');
             }
+            console.log('[JWT] Returning token with properties:', {
+                hasRole: !!token.role,
+                hasId: !!token._id,
+                hasAccessToken: !!token.accessToken,
+                accountType: token.accountType
+            });
             return token;
         },
         async redirect({ url, baseUrl }) {

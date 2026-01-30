@@ -32,8 +32,19 @@ apiRequest.interceptors.request.use(
             headerKey = 'X-Access-Token';
         }
         
+        console.log('[API-REQUEST] Request interceptor:', {
+            url: config.url,
+            method: config.method,
+            isAdminRequest,
+            hasAccessToken: !!accessToken,
+            headerKey,
+            pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'
+        });
+        
         if (accessToken) {
             config.headers[headerKey] = accessToken;
+        } else {
+            console.warn('[API-REQUEST] No access token found for request:', config.url);
         }
         // Ensure headers are set for CORS
         // Only set Content-Type for JSON requests.
@@ -48,52 +59,84 @@ apiRequest.interceptors.request.use(
         if (!config.headers['Accept']) {
             config.headers['Accept'] = 'application/json';
         }
-        // console.log(accessToken);
         config.withCredentials = true;
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        console.error('[API-REQUEST] Request interceptor error:', error);
+        return Promise.reject(error);
+    }
 );
 
 apiRequest.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        console.log('[API-RESPONSE] Response received:', {
+            url: response.config.url,
+            status: response.status,
+            statusText: response.statusText
+        });
+        return response;
+    },
     async (error) => {
         const originalRequest = error.config;
 
         // Check if error.response exists before accessing its properties
         if (error.response) {
-            console.log("If the error status", error.response.status, error.response.data);
+            console.log('[API-RESPONSE] Error response:', {
+                url: originalRequest?.url,
+                status: error.response.status,
+                statusText: error.response.statusText,
+                data: error.response.data,
+                hasData: !!error.response.data,
+                dataType: typeof error.response.data
+            });
             
             // Skip logout for requests marked with skipAuthError flag (e.g., QR code endpoints)
             if (originalRequest.skipAuthError) {
+                console.log('[API-RESPONSE] Skipping auth error handling (skipAuthError flag set)');
                 return Promise.reject(error);
             }
             
             // Don't logout for 403 (Forbidden) errors - these are permission issues, not auth issues
             if (error.response.status === 403) {
+                console.log('[API-RESPONSE] 403 Forbidden error, not logging out');
                 return Promise.reject(error);
             }
             
             // If the error status is 401 and there is no originalRequest._retry flag,
             // it means the token has expired and we need to refresh it
             if (error.response.status === 401 && !originalRequest._retry) {
+                console.log('[API-RESPONSE] 401 Unauthorized, attempting token refresh');
                 originalRequest._retry = true;
                 try {
+                    console.log('[API-RESPONSE] Calling refresh token endpoint');
                     await axios.post(`/api/auth/user-refresh-token`, {});
-                    //Store access token
+                    console.log('[API-RESPONSE] Token refresh successful, retrying original request');
                     // Retry the original request with the new token
-                    console.log('Retry The original request');
                     return apiRequest(originalRequest);
-                } catch (refreshError) {
+                } catch (refreshError: any) {
                     // Handle refresh token error or redirect to login
-                    console.log("Handle refresh token error or redirect to login", refreshError)
+                    console.error('[API-RESPONSE] Token refresh failed:', {
+                        message: refreshError?.message,
+                        response: refreshError?.response?.status,
+                        responseData: refreshError?.response?.data,
+                        stack: refreshError?.stack
+                    });
                     // Check if we're on a hotel route
                     const isHotelRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/hotels/');
                     const redirectUrl = isHotelRoute ? HOTEL_LOGIN_URL : LOGIN_ROUTE;
+                    console.log('[API-RESPONSE] Signing out and redirecting to:', redirectUrl);
                     signOut({ redirect: true, callbackUrl: redirectUrl });
                     return Promise.reject(refreshError);
                 }
             }
+        } else {
+            console.error('[API-RESPONSE] Error without response object:', {
+                message: error?.message,
+                code: error?.code,
+                config: error?.config?.url,
+                hasRequest: !!error?.request
+            });
         }
         return Promise.reject(error);
     }
