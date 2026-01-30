@@ -41,6 +41,15 @@ function extractCookieValue(setCookieHeader: string[] | string | undefined, cook
     return undefined;
 }
 
+function extractCookieNames(setCookieHeader: string[] | string | undefined): string[] {
+    if (!setCookieHeader) return [];
+    const cookiesArr = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
+    return cookiesArr
+        .filter((c): c is string => typeof c === 'string')
+        .map((c) => c.split('=')[0]?.trim())
+        .filter((n): n is string => !!n);
+}
+
 // Helper function to decode JWT token
 function decodeJWT(token: string): any {
     try {
@@ -110,6 +119,9 @@ const authOptions: AuthOptions = {
                     }
                     const setCookieHeader = (response.headers as any)?.['set-cookie'] as string[] | string | undefined;
                     console.log('[AUTH] Admin login response set-cookie header present:', !!setCookieHeader);
+                    if (setCookieHeader) {
+                        console.log('[AUTH] Admin login set-cookie cookie names:', extractCookieNames(setCookieHeader));
+                    }
                     
                     cookieStore.set('X-Admin-Access-Token', user.accessToken, accessCookieOptions);
                     const adminRefreshTokenFromBody = user?.refreshToken as string | undefined;
@@ -232,6 +244,9 @@ const authOptions: AuthOptions = {
                     }
                     const setCookieHeader = (response.headers as any)?.['set-cookie'] as string[] | string | undefined;
                     console.log('[AUTH] Hotel login response set-cookie header present:', !!setCookieHeader);
+                    if (setCookieHeader) {
+                        console.log('[AUTH] Hotel login set-cookie cookie names:', extractCookieNames(setCookieHeader));
+                    }
                     
                     cookieStore.set('X-Access-Token', user.accessToken, accessCookieOptions);
                     const refreshTokenFromBody = user?.refreshToken as string | undefined;

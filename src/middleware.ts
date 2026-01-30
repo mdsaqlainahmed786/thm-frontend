@@ -98,6 +98,11 @@ export async function middleware(req: NextRequest) {
         }
     }
 
+    // Read NextAuth token once (used for both admin + hotel auth).
+    // This lets us authorize hotel routes even when refresh tokens are httpOnly on API domain
+    // (or not returned at all) as long as NextAuth session is valid.
+    const nextAuthToken = await getToken({ req });
+
     // 0. Login page redirects - check specific cookies for each login page (must be first)
     if (pathname === "/admin/login") {
         const adminSessionToken = cookieStore.get('AdminSessionToken');
@@ -115,9 +120,10 @@ export async function middleware(req: NextRequest) {
             pathname,
             hasSessionToken: !!userSessionToken,
             sessionTokenValue: userSessionToken?.value ? 'exists' : 'missing',
-            host
+            host,
+            hasNextAuthToken: !!nextAuthToken
         });
-        if (userSessionToken) {
+        if (userSessionToken || nextAuthToken) {
             // Hotel/user is logged in, redirect to hotel dashboard
             console.log('[MIDDLEWARE] SessionToken found, redirecting to dashboard');
             return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
@@ -153,9 +159,13 @@ export async function middleware(req: NextRequest) {
             isHotelRoute,
             hasSessionToken: !!hotelSessionToken,
             sessionTokenValue: hotelSessionToken?.value ? 'exists' : 'missing',
-            host
+            host,
+            hasNextAuthToken: !!nextAuthToken,
+            nextAuthAccountType: (nextAuthToken as any)?.accountType,
         });
-        if (!hotelSessionToken) {
+        // Allow access if either our legacy SessionToken exists OR NextAuth session exists for business accounts.
+        const hasValidNextAuthForHotel = !!nextAuthToken && (nextAuthToken as any)?.accountType === 'business';
+        if (!hotelSessionToken && !hasValidNextAuthForHotel) {
             // No SessionToken cookie, redirect to hotel login
             console.log('[MIDDLEWARE] No SessionToken found, redirecting to login');
             return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
@@ -172,7 +182,7 @@ export async function middleware(req: NextRequest) {
     });
 
     // Only check NextAuth token for admin routes
-    const token = await getToken({ req });
+    const token = nextAuthToken;
 
     // 5. Subdomain-Specific Root Redirection
     if (pathname === '/') {
