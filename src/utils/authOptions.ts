@@ -64,10 +64,35 @@ const authOptions: AuthOptions = {
                     }
                     const user = response.data?.data;
                     const cookieStore = await cookies();
+                    
+                    // CRITICAL: Clear any existing hotel cookies to prevent cross-contamination
+                    console.log('[AUTH] Clearing hotel cookies before setting admin cookies');
+                    cookieStore.delete('X-Access-Token');
+                    cookieStore.delete('SessionToken');
+                    
                     // Admin uses separate cookie names
                     const cookieOptions = getCookieOptions();
+                    console.log('[AUTH] Setting admin cookies:', {
+                        hasAccessToken: !!user?.accessToken,
+                        hasRefreshToken: !!user?.refreshToken
+                    });
+                    
+                    if (!user?.accessToken || !user?.refreshToken) {
+                        console.error('[AUTH] Missing tokens in admin user object');
+                        throw new Error("Invalid response from server: missing tokens");
+                    }
+                    
                     cookieStore.set('X-Admin-Access-Token', user.accessToken, cookieOptions);
                     cookieStore.set('AdminSessionToken', user.refreshToken, cookieOptions);
+                    
+                    // Verify cookies were set
+                    const setAdminAccessToken = cookieStore.get('X-Admin-Access-Token');
+                    const setAdminSessionToken = cookieStore.get('AdminSessionToken');
+                    console.log('[AUTH] Admin cookies set - verification:', {
+                        accessTokenSet: !!setAdminAccessToken,
+                        sessionTokenSet: !!setAdminSessionToken
+                    });
+                    
                     return user;
                 } catch (error: any) {
                     const { response } = error;
@@ -138,18 +163,45 @@ const authOptions: AuthOptions = {
                         throw new Error("You don't have the right permission to access this page.")
                     }
                     const cookieStore = await cookies();
+                    
+                    // CRITICAL: Clear any existing admin cookies to prevent cross-contamination
+                    console.log('[AUTH] Clearing admin cookies before setting hotel cookies');
+                    cookieStore.delete('X-Admin-Access-Token');
+                    cookieStore.delete('AdminSessionToken');
+                    
                     const cookieOptions = getCookieOptions();
-                    console.log('[AUTH] Setting cookies with options:', {
+                    console.log('[AUTH] Setting hotel cookies with options:', {
                         secure: cookieOptions.secure,
                         sameSite: cookieOptions.sameSite,
                         path: cookieOptions.path,
                         maxAge: cookieOptions.maxAge,
                         hasAccessToken: !!user?.accessToken,
-                        hasRefreshToken: !!user?.refreshToken
+                        hasRefreshToken: !!user?.refreshToken,
+                        accessTokenLength: user?.accessToken?.length,
+                        refreshTokenLength: user?.refreshToken?.length
                     });
+                    
+                    if (!user?.accessToken || !user?.refreshToken) {
+                        console.error('[AUTH] Missing tokens in user object:', {
+                            hasAccessToken: !!user?.accessToken,
+                            hasRefreshToken: !!user?.refreshToken
+                        });
+                        throw new Error("Invalid response from server: missing tokens");
+                    }
+                    
                     cookieStore.set('X-Access-Token', user.accessToken, cookieOptions);
                     cookieStore.set('SessionToken', user.refreshToken, cookieOptions);
-                    console.log('[AUTH] Cookies set successfully');
+                    
+                    // Verify cookies were set
+                    const setAccessToken = cookieStore.get('X-Access-Token');
+                    const setSessionToken = cookieStore.get('SessionToken');
+                    console.log('[AUTH] Cookies set - verification:', {
+                        accessTokenSet: !!setAccessToken,
+                        sessionTokenSet: !!setSessionToken,
+                        accessTokenValue: setAccessToken?.value ? 'exists' : 'missing',
+                        sessionTokenValue: setSessionToken?.value ? 'exists' : 'missing'
+                    });
+                    
                     console.log('[AUTH] Returning user object');
                     return user;
                 } catch (error: any) {
