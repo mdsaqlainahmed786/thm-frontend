@@ -94,7 +94,7 @@ const BookingTable: React.FC<{}> = () => {
                 Status
               </th>
               {!isRestaurant && (
-                <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white">
+                <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white min-w-[96px] pl-6">
                   Action
                 </th>
               )}
@@ -242,8 +242,8 @@ const BookingTable: React.FC<{}> = () => {
                           </div>
                         </td>
                         {!isRestaurant && (
-                          <td className=" px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                            <div className="flex gap-2 justify-end pe-2">
+                          <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                            <div className="flex gap-2 justify-start pl-6">
                               <Button.Hotel.View
                                 name="View"
                                 svg={<SVG.Eye />}
