@@ -31,7 +31,7 @@ export default function HotelAdminLayout(props: MainLayoutProps) {
           {/* <!-- ===== Sidebar End ===== --> */}
 
           {/* <!-- ===== Content Area Start ===== --> */}
-          <div className="relative flex flex-1 min-w-0 flex-col">
+          <div className="relative flex flex-1 flex-col lg:ml-[16.125rem]">
             {/* <!-- ===== Header Start ===== --> */}
             <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isSearchable={props.isSearchable} queryPlaceholder={props.searchPlaceholder ?? ""} />
             {/* <!-- ===== Header End ===== --> */}
