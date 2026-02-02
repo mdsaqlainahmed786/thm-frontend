@@ -54,7 +54,7 @@ const BookingTable: React.FC<{}> = () => {
     }
   };
   return (
-    <div className="max-w-full overflow-x-auto">
+    <div className="max-w-full overflow-x-auto thm-scrollbar">
       <div className="border dark:border-theme-gray border-theme-gray rounded-xl">
         <table className="w-full table-auto font-quicksand">
           <thead>

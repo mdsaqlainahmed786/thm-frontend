@@ -28,6 +28,39 @@
     /* Firefox */
   }
 
+  /* Themed scrollbar (for tables like Guest List) */
+  .thm-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(72, 129, 245, 0.75) rgba(255, 255, 255, 0.08); /* Firefox */
+  }
+
+  .thm-scrollbar::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  /* Hide Windows-style arrow buttons */
+  .thm-scrollbar::-webkit-scrollbar-button {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  .thm-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+  }
+
+  .thm-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(72, 129, 245, 0.75);
+    border-radius: 999px;
+    border: 2px solid rgba(0, 0, 0, 0.35);
+  }
+
+  .thm-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(72, 129, 245, 0.9);
+  }
+
   .chat-height {
     @apply h-[calc(100vh_-_8.125rem)] lg:h-[calc(100vh_-_5.625rem)];
   }
