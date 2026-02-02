@@ -290,28 +290,30 @@ const Overview: React.FC<{}> = () => {
   }, [chartBookingsData, duration]);
   return (
     <>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageTitle>Overview</PageTitle>
-        <div
-          className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
-          role="group"
-        >
-          {durationArray.map((text, index) => {
-            return (
-              <button
-                onClick={() => setDuration(text)}
-                type="button"
-                key={index}
-                className={`${
-                  duration === text
-                    ? "bg-[#4881F5] dark:bg-[#4881F5] border-[#4881F5]"
-                    : "text-white/50  dark:text-white/50 border-transparent"
-                } px-2.5 py-1.5 text-sm font-normal text-gray-900 border  rounded-lg hover:bg-primary/50 dark:text-white  dark:hover:bg-[#4881F5]/80 dark:hover:text-white hover:text-white`}
-              >
-                <span className="px-1.5">{text}</span>
-              </button>
-            );
-          })}
+        <div className="w-full max-w-full overflow-x-auto no-scrollbar">
+          <div
+            className="inline-flex w-max rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
+            role="group"
+          >
+            {durationArray.map((text, index) => {
+              return (
+                <button
+                  onClick={() => setDuration(text)}
+                  type="button"
+                  key={index}
+                  className={`${
+                    duration === text
+                      ? "bg-[#4881F5] dark:bg-[#4881F5] border-[#4881F5]"
+                      : "text-white/50  dark:text-white/50 border-transparent"
+                  } px-2.5 py-1.5 text-sm font-normal text-gray-900 border  rounded-lg hover:bg-primary/50 dark:text-white  dark:hover:bg-[#4881F5]/80 dark:hover:text-white hover:text-white`}
+                >
+                  <span className="px-1.5">{text}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
       <div

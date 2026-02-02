@@ -13,7 +13,8 @@ export default function TableManagement() {
     <>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between items-center">
         <PageTitle>Table Management</PageTitle>
-        <div className="flex gap-2 justify-end items-center">
+        <div className="w-full max-w-full overflow-x-auto no-scrollbar">
+          <div className="flex w-max gap-2 justify-end items-center ml-auto">
           <div
             className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
             role="group"
@@ -129,6 +130,7 @@ export default function TableManagement() {
                 />
               </svg>
             </button>
+          </div>
           </div>
         </div>
       </div>

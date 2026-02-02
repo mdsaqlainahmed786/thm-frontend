@@ -34,7 +34,8 @@ export default function BookingManagement() {
     <>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between items-center">
         <PageTitle>{pageTitle}</PageTitle>
-        <div className="flex gap-2 justify-end items-center">
+        <div className="w-full max-w-full overflow-x-auto no-scrollbar">
+          <div className="flex w-max gap-2 justify-end items-center ml-auto">
           {isHotel && (
             <div
               className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
@@ -173,6 +174,7 @@ export default function BookingManagement() {
                 />
               </svg>
             </button>
+          </div>
           </div>
           {/* <Button.Hotel.Button name="Export" onClick={() => {
                         setModal(!modal);
