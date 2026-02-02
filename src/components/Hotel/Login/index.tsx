@@ -1,42 +1,25 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { signIn } from "next-auth/react";
 import { AuthenticationProvider, HOTEL_DASHBOARD } from "@/types/auth";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 const LoginInForm = () => {
     const router = useRouter();
-    
-    // Monitor cookie changes for debugging
+
+    // Avoid a brief login-page flash when already authenticated (and avoid re-mount loops).
+    const { data: session, status } = useSession();
     useEffect(() => {
-        const checkCookies = () => {
-            if (typeof window !== 'undefined') {
-                const sessionToken = document.cookie.split('; ').find(row => row.startsWith('SessionToken='));
-                const accessToken = document.cookie.split('; ').find(row => row.startsWith('X-Access-Token='));
-                console.log('[LOGIN-COMPONENT] Cookie monitor:', {
-                    hasSessionToken: !!sessionToken,
-                    hasAccessToken: !!accessToken,
-                    timestamp: new Date().toISOString()
-                });
-            }
-        };
-        
-        // Check cookies on mount
-        checkCookies();
-        
-        // Monitor cookies periodically (for debugging)
-        const interval = setInterval(checkCookies, 1000);
-        
-        return () => clearInterval(interval);
-    }, []);
-    const initialValues = {
-        email: '',
-        password: "",
-    }
-    const [formInputs, setFormInputs] = useState(initialValues);
+        if (status !== "authenticated") return;
+        if (session?.user?.accountType !== "business") return;
+        router.replace(HOTEL_DASHBOARD);
+    }, [router, session?.user?.accountType, status]);
+
+    const emailRef = useRef<HTMLInputElement | null>(null);
+    const passwordRef = useRef<HTMLInputElement | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const validate = () => {
-        const { email, password } = formInputs;
+    const validate = (email: string, password: string) => {
         const errors: any = {};
         if (!email.trim()) {
             errors.email = 'Email is required.';
@@ -58,68 +41,48 @@ const LoginInForm = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log('[LOGIN] Form submitted at:', new Date().toISOString());
-        const isValid = validate();
-        console.log('[LOGIN] Form validation result:', isValid);
+        const email = (emailRef.current?.value ?? "").trim();
+        const password = passwordRef.current?.value ?? "";
+
+        const isValid = validate(email, password);
         if (isValid) {
             setIsLoading(true);
-            console.log('[LOGIN] Starting signIn process with email:', formInputs.email);
             try {
-                const signInStartTime = Date.now();
                 const data = await signIn(AuthenticationProvider.HOTEL, {
-                    email: formInputs.email,
-                    password: formInputs.password,
+                    email,
+                    password,
                     redirect: false,
                     // callbackUrl: '/hotels/overview'
                 })
-                const signInDuration = Date.now() - signInStartTime;
-                console.log('[LOGIN] signIn completed in', signInDuration, 'ms');
-                console.log('[LOGIN] signIn response data:', {
-                    error: data?.error,
-                    ok: data?.ok,
-                    status: data?.status,
-                    url: data?.url,
-                    hasError: !!data?.error,
-                    hasOk: data?.ok !== undefined
-                });
                 
                 if (data?.error) {
-                    console.error('[LOGIN] SignIn error detected:', data.error);
                     toast.error(data?.error);
                     setIsLoading(false);
                     return;
                 } else {
-                    console.log('[LOGIN] SignIn successful, checking cookies...');
-                    // Check if cookies are set
-                    if (typeof window !== 'undefined') {
-                        const sessionToken = document.cookie.split('; ').find(row => row.startsWith('SessionToken='));
-                        const accessToken = document.cookie.split('; ').find(row => row.startsWith('X-Access-Token='));
-                        console.log('[LOGIN] Cookie check - SessionToken exists:', !!sessionToken);
-                        console.log('[LOGIN] Cookie check - X-Access-Token exists:', !!accessToken);
-                        console.log('[LOGIN] All cookies:', document.cookie);
-                    }
-                    console.log('[LOGIN] Pushing to dashboard:', HOTEL_DASHBOARD);
                     toast.success("Logged in");
                     setIsLoading(false);
-                    router.push(HOTEL_DASHBOARD);
-                    console.log('[LOGIN] Router.push called, waiting for navigation...');
+                    router.replace(HOTEL_DASHBOARD);
                 }
             } catch (error: any) {
-                console.error('[LOGIN] Exception during signIn:', {
-                    message: error?.message,
-                    stack: error?.stack,
-                    error: error
-                });
                 const errorData = error?.message ?? "Something went wrong while checking your credentials. Please try again later."
                 toast.error(errorData);
                 setIsLoading(false);
                 return errorData;
             }
-        } else {
-            console.log('[LOGIN] Form validation failed');
+        } else {            
             toast.error('Form has errors. Please correct them');
         }
     }
+
+    if (status === "loading") {
+        return (
+            <div className="w-full flex items-center justify-center py-8 text-white/70">
+                Loading...
+            </div>
+        );
+    }
+
     return (
         <form className="flex flex-col sm:gap-6 gap-4" onSubmit={handleSubmit}>
             <div>
@@ -129,9 +92,16 @@ const LoginInForm = () => {
                     <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path opacity="0.94" fill-rule="evenodd" clipRule="evenodd" d="M0.826172 0.521748C6.09715 0.512166 11.368 0.53365 16.6387 0.586201C16.6602 0.607685 16.6816 0.62917 16.7031 0.650654C16.8328 4.71773 16.9402 8.78541 17.0254 12.8538C17.3395 12.7986 17.6044 12.8845 17.8203 13.1116C17.8849 13.2637 17.8992 13.4212 17.8633 13.5842C17.8066 13.6696 17.7278 13.7198 17.627 13.7346C11.9983 13.8248 6.36944 13.8821 0.740234 13.9065C0.391715 13.8228 0.205518 13.6008 0.181641 13.2405C0.383529 10.2221 0.447982 7.19995 0.375 4.17409C0.356137 3.43559 0.320331 2.69794 0.267578 1.9612C0.307096 1.41941 0.493293 0.939619 0.826172 0.521748ZM1.55664 1.03737C1.56675 1.01172 1.58823 0.997412 1.62109 0.994404C6.3966 1.03007 11.1733 1.05155 15.9512 1.05886C14.0188 2.91958 12.0995 4.79589 10.1934 6.68776C9.86856 7.00552 9.52481 7.29917 9.16211 7.56862C7.92005 6.68235 6.71693 5.74421 5.55273 4.75417C4.20042 3.53798 2.8684 2.29902 1.55664 1.03737ZM16.209 1.51003C16.3545 5.19726 16.4548 8.89258 16.5098 12.596C11.4108 12.6522 6.31182 12.7095 1.21289 12.7678C1.363 9.14313 1.37016 5.5194 1.23438 1.89675C3.18126 4.21672 5.39414 6.22907 7.87305 7.93386C8.21521 8.10504 8.57327 8.22682 8.94727 8.29909C9.17595 8.22119 9.39079 8.11377 9.5918 7.97683C10.557 7.22646 11.4236 6.37426 12.1914 5.42019C13.4999 4.07569 14.8391 2.77232 16.209 1.51003Z" fill="white" fill-opacity="0.6" />
                     </svg>
-                    <input type="email" name="email" id="email"
+                    <input
+                        ref={emailRef}
+                        type="email"
+                        name="email"
+                        id="email"
+                        autoComplete="email"
                         className="bg-transparent outline-none dark:focus:ring-black dark:focus:border-white/80 w-full"
-                        placeholder="name@company.com" required={true} value={formInputs.email} onChange={(e) => setFormInputs({ ...formInputs, email: e.target.value })} />
+                        placeholder="name@company.com"
+                        required
+                    />
                 </div>
             </div>
             <div>
@@ -144,9 +114,16 @@ const LoginInForm = () => {
                         <path opacity="0.893" fill-rule="evenodd" clipRule="evenodd" d="M16.9085 6.42383C17.727 6.49993 18.5434 6.59304 19.3577 6.70312C19.572 6.98246 19.5004 7.13286 19.1429 7.1543C18.3979 7.07708 17.6531 6.99832 16.9085 6.91797C16.6828 6.75353 16.6828 6.58883 16.9085 6.42383Z" fill="white" fill-opacity="0.6" />
                         <path opacity="0.9" fill-rule="evenodd" clipRule="evenodd" d="M9.56088 12.6544C10.6134 12.6473 11.1863 13.1629 11.2796 14.2012C11.2706 14.735 11.0557 15.1646 10.6351 15.4903C10.6104 16.065 10.5746 16.6379 10.5277 17.2091C10.3621 17.5428 10.09 17.7003 9.71127 17.6817C9.29443 17.7172 9.008 17.5453 8.8519 17.1661C8.84472 16.6499 8.82324 16.1342 8.78744 15.6192C8.08791 15.1464 7.85158 14.5019 8.07846 13.6856C8.38405 13.0709 8.87819 12.7272 9.56088 12.6544ZM9.47494 13.17C9.07254 13.2678 8.76463 13.497 8.55112 13.8575C8.40326 14.5357 8.64672 15.0227 9.28158 15.3184C9.29589 15.877 9.31024 16.4356 9.32455 16.9942C9.32501 17.012 9.53819 17.1971 9.71127 17.1661C9.85272 17.1865 9.96732 17.1435 10.055 17.0372C10.0693 16.4643 10.0837 15.8913 10.098 15.3184C10.2975 15.1331 10.4838 14.9326 10.6566 14.7169C10.7368 14.5465 10.7869 14.3674 10.807 14.1798C10.6808 13.4311 10.2368 13.0945 9.47494 13.17Z" fill="white" fill-opacity="0.6" />
                     </svg>
-                    <input type="password" name="password" id="password" placeholder="Enter your password"
+                    <input
+                        ref={passwordRef}
+                        type="password"
+                        name="password"
+                        id="password"
+                        autoComplete="current-password"
+                        placeholder="Enter your password"
                         className="bg-transparent outline-none dark:focus:ring-black dark:focus:border-white/80 w-full"
-                        required={true} value={formInputs.password} onChange={(e) => setFormInputs({ ...formInputs, password: e.target.value })} />
+                        required
+                    />
                 </div>
                 <div className="flex flex-col items-end mt-2">
                     <a href="#" className="text-base font-medium text-primary hover:underline dark:text-primary underline tracking-wider">Forgot

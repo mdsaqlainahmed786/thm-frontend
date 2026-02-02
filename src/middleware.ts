@@ -125,16 +125,18 @@ export async function middleware(req: NextRequest) {
 
     if (pathname === HOTEL_LOGIN_ROUTE) {
         const userSessionToken = cookieStore.get('SessionToken');
+        const hasValidNextAuthForHotel = !!nextAuthToken && (nextAuthToken as any)?.accountType === 'business';
         console.log('[MIDDLEWARE] Hotel login route check:', {
             pathname,
             hasSessionToken: !!userSessionToken,
             sessionTokenValue: userSessionToken?.value ? 'exists' : 'missing',
             host,
-            hasNextAuthToken: !!nextAuthToken
+            hasNextAuthToken: !!nextAuthToken,
+            hasValidNextAuthForHotel
         });
-        if (userSessionToken || nextAuthToken) {
+        if (userSessionToken || hasValidNextAuthForHotel) {
             // Hotel/user is logged in, redirect to hotel dashboard
-            console.log('[MIDDLEWARE] Auth found (SessionToken or NextAuth), redirecting to dashboard');
+            console.log('[MIDDLEWARE] Auth found (SessionToken or valid NextAuth business), redirecting to dashboard');
             return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
         }
         // No hotel session, allow access to hotel login page
@@ -197,11 +199,13 @@ export async function middleware(req: NextRequest) {
     if (pathname === '/') {
         if (isHotelSubdomain) {
             const hotelSessionToken = cookieStore.get('SessionToken');
+            const hasValidNextAuthForHotel = !!nextAuthToken && (nextAuthToken as any)?.accountType === 'business';
             console.log('[MIDDLEWARE] Root path on hotel subdomain:', {
                 hasSessionToken: !!hotelSessionToken,
-                redirectingTo: hotelSessionToken ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE
+                hasValidNextAuthForHotel,
+                redirectingTo: (hotelSessionToken || hasValidNextAuthForHotel) ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE
             });
-            return NextResponse.redirect(new URL(hotelSessionToken ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
+            return NextResponse.redirect(new URL((hotelSessionToken || hasValidNextAuthForHotel) ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
         }
         if (isAdminSubdomain) {
             console.log('[MIDDLEWARE] Root path on admin subdomain:', {
