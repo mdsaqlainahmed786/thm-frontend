@@ -2,19 +2,37 @@
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { signIn } from "next-auth/react";
-import { AuthenticationProvider, HOTEL_DASHBOARD } from "@/types/auth";
+import { AuthenticationProvider, HOTEL_DASHBOARD, HOTEL_DASHBOARD_URL } from "@/types/auth";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 const LoginInForm = () => {
     const router = useRouter();
+
+    const navigateToHotelDashboard = () => {
+        if (typeof window === "undefined") return;
+        const host = window.location.host.toLowerCase();
+        const isLocalhost =
+            host.includes("localhost") || host.startsWith("127.0.0.1") || host.startsWith("0.0.0.0");
+        const isHotelsSubdomain = host.startsWith("hotels.");
+
+        // If we’re not already on the hotels origin (prod), do a hard navigation to avoid RSC/CORS redirect issues.
+        if (!isLocalhost && !isHotelsSubdomain) {
+            window.location.assign(HOTEL_DASHBOARD_URL);
+            return;
+        }
+
+        // Same-origin navigation is safe on localhost + hotels subdomain.
+        router.replace(HOTEL_DASHBOARD);
+    };
 
     // Avoid a brief login-page flash when already authenticated (and avoid re-mount loops).
     const { data: session, status } = useSession();
     useEffect(() => {
         if (status !== "authenticated") return;
         if (session?.user?.accountType !== "business") return;
-        router.replace(HOTEL_DASHBOARD);
-    }, [router, session?.user?.accountType, status]);
+        navigateToHotelDashboard();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session?.user?.accountType, status]);
 
     const emailRef = useRef<HTMLInputElement | null>(null);
     const passwordRef = useRef<HTMLInputElement | null>(null);
@@ -62,7 +80,7 @@ const LoginInForm = () => {
                 } else {
                     toast.success("Logged in");
                     setIsLoading(false);
-                    router.replace(HOTEL_DASHBOARD);
+                    navigateToHotelDashboard();
                 }
             } catch (error: any) {
                 const errorData = error?.message ?? "Something went wrong while checking your credentials. Please try again later."

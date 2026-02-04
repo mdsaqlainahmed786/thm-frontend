@@ -1,8 +1,6 @@
 import AppConfig from "@/config/constants";
-import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   useScroll,
   useTransform,
@@ -11,7 +9,6 @@ import {
   useSpring,
 } from "framer-motion";
 const Navbar = () => {
-  const router = useRouter();
   // Scroll positions for each section based on the landing page scroll transforms
   const sectionScrollPositions: { [key: string]: number } = {
     Home: 0,
@@ -136,9 +133,9 @@ const Navbar = () => {
               </a>
             </li>
             <li className="">
-              <Link href={"/hotels/login"} className="text-[22px] text-white font-bold ">
+              <a href="/hotels/login" className="text-[22px] text-white font-bold ">
                 Become a member
-              </Link>
+              </a>
             </li>
             <li className="">
               <a
@@ -184,7 +181,7 @@ const Navbar = () => {
               boxShadow:
                 "-2.24px 2.13px 5px 0px #00000080 inset, 2.13px -2.13px 5px 0px #00000080 inset",
             }}
-            onClick={() => router.push("/hotels/login")}
+            onClick={() => window.location.assign("/hotels/login")}
           >
             <span className="relative z-20">Become a member</span>
           </button>

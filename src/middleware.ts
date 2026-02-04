@@ -67,6 +67,16 @@ export async function middleware(req: NextRequest) {
     const isApexDomain = !isHotelSubdomain && !isAdminSubdomain;
 
     const isHotelRoute = pathname.startsWith('/hotels/');
+
+    // IMPORTANT: On apex domain, hotel routes must be served from the hotels subdomain.
+    // If we allow client-side navigation on apex (RSC fetch to /hotels/*), middleware redirects will trigger
+    // CORS/preflight failures ("Redirect is not allowed for a preflight request") and can cause UI flicker.
+    // So we always perform a document redirect to the hotels subdomain early.
+    const isDevHost = host.includes('localhost') || host.startsWith('127.0.0.1') || host.startsWith('0.0.0.0');
+    if (isApexDomain && !isDevHost && isHotelRoute) {
+        const target = new URL(`${req.nextUrl.pathname}${req.nextUrl.search}`, 'https://hotels.thehotelmedia.com');
+        return NextResponse.redirect(target);
+    }
     
     // CRITICAL: Clear admin cookies if we're on hotel subdomain/route to prevent cross-contamination
     // Only clear if there's a mismatch (admin cookies exist but we're in hotel context)
@@ -144,16 +154,10 @@ export async function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    // 1. Apex Domain Handling
-    // If on the apex domain, we only redirect if they are trying to access /hotels/ paths
-    if (isApexDomain && !host.includes('localhost')) {
-        if (isHotelRoute) {
-            return NextResponse.redirect(new URL(pathname, 'https://hotels.thehotelmedia.com'));
-        }
-        // Allow root (/) and other non-hotel paths to load the landing page
-        if (pathname === '/') {
-            return NextResponse.next();
-        }
+    // 1. Apex Domain Handling (non-hotel routes)
+    // Allow root (/) and other non-hotel paths to load the landing page
+    if (isApexDomain && !isDevHost && pathname === '/') {
+        return NextResponse.next();
     }
 
     // 2. Cross-Subdomain Correction

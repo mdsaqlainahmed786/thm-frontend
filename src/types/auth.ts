@@ -3,6 +3,7 @@ export const DASHBOARD = "/dashboard";
 export const HOTEL_LOGIN_ROUTE = "/hotels/login";
 export const HOTEL_LOGIN_URL = "https://hotels.thehotelmedia.com/hotels/login";
 export const HOTEL_DASHBOARD = "/hotels/overview";
+export const HOTEL_DASHBOARD_URL = "https://hotels.thehotelmedia.com/hotels/overview";
 export enum AuthenticationProvider {
     ADMIN = "admin-authentication-provider",
     USER = "user-credentials-provider",
