@@ -292,7 +292,7 @@ const Overview: React.FC<{}> = () => {
     <>
       <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <PageTitle>Overview</PageTitle>
-        <div className="w-full max-w-full overflow-x-auto no-scrollbar sm:ml-auto sm:flex sm:w-auto sm:max-w-none sm:justify-end">
+        <div className="w-full max-w-full overflow-x-auto no-scrollbar pr-4 sm:ml-auto sm:flex sm:w-auto sm:max-w-none sm:justify-end sm:overflow-visible">
           <div
             className="inline-flex w-max rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
             role="group"
