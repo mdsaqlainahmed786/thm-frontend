@@ -1,19 +1,15 @@
 "use client";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import apiRequest from "@/api-services/app-client";
-import { handleClientApiErrors } from "@/api-services/api-errors";
-import toast from "react-hot-toast";
+import { useMutation, useQuery, keepPreviousData } from "@tanstack/react-query";
 import { User } from "@/types/user";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import moment from "moment";
 import Paginator from "@/components/Paginator";
 import Button from "@/components/Button";
-import MultiSelect from "@/components/FormElements/MultiSelect";
 import { useSearchInput } from "@/context/SearchProvider";
 import { ListIcon, DownArrowIcon } from "@/components/Icons";
-import { fetchUsers } from "@/api-services/user";
+import { fetchNthSignupUser, fetchUsers } from "@/api-services/user";
 import {
   fetchBusinessSubtypes,
   fetchBusinessTypes,
@@ -46,6 +42,56 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
   >("none");
   const [sortOrder, setSortOrder] = useState<"asc" | "dsc" | null>(null);
   const [showSortOrderModal, setShowSortOrderModal] = useState(false);
+
+  const [nthPreset, setNthPreset] = useState<"100" | "1000" | "custom">("100");
+  const [customNth, setCustomNth] = useState<string>("");
+  const [includeAdmins, setIncludeAdmins] = useState(false);
+  const [nthResult, setNthResult] = useState<
+    | null
+    | {
+        n: number;
+        user: {
+          _id: string;
+          name: string;
+          email: string;
+          createdAt: string;
+        };
+      }
+  >(null);
+  const [nthError, setNthError] = useState<string | null>(null);
+
+  const nthSignupMutation = useMutation({
+    mutationFn: async (payload: { n: number; includeAdmins: boolean }) => {
+      return fetchNthSignupUser(payload.n, payload.includeAdmins);
+    },
+    onSuccess: (result) => {
+      setNthError(null);
+      setNthResult(result);
+    },
+    onError: (error: any) => {
+      setNthResult(null);
+      setNthError(error?.message ?? "Failed to fetch nth signup user");
+    },
+  });
+
+  const getNthValue = () => {
+    if (nthPreset === "custom") {
+      const parsed = Number(customNth);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    }
+    return Number(nthPreset);
+  };
+
+  const handleFetchNthSignup = () => {
+    setNthError(null);
+    const n = getNthValue();
+    if (!Number.isInteger(n) || n <= 0) {
+      setNthResult(null);
+      setNthError("Please enter a positive integer (1, 2, 3, …).");
+      return;
+    }
+    nthSignupMutation.mutate({ n, includeAdmins });
+  };
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedTerm(value);
@@ -429,6 +475,136 @@ const UsersTable: React.FC<{ accountType?: string | undefined }> = ({
                   </div>
                 </div>
               ) : null}
+            </div>
+          </div>
+
+          {/* Nth signup lookup */}
+          <div className="mb-6 rounded border border-stroke bg-white p-4 dark:border-strokedark dark:bg-boxdark-2">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <h5 className="text-base font-semibold text-black dark:text-white">
+                  Nth signup lookup
+                </h5>
+                <p className="text-xs text-bodydark2 dark:text-bodydark">
+                  Fetch the Nth created account (createdAt asc, _id asc). Deleted users excluded.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+                <div>
+                  <label className="mb-0.5 block font-medium tracking-wide text-black text-sm dark:text-white">
+                    N
+                  </label>
+                  <select
+                    className="w-full cursor-pointer appearance-none rounded border border-stroke bg-transparent px-4 py-2 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[140px]"
+                    value={nthPreset}
+                    onChange={(e) => {
+                      setNthPreset(e.target.value as any);
+                      setNthError(null);
+                      setNthResult(null);
+                    }}
+                  >
+                    <option value="100" className="dark:bg-boxdark">
+                      100
+                    </option>
+                    <option value="1000" className="dark:bg-boxdark">
+                      1000
+                    </option>
+                    <option value="custom" className="dark:bg-boxdark">
+                      Custom
+                    </option>
+                  </select>
+                </div>
+
+                {nthPreset === "custom" && (
+                  <div>
+                    <label className="mb-0.5 block font-medium tracking-wide text-black text-sm dark:text-white">
+                      Custom N
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={customNth}
+                      onChange={(e) => {
+                        setCustomNth(e.target.value);
+                        setNthError(null);
+                      }}
+                      placeholder="e.g. 250"
+                      className="w-full rounded border border-stroke bg-transparent px-4 py-2 font-medium outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-boxdark text-black dark:text-white text-sm min-w-[160px]"
+                    />
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 text-sm text-black dark:text-white select-none">
+                  <input
+                    type="checkbox"
+                    checked={includeAdmins}
+                    onChange={(e) => {
+                      setIncludeAdmins(e.target.checked);
+                      setNthError(null);
+                      setNthResult(null);
+                    }}
+                    className="h-4 w-4 rounded border border-stroke accent-primary dark:border-form-strokedark"
+                  />
+                  Include admins
+                </label>
+
+                <button
+                  type="button"
+                  onClick={handleFetchNthSignup}
+                  disabled={nthSignupMutation.isPending}
+                  className="inline-flex items-center justify-center rounded bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {nthSignupMutation.isPending ? "Fetching..." : "Fetch"}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              {nthError ? (
+                <div className="rounded border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+                  {nthError}
+                </div>
+              ) : nthSignupMutation.isPending ? (
+                <div className="rounded border border-stroke bg-gray-2 px-4 py-3 dark:border-strokedark dark:bg-meta-4">
+                  <div className="h-4 w-56 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse mb-2"></div>
+                  <div className="h-3 w-72 rounded bg-gray-200 dark:bg-boxdark-hover animate-pulse"></div>
+                </div>
+              ) : nthResult?.user ? (
+                <div className="flex flex-col gap-3 rounded border border-stroke bg-white px-4 py-3 dark:border-strokedark dark:bg-boxdark">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-black dark:text-white">
+                        #{nthResult.n} signup
+                      </p>
+                      <p className="text-sm text-black dark:text-white">
+                        {nthResult.user.name}{" "}
+                        <span className="text-bodydark2 dark:text-bodydark">
+                          ({nthResult.user.email})
+                        </span>
+                      </p>
+                      <p className="text-xs text-bodydark2 dark:text-bodydark">
+                        Created:{" "}
+                        {moment(nthResult.user.createdAt).format(
+                          "ddd DD, MMM YYYY hh:mm:ss A"
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3.5">
+                      <Button.View
+                        onClick={() => {
+                          route.push(`/users/${nthResult.user._id}`);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-bodydark2 dark:text-bodydark">
+                  Choose N (100/1000 or Custom) and click Fetch.
+                </div>
+              )}
             </div>
           </div>
           <div className="max-w-full overflow-x-auto no-scrollbar">

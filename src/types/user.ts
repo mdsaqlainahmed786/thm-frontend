@@ -33,6 +33,14 @@ export interface UserProfile extends User {
   reportCount: number;
 }
 
+// Lightweight shape returned by admin nth-signup endpoint
+export interface NthSignupUser {
+  _id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+}
+
 export interface BusinessTypeRef {
   _id: string;
   icon: string;

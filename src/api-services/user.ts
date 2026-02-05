@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { handleClientApiErrors } from "./api-errors";
 import { User } from "@/types/user";
 import moment from "moment";
+import type { NthSignupUser } from "@/types/user";
 const fetchUser = async (userID: string) => {
     try {
         const response = await apiRequest.get(`/admin/users/${userID}`);
@@ -191,4 +192,43 @@ const demoteAdmin = async (userID: string) => {
     }
 };
 
-export { fetchUser, fetchUsers, fetchUserGrowth, addAdmin, fetchAllUsers, demoteAdmin }
+type NthSignupResponse = {
+    status: boolean;
+    statusCode: number;
+    message: string;
+    data: {
+        n: number;
+        user: NthSignupUser;
+    };
+};
+
+const fetchNthSignupUser = async (n: number, includeAdmins?: boolean) => {
+    try {
+        const response = await apiRequest.get(`/admin/users/nth-signup/${n}`, {
+            params: includeAdmins ? { includeAdmins: true } : undefined,
+        });
+        if (response.status === 200 && response.data.status) {
+            const responseData = response.data as NthSignupResponse;
+            return responseData.data;
+        } else {
+            toast.error(response?.data?.message ?? "Something went wrong");
+            return null;
+        }
+    } catch (error: any) {
+        const status = error?.response?.status;
+        // For these, show inline UI message instead of global error handling/toasts
+        if (status === 400 || status === 404) {
+            const message =
+                error?.response?.data?.message ??
+                error?.response?.data?.data?.message ??
+                "Request failed";
+            const err = new Error(message);
+            (err as any).status = status;
+            throw err;
+        }
+        handleClientApiErrors(error);
+        throw error;
+    }
+};
+
+export { fetchUser, fetchUsers, fetchUserGrowth, addAdmin, fetchAllUsers, demoteAdmin, fetchNthSignupUser }
