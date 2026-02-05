@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, ReactNode, useEffect } from "react";
+import React, { useState, ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -24,22 +24,6 @@ type MainLayoutProps =
 
 export default function AdminLayout(props: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useLocalStorage("adminSidebarOpen", false);
-  const [isCollapsed, setIsCollapsed] = useLocalStorage("adminSidebarCollapsed", true);
-
-  // Listen for sidebar collapse state changes (same tab)
-  useEffect(() => {
-    const handleCustomEvent = (event: any) => {
-      if (event.detail && typeof event.detail.isCollapsed === "boolean") {
-        setIsCollapsed(event.detail.isCollapsed);
-      }
-    };
-
-    window.addEventListener("sidebarCollapseChange", handleCustomEvent);
-
-    return () => {
-      window.removeEventListener("sidebarCollapseChange", handleCustomEvent);
-    };
-  }, [setIsCollapsed]);
 
   return (
     <div className="dark:bg-boxdark-2 dark:text-bodydark">
@@ -51,11 +35,7 @@ export default function AdminLayout(props: MainLayoutProps) {
           {/* <!-- ===== Sidebar End ===== --> */}
 
           {/* <!-- ===== Content Area Start ===== --> */}
-          <div
-            className={`relative flex flex-1 flex-col transition-all duration-300 ${
-              isCollapsed ? "lg:ml-20" : "lg:ml-72.5"
-            }`}
-          >
+          <div className="relative flex flex-1 flex-col transition-all duration-300 lg:ml-72.5">
             {/* <!-- ===== Header Start ===== --> */}
             <Header
               sidebarOpen={sidebarOpen}

@@ -5,6 +5,7 @@ import { User, UserProfile } from "@/types/user";
 import { Amenity } from "@/types/amenity";
 import { UsersRef } from "@/types/subscription";
 import { Room } from "@/types/room";
+import type { AxiosRequestConfig } from "axios";
 const fetchHotelDashboard = async (params: { [key: string]: any }) => {
     try {
         const paramsKey = Object.keys(params);
@@ -152,9 +153,9 @@ const fetchAmenities = async (params: { [key: string]: any }) => {
     }
 }
 
-const createRoom = async (data: any) => {
+const createRoom = async (data: any, config?: AxiosRequestConfig) => {
     try {
-        const response = await apiRequest.post(`/rooms`, data);
+        const response = await apiRequest.post(`/rooms`, data, config);
         if (response.status === 200 && response.data.status) {
             toast.success(response.data.message);
             return response.data;
@@ -183,9 +184,9 @@ const deleteRoom = async (ID: string) => {
     }
 }
 
-const updateRoom = async (data: any, ID: string) => {
+const updateRoom = async (data: any, ID: string, config?: AxiosRequestConfig) => {
     try {
-        const response = await apiRequest.put(`/rooms/${ID}`, data);
+        const response = await apiRequest.put(`/rooms/${ID}`, data, config);
         if (response.status === 200 && response.data.status) {
             toast.success(response.data.message);
             return response.data;
