@@ -20,6 +20,10 @@ const path = require("path");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOSTNAME = process.env.HOSTNAME || "127.0.0.1";
+// Prefer explicit config, but provide safe defaults so production never leaks localhost into redirects.
+// NextAuth uses NEXTAUTH_URL to build absolute callback/sign-in URLs.
+const PUBLIC_HOST = process.env.NEXT_PUBLIC_HOST || "https://admin.thehotelmedia.com";
+const NEXTAUTH_URL = process.env.NEXTAUTH_URL || PUBLIC_HOST;
 
 module.exports = {
   apps: [
@@ -35,6 +39,11 @@ module.exports = {
         NODE_ENV: "production",
         PORT: String(PORT),
         HOSTNAME,
+        NEXT_PUBLIC_HOST: PUBLIC_HOST,
+        NEXTAUTH_URL,
+        // If you use NEXTAUTH_URL_INTERNAL, keep it pointing to the local upstream for server-side calls.
+        NEXTAUTH_URL_INTERNAL:
+          process.env.NEXTAUTH_URL_INTERNAL || `http://${HOSTNAME}:${PORT}`,
       },
 
       // Resilience / self-healing

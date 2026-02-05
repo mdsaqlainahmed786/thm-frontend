@@ -61,6 +61,17 @@ export async function middleware(req: NextRequest) {
         .toLowerCase();
     const cookieStore = await cookies();
 
+    // Build redirects using the public origin as seen by the browser (NOT the upstream origin).
+    // If nginx doesn't forward Host/proto correctly, `req.url` can look like http://127.0.0.1:3000
+    // which would leak into Location headers and cause users to be redirected to localhost.
+    const forwardedProto = (req.headers.get('x-forwarded-proto') || '')
+        .split(',')[0]
+        .trim()
+        .toLowerCase();
+    const isDevHost = host.includes('localhost') || host.startsWith('127.0.0.1') || host.startsWith('0.0.0.0');
+    const publicProto = forwardedProto || (isDevHost ? 'http' : 'https');
+    const publicOrigin = `${publicProto}://${host}`;
+
     // Determine current subdomain status
     const isHotelSubdomain = host.startsWith('hotels.');
     const isAdminSubdomain = host.startsWith('admin.');
@@ -72,7 +83,6 @@ export async function middleware(req: NextRequest) {
     // If we allow client-side navigation on apex (RSC fetch to /hotels/*), middleware redirects will trigger
     // CORS/preflight failures ("Redirect is not allowed for a preflight request") and can cause UI flicker.
     // So we always perform a document redirect to the hotels subdomain early.
-    const isDevHost = host.includes('localhost') || host.startsWith('127.0.0.1') || host.startsWith('0.0.0.0');
     if (isApexDomain && !isDevHost && isHotelRoute) {
         const target = new URL(`${req.nextUrl.pathname}${req.nextUrl.search}`, 'https://hotels.thehotelmedia.com');
         return NextResponse.redirect(target);
@@ -127,7 +137,7 @@ export async function middleware(req: NextRequest) {
         const adminSessionToken = cookieStore.get('AdminSessionToken');
         if (adminSessionToken) {
             // Admin is logged in, redirect to dashboard
-            return NextResponse.redirect(new URL(DASHBOARD, req.url));
+            return NextResponse.redirect(new URL(DASHBOARD, publicOrigin));
         }
         // No admin session, allow access to admin login page
         return NextResponse.next();
@@ -147,7 +157,7 @@ export async function middleware(req: NextRequest) {
         if (userSessionToken || hasValidNextAuthForHotel) {
             // Hotel/user is logged in, redirect to hotel dashboard
             console.log('[MIDDLEWARE] Auth found (SessionToken or valid NextAuth business), redirecting to dashboard');
-            return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
+            return NextResponse.redirect(new URL(HOTEL_DASHBOARD, publicOrigin));
         }
         // No hotel session, allow access to hotel login page
         console.log('[MIDDLEWARE] No SessionToken, allowing access to login page');
@@ -183,7 +193,7 @@ export async function middleware(req: NextRequest) {
         if (!hotelSessionToken && !hasValidNextAuthForHotel) {
             // No SessionToken cookie, redirect to hotel login
             console.log('[MIDDLEWARE] No SessionToken found, redirecting to login');
-            return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, req.url));
+            return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, publicOrigin));
         }
         // SessionToken exists, allow access to hotel routes
         console.log('[MIDDLEWARE] Auth found (SessionToken or NextAuth), allowing access to hotel route');
@@ -209,14 +219,14 @@ export async function middleware(req: NextRequest) {
                 hasValidNextAuthForHotel,
                 redirectingTo: (hotelSessionToken || hasValidNextAuthForHotel) ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE
             });
-            return NextResponse.redirect(new URL((hotelSessionToken || hasValidNextAuthForHotel) ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, req.url));
+            return NextResponse.redirect(new URL((hotelSessionToken || hasValidNextAuthForHotel) ? HOTEL_DASHBOARD : HOTEL_LOGIN_ROUTE, publicOrigin));
         }
         if (isAdminSubdomain) {
             console.log('[MIDDLEWARE] Root path on admin subdomain:', {
                 hasToken: !!token,
                 redirectingTo: token ? DASHBOARD : LOGIN_ROUTE
             });
-            return NextResponse.redirect(new URL(token ? DASHBOARD : LOGIN_ROUTE, req.url));
+            return NextResponse.redirect(new URL(token ? DASHBOARD : LOGIN_ROUTE, publicOrigin));
         }
     }
 
@@ -224,24 +234,24 @@ export async function middleware(req: NextRequest) {
     if (token) {
         // Redirection for authenticated admin users hitting root
         if (pathname === "/" && !isApexDomain && isAdminSubdomain) {
-            return NextResponse.redirect(new URL(DASHBOARD, req.url));
+            return NextResponse.redirect(new URL(DASHBOARD, publicOrigin));
         }
 
         // Protect admin dashboard routes - only allow admin role
         if (isDashboardEndpoint && token.role !== Role.ADMIN) {
-            return NextResponse.redirect(new URL(HOTEL_DASHBOARD, req.url));
+            return NextResponse.redirect(new URL(HOTEL_DASHBOARD, publicOrigin));
         }
     } else {
         // 7. Unauthenticated protection for admin routes
 
         // On admin subdomain, protect dashboard routes
         if (isAdminSubdomain && isDashboardEndpoint) {
-            return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
+            return NextResponse.redirect(new URL(LOGIN_ROUTE, publicOrigin));
         }
 
         // Protect admin dashboard routes regardless of subdomain
         if (isDashboardEndpoint && !isHotelRoute) {
-            return NextResponse.redirect(new URL(LOGIN_ROUTE, req.url));
+            return NextResponse.redirect(new URL(LOGIN_ROUTE, publicOrigin));
         }
     }
 
