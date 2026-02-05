@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop thm-frontend",
+    "pm2:restart": "pm2 restart thm-frontend",
+    "pm2:logs": "pm2 logs thm-frontend",
+    "pm2:monit": "pm2 monit"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.15",

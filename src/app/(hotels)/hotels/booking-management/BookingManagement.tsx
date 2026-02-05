@@ -32,64 +32,61 @@ export default function BookingManagement() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between items-center">
-        <PageTitle>{pageTitle}</PageTitle>
-        <div className="w-full max-w-full overflow-x-auto no-scrollbar">
-          <div className="flex w-max gap-2 justify-end items-center ml-auto">
-          {isHotel && (
-            <div
-              className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
-              role="group"
-            >
-              {["Today Check In", "Today Check Out"].map((text, index) => {
-                return (
+      <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <PageTitle className="text-lg sm:text-xl">{pageTitle}</PageTitle>
+        </div>
+
+        {/* Controls: scrollable on mobile, aligned right on larger screens */}
+        <div className="w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar">
+          <div className="flex w-max sm:w-auto gap-2 sm:gap-3 items-center sm:justify-end">
+            {isHotel && (
+              <div
+                className="inline-flex rounded-lg bg-primary/60 p-0.5 flex-shrink-0"
+                role="group"
+              >
+                {["Today Check In", "Today Check Out"].map((text) => (
                   <button
                     onClick={() => handelCheckEventClick(text)}
                     type="button"
-                    key={index}
+                    key={text}
                     className={`${
                       checkEvent === text
-                        ? "bg-[#4881F5] dark:bg-[#4881F5] border-[#4881F5]"
-                        : "text-white/50  dark:text-white/50 border-transparent"
-                    } px-2.5 py-1.5 text-sm font-normal text-gray-900 border  rounded-lg hover:bg-primary/50 dark:text-white  dark:hover:bg-[#4881F5]/80 dark:hover:text-white hover:text-white`}
+                        ? "bg-[#4881F5] border-[#4881F5] text-white"
+                        : "text-white/60 border-transparent"
+                    } px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-primary/50 transition-colors min-w-[44px]`}
                   >
-                    <span className="px-1.5">{text}</span>
+                    <span className="whitespace-nowrap">{text}</span>
                   </button>
-                );
-              })}
-            </div>
-          )}
-          <div
-            className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
-            role="group"
-          >
-            {["1h", "1d", "1w", "1m", "1y"].map((text, index) => {
-              return (
+                ))}
+              </div>
+            )}
+
+            <div
+              className="inline-flex rounded-lg bg-primary/60 p-0.5 flex-shrink-0"
+              role="group"
+            >
+              {["1h", "1d", "1w", "1m", "1y"].map((text) => (
                 <button
                   onClick={() => handleTimelineFilterClick(text)}
                   type="button"
-                  key={index}
+                  key={text}
                   className={`${
                     timelineFilter === text
-                      ? "bg-[#4881F5] dark:bg-[#4881F5] border-[#4881F5]"
-                      : "text-white/50  dark:text-white/50 border-transparent"
-                  } px-2.5 py-1.5 text-sm font-normal text-gray-900 border  rounded-lg hover:bg-primary/50 dark:text-white  dark:hover:bg-[#4881F5]/80 dark:hover:text-white hover:text-white`}
+                      ? "bg-[#4881F5] border-[#4881F5] text-white"
+                      : "text-white/60 border-transparent"
+                  } px-3 py-2 text-xs sm:text-sm font-medium border rounded-lg hover:bg-primary/50 transition-colors min-w-[44px]`}
                 >
-                  <span className="px-1.5">{text}</span>
+                  <span className="whitespace-nowrap">{text}</span>
                 </button>
-              );
-            })}
-          </div>
-          <div
-            className="inline-flex rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
-            role="group"
-          >
+              ))}
+            </div>
+
             <button
               onClick={() => {}}
               type="button"
-              className={`${
-                true ? " " : "text-white/50"
-              } px-2.5 py-1.5 text-sm font-normal text-gray-900 border-0  rounded-lg hover:bg-primary/50 dark:text-white  dark:hover:bg-[#4881F5]/80 dark:hover:text-white hover:text-white`}
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/60 hover:bg-primary/50 transition-colors flex-shrink-0"
+              aria-label="Open calendar"
             >
               <svg
                 width="20"
@@ -102,7 +99,7 @@ export default function BookingManagement() {
                   d="M6.82227 2.06055V4.4429"
                   stroke="white"
                   strokeWidth="1.54853"
-                  stroke-miterlimit="10"
+                  strokeMiterlimit="10"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -110,7 +107,7 @@ export default function BookingManagement() {
                   d="M13.1758 2.06055V4.4429"
                   stroke="white"
                   strokeWidth="1.54853"
-                  stroke-miterlimit="10"
+                  strokeMiterlimit="10"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -118,7 +115,7 @@ export default function BookingManagement() {
                   d="M3.24902 7.68945H16.749"
                   stroke="white"
                   strokeWidth="1.54853"
-                  stroke-miterlimit="10"
+                  strokeMiterlimit="10"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -126,7 +123,7 @@ export default function BookingManagement() {
                   d="M17.1467 7.22059V13.9706C17.1467 16.3529 15.9555 17.9412 13.1761 17.9412H6.82313C4.04372 17.9412 2.85254 16.3529 2.85254 13.9706V7.22059C2.85254 4.83824 4.04372 3.25 6.82313 3.25H13.1761C15.9555 3.25 17.1467 4.83824 17.1467 7.22059Z"
                   stroke="white"
                   strokeWidth="1.54853"
-                  stroke-miterlimit="10"
+                  strokeMiterlimit="10"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -175,7 +172,6 @@ export default function BookingManagement() {
               </svg>
             </button>
           </div>
-          </div>
           {/* <Button.Hotel.Button name="Export" onClick={() => {
                         setModal(!modal);
                         setFormInputs(initialFormInputs);
@@ -184,7 +180,10 @@ export default function BookingManagement() {
         </div>
       </div>
       <PageContent>
-        <BookingTable />
+        <BookingTable 
+          timelineFilter={timelineFilter}
+          checkEvent={checkEvent}
+        />
       </PageContent>
     </>
   );

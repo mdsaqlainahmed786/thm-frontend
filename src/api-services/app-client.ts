@@ -3,13 +3,18 @@ import AppConfig from '../config/constants';
 import { getCookie } from 'cookies-next';
 import { signOut } from 'next-auth/react';
 import { LOGIN_ROUTE, HOTEL_LOGIN_URL } from "@/types/auth";
+
+const isDev = process.env.NODE_ENV === 'development';
+
 const apiRequest = axios.create({
     baseURL: AppConfig.API_ENDPOINT,
     headers: {
         'Accept': 'application/json',
     },
     withCredentials: true,
+    timeout: 30000, // 30 seconds timeout - prevents hanging connections
 });
+
 /**
  * Request interceptor
  */
@@ -32,21 +37,10 @@ apiRequest.interceptors.request.use(
             headerKey = 'X-Access-Token';
         }
         
-        console.log('[API-REQUEST] Request interceptor:', {
-            url: config.url,
-            method: config.method,
-            isAdminRequest,
-            hasAccessToken: !!accessToken,
-            headerKey,
-            pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'
-        });
-        
         if (accessToken) {
             config.headers[headerKey] = accessToken;
-        } else {
-            console.warn('[API-REQUEST] No access token found for request:', config.url);
         }
-        // Ensure headers are set for CORS
+        
         // Only set Content-Type for JSON requests.
         // Let the browser set the boundary for FormData (file uploads).
         if (config.data && !config.headers['Content-Type']) {
@@ -55,26 +49,22 @@ apiRequest.interceptors.request.use(
                 config.headers['Content-Type'] = 'application/json';
             }
         }
+        
         // Always set Accept header
         if (!config.headers['Accept']) {
             config.headers['Accept'] = 'application/json';
         }
+        
         config.withCredentials = true;
         return config;
     },
     (error) => {
-        console.error('[API-REQUEST] Request interceptor error:', error);
         return Promise.reject(error);
     }
 );
 
 apiRequest.interceptors.response.use(
     (response) => {
-        console.log('[API-RESPONSE] Response received:', {
-            url: response.config.url,
-            status: response.status,
-            statusText: response.statusText
-        });
         return response;
     },
     async (error) => {
@@ -82,64 +72,36 @@ apiRequest.interceptors.response.use(
 
         // Check if error.response exists before accessing its properties
         if (error.response) {
-            console.log('[API-RESPONSE] Error response:', {
-                url: originalRequest?.url,
-                status: error.response.status,
-                statusText: error.response.statusText,
-                data: error.response.data,
-                hasData: !!error.response.data,
-                dataType: typeof error.response.data
-            });
-            
-            // Skip logout for requests marked with skipAuthError flag (e.g., QR code endpoints)
-            if (originalRequest.skipAuthError) {
-                console.log('[API-RESPONSE] Skipping auth error handling (skipAuthError flag set)');
+            // Skip logout for requests marked with skipAuthError flag
+            if (originalRequest?.skipAuthError) {
                 return Promise.reject(error);
             }
             
             // Don't logout for 403 (Forbidden) errors - these are permission issues, not auth issues
             if (error.response.status === 403) {
-                console.log('[API-RESPONSE] 403 Forbidden error, not logging out');
                 return Promise.reject(error);
             }
             
             // If the error status is 401 and there is no originalRequest._retry flag,
             // it means the token has expired and we need to refresh it
-            if (error.response.status === 401 && !originalRequest._retry) {
-                console.log('[API-RESPONSE] 401 Unauthorized, attempting token refresh');
+            if (error.response.status === 401 && originalRequest && !originalRequest._retry) {
                 originalRequest._retry = true;
                 try {
-                    console.log('[API-RESPONSE] Calling refresh token endpoint');
-                    await axios.post(`/api/auth/user-refresh-token`, {});
-                    console.log('[API-RESPONSE] Token refresh successful, retrying original request');
+                    await axios.post(`/api/auth/user-refresh-token`, {}, { timeout: 10000 });
                     // Retry the original request with the new token
                     return apiRequest(originalRequest);
                 } catch (refreshError: any) {
-                    // Handle refresh token error or redirect to login
-                    console.error('[API-RESPONSE] Token refresh failed:', {
-                        message: refreshError?.message,
-                        response: refreshError?.response?.status,
-                        responseData: refreshError?.response?.data,
-                        stack: refreshError?.stack
-                    });
                     // Check if we're on a hotel route
                     const isHotelRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/hotels/');
                     const redirectUrl = isHotelRoute ? HOTEL_LOGIN_URL : LOGIN_ROUTE;
-                    console.log('[API-RESPONSE] Signing out and redirecting to:', redirectUrl);
                     signOut({ redirect: true, callbackUrl: redirectUrl });
                     return Promise.reject(refreshError);
                 }
             }
-        } else {
-            console.error('[API-RESPONSE] Error without response object:', {
-                message: error?.message,
-                code: error?.code,
-                config: error?.config?.url,
-                hasRequest: !!error?.request
-            });
         }
+        
         return Promise.reject(error);
     }
 );
-export default apiRequest;
 
+export default apiRequest;

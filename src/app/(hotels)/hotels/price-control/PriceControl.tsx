@@ -324,126 +324,177 @@ export default function PriceControl() {
                 </div>
             </div >
             <PageContent>
-                <div className="max-w-full overflow-x-auto">
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-3">
+                    {isFetching ? (
+                        <div className="rounded-xl border border-theme-gray bg-theme-black p-4">
+                            <Loading />
+                        </div>
+                    ) : (data?.data?.length ?? 0) === 0 ? (
+                        <div className="rounded-xl border border-theme-gray bg-theme-black p-4 text-white/60 text-sm">
+                            No price presets found.
+                        </div>
+                    ) : (
+                        data?.data?.map((pricePreset) => (
+                            <div
+                                key={pricePreset._id}
+                                className="rounded-xl border border-theme-gray bg-theme-black p-4 space-y-3"
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium capitalize mb-2">
+                                            {pricePreset.type}
+                                        </span>
+                                        <p className="text-white text-sm">
+                                            {pricePreset.type === "custom" && (
+                                                <>{moment(pricePreset.startDate).format("MMM DD")} - {moment(pricePreset.endDate).format("MMM DD, YYYY")}</>
+                                            )}
+                                            {pricePreset.type === "quarterly" && (
+                                                <>{pricePreset.months && pricePreset.months.map(month => moment.months(month)).join(", ")}</>
+                                            )}
+                                            {pricePreset.type === "monthly" && (
+                                                <>{pricePreset.months && pricePreset.months.map(month => moment.months(month)).join(", ")}</>
+                                            )}
+                                        </p>
+                                    </div>
+                                    <SwitcherThree 
+                                        enabled={pricePreset?.isActive} 
+                                        id={pricePreset._id} 
+                                        setEnabled={() => activatePricePreset({
+                                            ID: pricePreset._id,
+                                            isActive: !(pricePreset?.isActive)
+                                        })} 
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-3 py-2 border-t border-white/10">
+                                    <div>
+                                        <p className="text-white/60 text-xs mb-1">Daily Hike</p>
+                                        <p className="text-white font-medium">{pricePreset.price}%</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-white/60 text-xs mb-1">Weekend Hike</p>
+                                        <p className="text-white font-medium">{pricePreset.weekendPrice}%</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-2 pt-2 border-t border-white/10">
+                                    <Button.Hotel.Edit name="Edit" svg={<SVG.Edit />} onClick={() => {
+                                        setEditMode(true);
+                                        setModal(true);
+                                        setFormInputs({
+                                            ...formInputs,
+                                            _id: pricePreset._id,
+                                            type: pricePreset.type,
+                                            weeks: pricePreset.weeks,
+                                            months: pricePreset.months,
+                                            price: pricePreset.price,
+                                            weekendPrice: pricePreset.weekendPrice,
+                                            startDate: moment(pricePreset.startDate).format("YYYY-MM-DD"),
+                                            endDate: moment(pricePreset.endDate).format("YYYY-MM-DD")
+                                        })
+                                    }} />
+                                    <Button.Hotel.Delete name="Delete" svg={<SVG.Delete />} onClick={() => handleDelete(pricePreset._id)} />
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block max-w-full thm-scrollbar overflow-x-auto">
                     <div className="border dark:border-theme-gray border-theme-gray rounded-xl">
                         <table className="w-full table-auto font-quicksand">
                             <thead>
                                 <tr className="bg-primary/50 text-left dark:bg-primary/50 text-sm">
-                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-left xl:pl-11  min-w-[120px]">
+                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-left xl:pl-11 min-w-[120px]">
                                         Period
                                     </th>
-                                    {/* <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[120px]">
-                                        Week
+                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-center min-w-[140px]">
+                                        Daily Hike
                                     </th>
-                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[120px]">
-                                        Base Amount
-                                    </th> */}
-                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[220px]">
-                                        Every Day Hike
-                                    </th>
-                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[120px]">
+                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-center min-w-[120px]">
                                         Weekend Hike
                                     </th>
-
-                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-right min-w-[120px]">
+                                    <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-right min-w-[180px]">
                                         Action
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {
-                                    isFetching ?
-                                        <tr >
-                                            <td colSpan={6} >
-                                                <Loading />
-                                            </td>
-                                        </tr> : <>
-                                            {
-                                                data && data.data && data.data.map((pricePreset) => {
-                                                    return (
-                                                        <tr key={pricePreset._id} className="even:bg-primary/10 odd:bg-theme-black dark:even:bg-primary/10 dark:odd:bg-theme-black hover:bg-primary/30 dark:hover:bg-primary/30 group [&:not(:last-child)]:border-b  dark:[&:not(:last-child)]:border-theme-gray [&:not(:last-child)]:border-theme-gray" >
-                                                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                                                                <div className="flex flex-col ps-3 ">
-                                                                    <p className="text-white/60 dark:text-white//60 text-sm capitalize">
-                                                                        {pricePreset.type}
-                                                                    </p>
-                                                                    <p className="text-white dark:text-white text-base">
-
-                                                                        {
-                                                                            pricePreset.type === "custom" && <>
-                                                                                {moment(pricePreset.startDate).format("YYYY-MM-DD")} - {moment(pricePreset.endDate).format("YYYY-MM-DD")}
-                                                                            </>
-                                                                        }
-                                                                        {
-                                                                            pricePreset.type === "quarterly" && <>
-                                                                                {pricePreset.months && pricePreset.months.map(month => (moment.months(month))).join(", ")}
-                                                                            </>
-                                                                        }
-                                                                        {
-                                                                            pricePreset.type === "monthly" && <>
-                                                                                {pricePreset.months && pricePreset.months.map(month => (moment.months(month))).join(", ")}
-                                                                            </>
-                                                                        }
-                                                                    </p>
-                                                                </div>
-
-                                                            </td>
-                                                            {/* <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                                                                <p className="text-white dark:text-white text-sm capitalize text-center">
-                                                                    {pricePreset.weeks && pricePreset.weeks.map(week => (`Week ${++week}`)).join(", ")}
-                                                                </p>
-                                                            </td>
-                                                           <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                                                                <p className="text-white dark:text-white text-sm text-center">
-                                                                 {room?.availability} 
-                                                                </p>
-                                                            </td> */}
-                                                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                                                                <p className="text-white dark:text-white text-sm line-clamp-3 text-center">
-                                                                    {pricePreset.price}
-                                                                </p>
-                                                            </td>
-                                                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                                                                <p className="text-white dark:text-white text-sm line-clamp-3 text-center">
-                                                                    {pricePreset.weekendPrice}
-                                                                </p>
-                                                            </td>
-                                                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                                                                <div className="flex gap-2 justify-end pe-2">
-                                                                    <Button.Hotel.Edit name="View" svg={<SVG.Edit />} onClick={() => {
-                                                                        setEditMode(true);
-                                                                        setModal(true);
-                                                                        setFormInputs({
-                                                                            ...formInputs,
-                                                                            _id: pricePreset._id,
-                                                                            type: pricePreset.type,
-                                                                            weeks: pricePreset.weeks,
-                                                                            months: pricePreset.months,
-                                                                            price: pricePreset.price,
-                                                                            weekendPrice: pricePreset.weekendPrice,
-                                                                            startDate: moment(pricePreset.startDate).format("YYYY-MM-DD"),
-                                                                            endDate: moment(pricePreset.endDate).format("YYYY-MM-DD")
-                                                                        })
-                                                                    }} />
-                                                                    <Button.Hotel.Delete name="Delete" svg={<SVG.Delete />} onClick={() => handleDelete(pricePreset._id)} />
-                                                                    <SwitcherThree enabled={pricePreset?.isActive} id={pricePreset._id} setEnabled={() => activatePricePreset({
-                                                                        ID: pricePreset._id,
-                                                                        isActive: !(pricePreset?.isActive)
-                                                                    })} />
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    )
-                                                })
-                                            }
-                                        </>
-
-                                }
+                                {isFetching ? (
+                                    <tr>
+                                        <td colSpan={4}>
+                                            <Loading />
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    <>
+                                        {data && data.data && data.data.map((pricePreset) => {
+                                            return (
+                                                <tr key={pricePreset._id} className="even:bg-primary/10 odd:bg-theme-black dark:even:bg-primary/10 dark:odd:bg-theme-black hover:bg-primary/30 dark:hover:bg-primary/30 group [&:not(:last-child)]:border-b dark:[&:not(:last-child)]:border-theme-gray [&:not(:last-child)]:border-theme-gray transition-colors duration-200">
+                                                    <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                                                        <div className="flex flex-col">
+                                                            <p className="text-white/60 dark:text-white/60 text-sm capitalize">
+                                                                {pricePreset.type}
+                                                            </p>
+                                                            <p className="text-white dark:text-white text-base">
+                                                                {pricePreset.type === "custom" && (
+                                                                    <>{moment(pricePreset.startDate).format("YYYY-MM-DD")} - {moment(pricePreset.endDate).format("YYYY-MM-DD")}</>
+                                                                )}
+                                                                {pricePreset.type === "quarterly" && (
+                                                                    <>{pricePreset.months && pricePreset.months.map(month => moment.months(month)).join(", ")}</>
+                                                                )}
+                                                                {pricePreset.type === "monthly" && (
+                                                                    <>{pricePreset.months && pricePreset.months.map(month => moment.months(month)).join(", ")}</>
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                                                        <p className="text-white dark:text-white text-sm text-center">
+                                                            {pricePreset.price}%
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                                                        <p className="text-white dark:text-white text-sm text-center">
+                                                            {pricePreset.weekendPrice}%
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                                                        <div className="flex gap-2 justify-end items-center">
+                                                            <Button.Hotel.Edit name="Edit" svg={<SVG.Edit />} onClick={() => {
+                                                                setEditMode(true);
+                                                                setModal(true);
+                                                                setFormInputs({
+                                                                    ...formInputs,
+                                                                    _id: pricePreset._id,
+                                                                    type: pricePreset.type,
+                                                                    weeks: pricePreset.weeks,
+                                                                    months: pricePreset.months,
+                                                                    price: pricePreset.price,
+                                                                    weekendPrice: pricePreset.weekendPrice,
+                                                                    startDate: moment(pricePreset.startDate).format("YYYY-MM-DD"),
+                                                                    endDate: moment(pricePreset.endDate).format("YYYY-MM-DD")
+                                                                })
+                                                            }} />
+                                                            <Button.Hotel.Delete name="Delete" svg={<SVG.Delete />} onClick={() => handleDelete(pricePreset._id)} />
+                                                            <SwitcherThree enabled={pricePreset?.isActive} id={pricePreset._id} setEnabled={() => activatePricePreset({
+                                                                ID: pricePreset._id,
+                                                                isActive: !(pricePreset?.isActive)
+                                                            })} />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </>
+                                )}
                             </tbody>
                         </table>
                     </div>
-                    <Paginator pageNo={pageNo} totalPages={totalPages} totalResources={totalResources} onPageChange={(e, pageNo) => setPageNo(pageNo)} />
                 </div>
+                <Paginator pageNo={pageNo} totalPages={totalPages} totalResources={totalResources} onPageChange={(e, pageNo) => setPageNo(pageNo)} />
             </PageContent>
         </>
     )

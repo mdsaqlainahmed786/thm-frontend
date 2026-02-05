@@ -1,9 +1,10 @@
 "use client";
-import React, { useState, ReactNode, useCallback } from "react";
+
+import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { useEffect } from "react";
 import { InputProvider } from "@/context/SearchProvider";
+
 interface HotelAdminLayoutSearchableProps {
   isSearchable: true;
   searchPlaceholder: string;
@@ -18,50 +19,152 @@ interface MainLayoutNonSearchableProps {
 
 type MainLayoutProps = HotelAdminLayoutSearchableProps | MainLayoutNonSearchableProps;
 
-
 export default function HotelAdminLayout(props: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  return (
-    <div className=" dark:text-white text-white overflow-x-hidden">
-      <InputProvider>
-        {/* <!-- ===== Page Wrapper Start ===== --> */}
-        <div className="flex">
-          {/* <!-- ===== Sidebar Start ===== --> */}
-          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-          {/* <!-- ===== Sidebar End ===== --> */}
 
-          {/* <!-- ===== Content Area Start ===== --> */}
-          <div className="relative flex flex-1 flex-col lg:ml-[16.125rem]">
-            {/* <!-- ===== Header Start ===== --> */}
-            <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} isSearchable={props.isSearchable} queryPlaceholder={props.searchPlaceholder ?? ""} />
-            {/* <!-- ===== Header End ===== --> */}
-            {/* <!-- ===== Main Content Start ===== --> */}
-            <main>
-              <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:py-10">
+  // Lock background scroll when the mobile/tablet drawer is open
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isXlUp = window.matchMedia("(min-width: 1280px)").matches;
+    if (isXlUp) return;
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
+  return (
+    <div className="min-h-screen bg-theme-primary text-theme-primary overflow-x-hidden">
+      <InputProvider>
+        {/* Page Wrapper */}
+        <div className="flex min-w-0">
+          {/* Sidebar */}
+          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+          {/* Backdrop for off-canvas sidebar (mobile/tablet) */}
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className={`
+              fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm
+              transition-opacity duration-300 ease-out
+              xl:hidden
+              ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}
+            `}
+            aria-hidden="true"
+          />
+
+          {/* Content Area */}
+          <div className="relative flex min-w-0 flex-1 flex-col xl:ml-64">
+            {/* Header */}
+            <Header
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+              isSearchable={props.isSearchable}
+              queryPlaceholder={props.searchPlaceholder ?? ""}
+            />
+
+            {/* Main Content */}
+            <main className="flex-1">
+              <div className="mx-auto max-w-screen-2xl p-4 md:p-6 lg:p-8">
                 {props.children}
               </div>
             </main>
-            {/* <!-- ===== Main Content End ===== --> */}
           </div>
-          {/* <!-- ===== Content Area End ===== --> */}
         </div>
-        {/* <!-- ===== Page Wrapper End ===== --> */}
       </InputProvider>
     </div>
   );
 }
 
-export const PageTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+/**
+ * Page Title Component
+ */
+export const PageTitle: React.FC<{ 
+  children: React.ReactNode; 
+  className?: string;
+  subtitle?: string;
+}> = ({ children, className, subtitle }) => {
   return (
-    <h3 className="text-xl font-medium text-white dark:text-white font-quicksand">
-      {children}
-    </h3>
-  )
-}
-export const PageContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    <div className={className}>
+      <h1 className="text-heading-2 font-semibold text-theme-primary">
+        {children}
+      </h1>
+      {subtitle && (
+        <p className="mt-1 text-body-md text-theme-secondary">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Page Content Container
+ */
+export const PageContent: React.FC<{ 
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className }) => {
   return (
-    <div className="rounded-xl border border-theme-gray bg-theme-black p-4 shadow-default dark:border-theme-gray dark:bg-theme-black">
+    <div className={`
+      rounded-xl border border-theme-primary
+      bg-theme-card shadow-theme-card
+      p-4 md:p-6
+      ${className || ''}
+    `}>
       {children}
     </div>
-  )
-}
+  );
+};
+
+/**
+ * Card Component for dashboard sections
+ */
+export const Card: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  hover?: boolean;
+}> = ({ children, className, hover = false }) => {
+  return (
+    <div className={`
+      rounded-lg border border-theme-primary
+      bg-theme-card shadow-theme-card
+      p-4 md:p-5
+      transition-all duration-200
+      ${hover ? "card-hover cursor-pointer" : ""}
+      ${className || ''}
+    `}>
+      {children}
+    </div>
+  );
+};
+
+/**
+ * Section Header Component
+ */
+export const SectionHeader: React.FC<{
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+  className?: string;
+}> = ({ title, subtitle, action, className }) => {
+  return (
+    <div className={`flex items-start justify-between gap-4 mb-4 ${className || ''}`}>
+      <div>
+        <h2 className="text-heading-4 font-semibold text-theme-primary">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="mt-0.5 text-body-sm text-theme-secondary">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {action && (
+        <div className="flex-shrink-0">
+          {action}
+        </div>
+      )}
+    </div>
+  );
+};

@@ -339,6 +339,7 @@ const authOptions: AuthOptions = {
                 session.user._id = token._id;
                 session.user.name = token.name;
                 session.user.profilePic = token.profilePic;
+                session.user.businessProfilePic = (token as any).businessProfilePic;
                 session.user.accessToken = token.accessToken;
                 session.user.username = token.username;
                 session.user.role = token.role;
@@ -397,6 +398,8 @@ const authOptions: AuthOptions = {
                 token._id = user.id;
                 token.name = user.name;
                 token.profilePic = user.profilePic;
+                // Store business logo separately (for top-right header avatar)
+                (token as any).businessProfilePic = user?.businessProfileRef?.profilePic ?? (token as any).businessProfilePic;
                 token.accessToken = user.accessToken;
                 token.username = user.username;
                 token.accountType = user.accountType;
