@@ -1,6 +1,5 @@
 import { getToken } from 'next-auth/jwt';
 import { NextResponse, NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 import { DASHBOARD, HOTEL_DASHBOARD, HOTEL_LOGIN_ROUTE, HOTEL_LOGIN_URL, LOGIN_ROUTE, Role } from './types/auth';
 const dashboardEndpoints = [
     '/dashboard',
@@ -59,7 +58,7 @@ export async function middleware(req: NextRequest) {
         .split(',')[0]
         .trim()
         .toLowerCase();
-    const cookieStore = await cookies();
+    const cookieStore = req.cookies;
 
     // Build redirects using the public origin as seen by the browser (NOT the upstream origin).
     // If nginx doesn't forward Host/proto correctly, `req.url` can look like http://127.0.0.1:3000
@@ -78,6 +77,7 @@ export async function middleware(req: NextRequest) {
     const isApexDomain = !isHotelSubdomain && !isAdminSubdomain;
 
     const isHotelRoute = pathname.startsWith('/hotels/');
+    const isAdminRoute = pathname.startsWith('/admin/');
 
     // IMPORTANT: On apex domain, hotel routes must be served from the hotels subdomain.
     // If we allow client-side navigation on apex (RSC fetch to /hotels/*), middleware redirects will trigger
@@ -86,6 +86,17 @@ export async function middleware(req: NextRequest) {
     if (isApexDomain && !isDevHost && isHotelRoute) {
         const target = new URL(`${req.nextUrl.pathname}${req.nextUrl.search}`, 'https://hotels.thehotelmedia.com');
         return NextResponse.redirect(target);
+    }
+
+    // Fix invalid domain+path combos:
+    // - If you’re on admin subdomain and hit /hotels/* (including /hotels/login), redirect to hotels subdomain.
+    // - If you’re on hotels subdomain and hit /admin/*, redirect to /hotels/login.
+    if (!isDevHost && isAdminSubdomain && isHotelRoute) {
+        const target = new URL(`${req.nextUrl.pathname}${req.nextUrl.search}`, 'https://hotels.thehotelmedia.com');
+        return NextResponse.redirect(target);
+    }
+    if (isHotelSubdomain && isAdminRoute) {
+        return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, publicOrigin));
     }
     
     // CRITICAL: Clear admin cookies if we're on hotel subdomain/route to prevent cross-contamination
