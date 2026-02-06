@@ -154,7 +154,7 @@ export default function BankDetail() {
                                                 <ListIcon width={16} height={16} />
                                             </span>
                                             <select className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm" required={true} onChange={(e) => setFormInputs({ ...formInputs, bankName: e.target.value })} value={formInputs.bankName}>
-                                                <option value="" disabled={false} className="text-black dark:text-black">Select Bank Type</option>
+                                                <option value="" disabled={false} className="text-black dark:text-black">Select Bank Name</option>
                                                 {
                                                     banks && banks.map((data, index) => (
                                                         <option key={index} value={data.name} className="text-black dark:text-black">{data.name}</option>
