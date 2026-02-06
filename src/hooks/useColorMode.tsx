@@ -5,6 +5,18 @@ import useLocalStorage from "./useLocalStorage";
 
 type Theme = "light" | "dark";
 
+function normalizeStoredTheme(value: string | null): Theme | null {
+  if (!value) return null;
+  if (value === "light" || value === "dark") return value;
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed === "light" || parsed === "dark") return parsed;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 function isAdminThemeHost(hostname: string) {
   // Restrict theme switching to admin subdomain in production.
   // Allow localhost in non-prod to make local development usable.
@@ -56,12 +68,8 @@ const useColorMode = (): [Theme, (theme: Theme) => void] => {
       setColorModeStorage(enforced);
     } else {
       // Admin host: respect stored preference; ensure it's valid.
-      const stored = localStorage.getItem("thm-theme");
-      if (stored === "light" || stored === "dark") {
-        setColorModeStorage(stored);
-      } else {
-        setColorModeStorage("dark");
-      }
+      const stored = normalizeStoredTheme(localStorage.getItem("thm-theme"));
+      setColorModeStorage(stored ?? "dark");
     }
   }, [setColorModeStorage]);
 

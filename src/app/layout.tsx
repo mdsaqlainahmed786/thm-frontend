@@ -53,6 +53,16 @@ const ThemeScript = () => {
   const script = `
     (function() {
       try {
+        function normalizeTheme(value) {
+          if (!value) return null;
+          if (value === 'light' || value === 'dark') return value;
+          try {
+            var parsed = JSON.parse(value);
+            if (parsed === 'light' || parsed === 'dark') return parsed;
+          } catch (e) {}
+          return null;
+        }
+
         var pathname = window.location.pathname || '';
         var hostname = window.location.hostname || '';
 
@@ -67,14 +77,12 @@ const ThemeScript = () => {
         } else if (isHotelsArea) {
           theme = 'dark';
         } else if (isAdminHost) {
-          var stored = localStorage.getItem('thm-theme');
-          theme = (stored === 'light' || stored === 'dark') ? stored : 'dark';
+          var stored = normalizeTheme(localStorage.getItem('thm-theme'));
+          theme = stored || 'dark';
         } else {
           theme = 'dark';
           // Ensure non-admin hosts never stick to light mode accidentally.
-          if (localStorage.getItem('thm-theme') === 'light') {
-            localStorage.setItem('thm-theme', 'dark');
-          }
+          localStorage.setItem('thm-theme', JSON.stringify('dark'));
         }
 
         document.documentElement.setAttribute('data-theme', theme);

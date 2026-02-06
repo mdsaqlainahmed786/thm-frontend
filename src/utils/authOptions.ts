@@ -6,6 +6,30 @@ import { cookies } from 'next/headers'
 import { AuthenticationProvider } from "@/types/auth";
 import { LOGIN_ROUTE } from "@/types/auth";
 
+/**
+ * IMPORTANT (production stability):
+ * Excessive `console.log` in Next.js/NextAuth (especially printing large objects / tokens)
+ * can block the Node.js event loop and cause nginx 504s under traffic spikes.
+ *
+ * Logging is therefore OFF by default in production.
+ * Enable explicitly by setting AUTH_DEBUG=true.
+ */
+const AUTH_DEBUG = process.env.AUTH_DEBUG === "true";
+const isProd = process.env.NODE_ENV === "production";
+const shouldLog = AUTH_DEBUG || !isProd;
+
+const authLog = (...args: any[]) => {
+    if (shouldLog) console.log(...args);
+};
+const authWarn = (...args: any[]) => {
+    if (shouldLog) console.warn(...args);
+};
+// Errors are kept but we avoid dumping huge objects/tokens unless debug is enabled.
+const authError = (...args: any[]) => {
+    if (shouldLog) console.error(...args);
+    else console.error(args?.[0] ?? "[AUTH] error");
+};
+
 // Cookie options for Safari compatibility
 // Access tokens need to be readable by JavaScript (for axios interceptors)
 // Refresh tokens should be httpOnly (server-only)
@@ -64,7 +88,7 @@ function decodeJWT(token: string): any {
         );
         return JSON.parse(jsonPayload);
     } catch (error) {
-        console.error('Error decoding JWT:', error);
+        authError('[AUTH] Error decoding JWT');
         return null;
     }
 }
@@ -99,14 +123,14 @@ const authOptions: AuthOptions = {
                     const cookieStore = await cookies();
                     
                     // CRITICAL: Clear any existing hotel cookies to prevent cross-contamination
-                    console.log('[AUTH] Clearing hotel cookies before setting admin cookies');
+                    authLog('[AUTH] Clearing hotel cookies before setting admin cookies');
                     cookieStore.delete('X-Access-Token');
                     cookieStore.delete('SessionToken');
                     
                     // Admin uses separate cookie names
                     const accessCookieOptions = getAccessCookieOptions();
                     const refreshCookieOptions = getRefreshCookieOptions();
-                    console.log('[AUTH] Setting admin cookies:', {
+                    authLog('[AUTH] Setting admin cookies:', {
                         hasAccessToken: !!user?.accessToken,
                         hasRefreshToken: !!user?.refreshToken
                     });
@@ -114,13 +138,13 @@ const authOptions: AuthOptions = {
                     // Some backends return refresh token via Set-Cookie (httpOnly), not JSON.
                     // We require an accessToken here (used by client-side axios). Refresh token is optional.
                     if (!user?.accessToken) {
-                        console.error('[AUTH] Missing accessToken in admin user object');
+                        authError('[AUTH] Missing accessToken in admin user object');
                         throw new Error("Invalid response from server: missing access token");
                     }
                     const setCookieHeader = (response.headers as any)?.['set-cookie'] as string[] | string | undefined;
-                    console.log('[AUTH] Admin login response set-cookie header present:', !!setCookieHeader);
+                    authLog('[AUTH] Admin login response set-cookie header present:', !!setCookieHeader);
                     if (setCookieHeader) {
-                        console.log('[AUTH] Admin login set-cookie cookie names:', extractCookieNames(setCookieHeader));
+                        authLog('[AUTH] Admin login set-cookie cookie names:', extractCookieNames(setCookieHeader));
                     }
                     
                     cookieStore.set('X-Admin-Access-Token', user.accessToken, accessCookieOptions);
@@ -133,13 +157,13 @@ const authOptions: AuthOptions = {
                     if (adminRefreshToken) {
                         cookieStore.set('AdminSessionToken', adminRefreshToken, refreshCookieOptions);
                     } else {
-                        console.warn('[AUTH] Admin refreshToken missing in JSON and Set-Cookie; AdminSessionToken will not be set');
+                        authWarn('[AUTH] Admin refreshToken missing in JSON and Set-Cookie; AdminSessionToken will not be set');
                     }
                     
                     // Verify cookies were set
                     const setAdminAccessToken = cookieStore.get('X-Admin-Access-Token');
                     const setAdminSessionToken = cookieStore.get('AdminSessionToken');
-                    console.log('[AUTH] Admin cookies set - verification:', {
+                    authLog('[AUTH] Admin cookies set - verification:', {
                         accessTokenSet: !!setAdminAccessToken,
                         sessionTokenSet: !!setAdminSessionToken
                     });
@@ -166,16 +190,8 @@ const authOptions: AuthOptions = {
                 password: { label: "Password", type: "password" }
             },
             async authorize(credentials, req) {
-                console.log('[AUTH] HOTEL authorize called at:', new Date().toISOString());
-                console.log('[AUTH] Credentials received:', {
-                    hasEmail: !!credentials?.email,
-                    emailLength: credentials?.email?.length,
-                    hasPassword: !!credentials?.password,
-                    passwordLength: credentials?.password?.length
-                });
                 try {
                     //Backend api for login
-                    console.log('[AUTH] Making API request to:', `${AppConfig.API_ENDPOINT}/auth/login`);
                     const apiStartTime = Date.now();
                     const response = await axios({
                         url: `${AppConfig.API_ENDPOINT}/auth/login`,
@@ -190,62 +206,38 @@ const authOptions: AuthOptions = {
                         withCredentials: true
                     });
                     const apiDuration = Date.now() - apiStartTime;
-                    console.log('[AUTH] API response received in', apiDuration, 'ms');
-                    console.log('[AUTH] API response status:', response.status);
-                    console.log('[AUTH] API response data status:', response.data?.status);
-                    console.log('[AUTH] API response statusCode:', response.data?.statusCode);
+                    authLog('[AUTH] Hotel login API duration(ms):', apiDuration);
                     
                     if (!response.data?.status && response.data?.statusCode !== 200) {
-                        console.error('[AUTH] API returned error status:', response.data?.message);
+                        authError('[AUTH] Hotel login API returned error status');
                         throw new Error(response.data?.message ?? "Something went wrong");
                     }
                     const user = response.data?.data;
-                    console.log('[AUTH] User data received:', {
-                        hasUser: !!user,
-                        hasAccessToken: !!user?.accessToken,
-                        hasRefreshToken: !!user?.refreshToken,
-                        accountType: user?.accountType,
-                        userId: user?.id || user?._id,
-                        userName: user?.name
-                    });
                     
                     if (user && user.accountType && user.accountType !== "business") {
-                        console.error('[AUTH] Account type mismatch:', user.accountType);
+                        authError('[AUTH] Account type mismatch');
                         throw new Error("You don't have the right permission to access this page.")
                     }
                     const cookieStore = await cookies();
                     
                     // CRITICAL: Clear any existing admin cookies to prevent cross-contamination
-                    console.log('[AUTH] Clearing admin cookies before setting hotel cookies');
+                    authLog('[AUTH] Clearing admin cookies before setting hotel cookies');
                     cookieStore.delete('X-Admin-Access-Token');
                     cookieStore.delete('AdminSessionToken');
                     
                     const accessCookieOptions = getAccessCookieOptions();
                     const refreshCookieOptions = getRefreshCookieOptions();
-                    console.log('[AUTH] Setting hotel cookies with options:', {
-                        secure: accessCookieOptions.secure,
-                        sameSite: accessCookieOptions.sameSite,
-                        path: accessCookieOptions.path,
-                        maxAge: accessCookieOptions.maxAge,
-                        hasAccessToken: !!user?.accessToken,
-                        hasRefreshToken: !!user?.refreshToken,
-                        accessTokenLength: user?.accessToken?.length,
-                        refreshTokenLength: user?.refreshToken?.length
-                    });
                     
                     // Some backends return refresh token via Set-Cookie (httpOnly), not JSON.
                     // We require an accessToken here (used by client-side axios). Refresh token is optional.
                     if (!user?.accessToken) {
-                        console.error('[AUTH] Missing accessToken in user object:', {
-                            hasAccessToken: !!user?.accessToken,
-                            hasRefreshToken: !!user?.refreshToken
-                        });
+                        authError('[AUTH] Missing accessToken in user object');
                         throw new Error("Invalid response from server: missing access token");
                     }
                     const setCookieHeader = (response.headers as any)?.['set-cookie'] as string[] | string | undefined;
-                    console.log('[AUTH] Hotel login response set-cookie header present:', !!setCookieHeader);
+                    authLog('[AUTH] Hotel login response set-cookie header present:', !!setCookieHeader);
                     if (setCookieHeader) {
-                        console.log('[AUTH] Hotel login set-cookie cookie names:', extractCookieNames(setCookieHeader));
+                        authLog('[AUTH] Hotel login set-cookie cookie names:', extractCookieNames(setCookieHeader));
                     }
                     
                     cookieStore.set('X-Access-Token', user.accessToken, accessCookieOptions);
@@ -258,31 +250,16 @@ const authOptions: AuthOptions = {
                     const refreshToken = refreshTokenFromBody || refreshTokenFromCookie;
                     if (refreshToken) {
                         cookieStore.set('SessionToken', refreshToken, refreshCookieOptions);
-                        console.log('[AUTH] SessionToken set from', refreshTokenFromBody ? 'response body' : 'set-cookie header');
                     } else {
-                        console.warn('[AUTH] Hotel refreshToken missing in JSON and Set-Cookie; SessionToken will not be set (middleware will redirect)');
+                        authWarn('[AUTH] Hotel refreshToken missing in JSON and Set-Cookie; SessionToken will not be set (middleware will redirect)');
                     }
                     
                     // Verify cookies were set
                     const setAccessToken = cookieStore.get('X-Access-Token');
                     const setSessionToken = cookieStore.get('SessionToken');
-                    console.log('[AUTH] Cookies set - verification:', {
-                        accessTokenSet: !!setAccessToken,
-                        sessionTokenSet: !!setSessionToken,
-                        accessTokenValue: setAccessToken?.value ? 'exists' : 'missing',
-                        sessionTokenValue: setSessionToken?.value ? 'exists' : 'missing'
-                    });
-                    
-                    console.log('[AUTH] Returning user object');
                     return user;
                 } catch (error: any) {
-                    console.error('[AUTH] Error in authorize:', {
-                        message: error?.message,
-                        hasResponse: !!error?.response,
-                        responseStatus: error?.response?.status,
-                        responseData: error?.response?.data,
-                        stack: error?.stack
-                    });
+                    authError('[AUTH] Error in hotel authorize');
                     const { response } = error;
                     if (response) {
                         const { data } = response;
@@ -307,35 +284,16 @@ const authOptions: AuthOptions = {
     callbacks: {
         //step 2
         async session({ session, token, user, newSession, trigger }) {
-            console.log('[SESSION] Session callback called:', {
-                trigger,
-                hasToken: !!token,
-                hasUser: !!user,
-                hasNewSession: !!newSession,
-                hasSession: !!session
-            });
-            
             if (trigger === "update" && newSession?.name) {
-                console.log('[SESSION] Updating session name:', newSession);
                 session.user.name = newSession.name
             }
             if (trigger === "update" && newSession?.username) {
-                console.log('[SESSION] Updating session username:', newSession.username);
                 session.user.username = newSession.username
             }
             if (trigger === "update" && newSession?.profilePic) {
-                console.log('[SESSION] Updating session profilePic:', newSession.profilePic);
                 session.user.profilePic = newSession.profilePic
             }
             if (token) {
-                console.log('[SESSION] Setting session from token:', {
-                    hasId: !!token._id,
-                    hasName: !!token.name,
-                    hasAccessToken: !!token.accessToken,
-                    hasRole: !!token.role,
-                    accountType: token.accountType,
-                    hasBusinessName: !!token.businessName
-                });
                 session.user._id = token._id;
                 session.user.name = token.name;
                 session.user.profilePic = token.profilePic;
@@ -346,35 +304,14 @@ const authOptions: AuthOptions = {
                 session.user.accountType = token.accountType;
                 session.user.businessName = token.businessName;
                 session.user.businessTypeName = token.businessTypeName;
-                console.log('[SESSION] Session user object set:', {
-                    id: session.user._id,
-                    name: session.user.name,
-                    role: session.user.role,
-                    accountType: session.user.accountType
-                });
             } else {
-                console.warn('[SESSION] No token provided to session callback');
+                authWarn('[SESSION] No token provided to session callback');
             }
-            console.log('[SESSION] Returning session');
             return session;
         },
         //step 1
         async jwt({ token, user, account, profile, trigger, session }) {
-            console.log('[JWT] JWT callback called:', {
-                trigger,
-                hasUser: !!user,
-                hasToken: !!token,
-                hasAccount: !!account,
-                accountProvider: account?.provider,
-                hasSession: !!session
-            });
-            
             if (trigger === "update") {
-                console.log('[JWT] Trigger is update, session data:', {
-                    hasName: !!session?.name,
-                    hasUsername: !!session?.username,
-                    hasProfilePic: !!session?.profilePic
-                });
                 if (session.name) {
                     token.name = session.name;
                 }
@@ -386,14 +323,6 @@ const authOptions: AuthOptions = {
                 }
             }
             if (user) {
-                console.log('[JWT] User object present, setting token properties:', {
-                    hasRole: !!user.role,
-                    hasId: !!user.id,
-                    hasName: !!user.name,
-                    hasAccessToken: !!user.accessToken,
-                    accountType: user.accountType,
-                    provider: account?.provider
-                });
                 token.role = user.role;
                 token._id = user.id;
                 token.name = user.name;
@@ -404,51 +333,29 @@ const authOptions: AuthOptions = {
                 token.username = user.username;
                 token.accountType = user.accountType;
                 if (account && account.provider === AuthenticationProvider.HOTEL) {
-                    console.log('[JWT] Processing HOTEL provider token');
                     let decodedToken: any = null;
                     if (user.accessToken) {
                         decodedToken = decodeJWT(user.accessToken);
-                        console.log('[JWT] Decoded token:', {
-                            hasDecodedToken: !!decodedToken,
-                            hasBusinessTypeName: !!decodedToken?.businessTypeName,
-                            hasBusinessName: !!decodedToken?.businessName
-                        });
                     } else {
-                        console.warn('[JWT] No accessToken in user object');
+                        authWarn('[JWT] No accessToken in user object');
                     }
 
                     let businessTypeName = user?.businessProfileRef?.businessTypeRef?.name || "";
                     if (!businessTypeName && decodedToken?.businessTypeName) {
                         businessTypeName = decodedToken.businessTypeName;
-                        console.log('[JWT] Using businessTypeName from decoded token:', businessTypeName);
-                    } else {
-                        console.log('[JWT] Using businessTypeName from user object:', businessTypeName);
                     }
 
                     let businessName = user?.businessProfileRef?.name || "";
                     if (!businessName && decodedToken?.businessName) {
                         businessName = decodedToken.businessName;
-                        console.log('[JWT] Using businessName from decoded token:', businessName);
-                    } else {
-                        console.log('[JWT] Using businessName from user object:', businessName);
                     }
 
                     token.businessName = businessName;
                     token.businessTypeName = businessTypeName;
-                    console.log('[JWT] Final token business info:', {
-                        businessName: token.businessName,
-                        businessTypeName: token.businessTypeName
-                    });
                 }
             } else {
-                console.log('[JWT] No user object, returning existing token');
+                authLog('[JWT] No user object, returning existing token');
             }
-            console.log('[JWT] Returning token with properties:', {
-                hasRole: !!token.role,
-                hasId: !!token._id,
-                hasAccessToken: !!token.accessToken,
-                accountType: token.accountType
-            });
             return token;
         },
         async redirect({ url, baseUrl }) {

@@ -19,7 +19,9 @@
 const path = require("path");
 
 const PORT = Number(process.env.PORT || 3000);
-const HOSTNAME = process.env.HOSTNAME || "127.0.0.1";
+// DO NOT use process.env.HOSTNAME here — Linux usually sets it to the machine hostname (e.g. ip-172-31-0-142),
+// which can cause Next to bind to an unexpected interface. nginx is proxying to 127.0.0.1, so bind to IPv4 loopback.
+const BIND_HOST = process.env.BIND_HOST || "127.0.0.1";
 // Prefer explicit config, but provide safe defaults so production never leaks localhost into redirects.
 // NextAuth uses NEXTAUTH_URL to build absolute callback/sign-in URLs.
 const PUBLIC_HOST = process.env.NEXT_PUBLIC_HOST || "https://admin.thehotelmedia.com";
@@ -32,18 +34,18 @@ module.exports = {
       cwd: path.resolve(__dirname),
       // Run Next directly (more reliable than `pm2 start npm -- start` for signals/logging)
       script: "node_modules/next/dist/bin/next",
-      args: ["start", "-p", String(PORT), "-H", HOSTNAME],
+      args: ["start", "-p", String(PORT), "-H", BIND_HOST],
       interpreter: "node",
 
       env: {
         NODE_ENV: "production",
         PORT: String(PORT),
-        HOSTNAME,
+        BIND_HOST,
         NEXT_PUBLIC_HOST: PUBLIC_HOST,
         NEXTAUTH_URL,
         // If you use NEXTAUTH_URL_INTERNAL, keep it pointing to the local upstream for server-side calls.
         NEXTAUTH_URL_INTERNAL:
-          process.env.NEXTAUTH_URL_INTERNAL || `http://${HOSTNAME}:${PORT}`,
+          process.env.NEXTAUTH_URL_INTERNAL || `http://${BIND_HOST}:${PORT}`,
       },
 
       // Resilience / self-healing

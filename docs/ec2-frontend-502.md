@@ -93,11 +93,11 @@ If `curl` fails but PM2 says "online", the process may be wedged or bound to a d
 
 ### IPv6/localhost gotcha (very common)
 
-If your app is started with `HOST=localhost` (or `-H localhost`), Node/Next can bind to **`::1` (IPv6)**. nginx is proxying to **`127.0.0.1` (IPv4)**, so it will get **connection refused**.
+If your app is started with `-H localhost`, Node/Next can bind to **`::1` (IPv6)**. nginx is proxying to **`127.0.0.1` (IPv4)**, so it will get **connection refused**.
 
 Fix: force the app to bind to IPv4:
 
-- Start Next with `-H 127.0.0.1` (the provided `ecosystem.config.cjs` already does this), OR
+- Start Next with `-H 127.0.0.1` (the provided `ecosystem.config.cjs` already does this by default), OR
 - Change nginx upstream to `proxy_pass http://[::1]:3000;` (not recommended unless you know you want IPv6).
 
 Confirm binding:
