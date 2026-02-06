@@ -1,160 +1,184 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ClickOutside from "@/components/ClickOutside";
 import { fetchBusinessNotifications } from "@/api-services/hotel";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import UserProfile from "@/app/(admin-panel)/users/[id]/UserProfile";
 import Image from "next/image";
 import { DefaultProfilePic } from "@/components/Profile";
 import moment from "moment";
+
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [notifying, setNotifying] = useState(true);
-  const { isPending, isError, error, data, isFetching, isPlaceholderData, refetch } = useQuery({
-    queryKey: ['notifications'],
+  const [notifying, setNotifying] = useState(false);
+
+  const { data } = useQuery({
+    queryKey: ["notifications"],
     queryFn: () => fetchBusinessNotifications(),
     placeholderData: keepPreviousData,
   });
+
   useEffect(() => {
-    setNotifying(data?.hasUnreadNotifications ?? false)
-  }, [data])
-  console.log(data)
+    setNotifying(data?.hasUnreadNotifications ?? false);
+  }, [data]);
+
+  const notificationCount = data?.notifications?.length ?? 0;
+
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
-      <li>
-        <Link
-          onClick={() => {
-            // setNotifying(false);
-            setDropdownOpen(!dropdownOpen);
-          }}
-          href="#"
-          className="relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px] border-stroke bg-gray hover:text-primary dark:border-strokedark dark:bg-meta-4 dark:text-white"
-        >
-          <span
-            className={`absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1 ${notifying === false ? "hidden" : "inline"
-              }`}
-          >
-            <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
+      <button
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className="
+          relative flex h-10 w-10 items-center justify-center rounded-lg
+          text-theme-secondary
+          transition-colors duration-200
+          hover:bg-theme-hover hover:text-theme-primary
+        "
+        aria-label={`Notifications${notifying ? " - You have unread notifications" : ""}`}
+        aria-expanded={dropdownOpen}
+        aria-haspopup="true"
+      >
+        {/* Notification Badge */}
+        {notifying && (
+          <span className="absolute right-1.5 top-1.5 flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-error opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-status-error" />
           </span>
-          <svg
-            className="fill-current duration-300 ease-in-out"
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M16.1999 14.9343L15.6374 14.0624C15.5249 13.8937 15.4687 13.7249 15.4687 13.528V7.67803C15.4687 6.01865 14.7655 4.47178 13.4718 3.31865C12.4312 2.39053 11.0812 1.7999 9.64678 1.6874V1.1249C9.64678 0.787402 9.36553 0.478027 8.9999 0.478027C8.6624 0.478027 8.35303 0.759277 8.35303 1.1249V1.65928C8.29678 1.65928 8.24053 1.65928 8.18428 1.6874C4.92178 2.05303 2.4749 4.66865 2.4749 7.79053V13.528C2.44678 13.8093 2.39053 13.9499 2.33428 14.0343L1.7999 14.9343C1.63115 15.2155 1.63115 15.553 1.7999 15.8343C1.96865 16.0874 2.2499 16.2562 2.55928 16.2562H8.38115V16.8749C8.38115 17.2124 8.6624 17.5218 9.02803 17.5218C9.36553 17.5218 9.6749 17.2405 9.6749 16.8749V16.2562H15.4687C15.778 16.2562 16.0593 16.0874 16.228 15.8343C16.3968 15.553 16.3968 15.2155 16.1999 14.9343ZM3.23428 14.9905L3.43115 14.653C3.5999 14.3718 3.68428 14.0343 3.74053 13.6405V7.79053C3.74053 5.31553 5.70928 3.23428 8.3249 2.95303C9.92803 2.78428 11.503 3.2624 12.6562 4.2749C13.6687 5.1749 14.2312 6.38428 14.2312 7.67803V13.528C14.2312 13.9499 14.3437 14.3437 14.5968 14.7374L14.7655 14.9905H3.23428Z"
-              fill=""
-            />
-          </svg>
-        </Link>
-
-        {dropdownOpen && (
-          <div
-            className={`absolute -right-27 mt-2.5 flex h-90 w-75 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark sm:right-0 sm:w-80`}
-          >
-            <div className="px-4.5 py-3">
-              <h5 className="text-sm font-medium text-bodydark2">
-                Notification
-              </h5>
-            </div>
-
-            <ul className="flex h-auto flex-col overflow-y-auto">
-              {
-                data && data.notifications && data.notifications.map((data) => {
-                  return (
-                    <li>
-                      <Link
-                        className="flex border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                        href="#"
-                      >
-                        <div className="flex gap-2 items-center">
-                          <div className="h-12 w-12 rounded-full bg-black/10 dark:bg-meta-4 flex justify-center items-center">
-                            <Image src={data.usersRef.profilePic?.large ?? DefaultProfilePic} alt={''} width={80} height={80} className="w-12 h-12 object-cover rounded-full" />
-                          </div>
-                          <div className="flex flex-col gap-1 justify-center">
-                            <p className="text-sm">
-                              <span className="text-white dark:text-white font-medium">
-                                {data.description}
-                              </span>
-                            </p>
-                            <p className="text-xs text-white/60 dark:text-white/60">{moment(data?.createdAt).format('ddd DD, MMM YYYY hh:mm:ss A')}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    </li>
-                  )
-                })
-              }
-              {/* <li>
-                <Link
-                  className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                  href="#"
-                >
-                  <p className="text-sm">
-                    <span className="text-black dark:text-white">
-                      Edit your information in a swipe
-                    </span>{" "}
-                    Sint occaecat cupidatat non proident, sunt in culpa qui
-                    officia deserunt mollit anim.
-                  </p>
-
-                  <p className="text-xs">12 May, 2025</p>
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                  href="#"
-                >
-                  <p className="text-sm">
-                    <span className="text-black dark:text-white">
-                      It is a long established fact
-                    </span>{" "}
-                    that a reader will be distracted by the readable.
-                  </p>
-
-                  <p className="text-xs">24 Feb, 2025</p>
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                  href="#"
-                >
-                  <p className="text-sm">
-                    <span className="text-black dark:text-white">
-                      There are many variations
-                    </span>{" "}
-                    of passages of Lorem Ipsum available, but the majority have
-                    suffered
-                  </p>
-
-                  <p className="text-xs">04 Jan, 2025</p>
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-                  href="#"
-                >
-                  <p className="text-sm">
-                    <span className="text-black dark:text-white">
-                      There are many variations
-                    </span>{" "}
-                    of passages of Lorem Ipsum available, but the majority have
-                    suffered
-                  </p>
-
-                  <p className="text-xs">01 Dec, 2024</p>
-                </Link>
-              </li> */}
-            </ul>
-          </div>
         )}
-      </li>
+
+        {/* Bell Icon */}
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {dropdownOpen && (
+        <div
+          className="
+            absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)]
+            rounded-lg border border-theme-primary
+            bg-theme-elevated shadow-theme-lg
+            animate-scale-in origin-top-right
+            overflow-hidden
+          "
+          role="menu"
+          aria-orientation="vertical"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-theme-primary px-4 py-3">
+            <h3 className="text-body-md font-semibold text-theme-primary">
+              Notifications
+            </h3>
+            {notificationCount > 0 && (
+              <span className="rounded-full bg-brand-primary px-2 py-0.5 text-label-sm text-white">
+                {notificationCount}
+              </span>
+            )}
+          </div>
+
+          {/* Notification List */}
+          <div className="max-h-80 overflow-y-auto thm-scrollbar">
+            {data?.notifications && data.notifications.length > 0 ? (
+              <ul>
+                {data.notifications.map((notification: any, index: number) => (
+                  <li key={index}>
+                    <Link
+                      href="#"
+                      className="
+                        flex gap-3 border-b border-theme-secondary px-4 py-3
+                        transition-colors duration-200
+                        hover:bg-theme-hover
+                        last:border-b-0
+                      "
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      {/* Avatar */}
+                      <div className="flex-shrink-0">
+                        <Image
+                          src={notification.usersRef?.profilePic?.large ?? DefaultProfilePic}
+                          alt=""
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-body-sm text-theme-primary line-clamp-2">
+                          {notification.description}
+                        </p>
+                        <p className="mt-1 text-body-sm text-theme-tertiary">
+                          {moment(notification?.createdAt).format("MMM DD, YYYY h:mm A")}
+                        </p>
+                      </div>
+
+                      {/* Unread indicator */}
+                      {!notification.isRead && (
+                        <span className="flex-shrink-0 mt-1.5">
+                          <span className="block h-2 w-2 rounded-full bg-brand-primary" />
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 px-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-theme-secondary mb-3">
+                  <svg
+                    className="h-6 w-6 text-theme-tertiary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                </div>
+                <p className="text-body-sm text-theme-secondary text-center">
+                  No notifications yet
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          {notificationCount > 0 && (
+            <div className="border-t border-theme-primary p-2">
+              <Link
+                href="#"
+                className="
+                  block w-full rounded-md px-3 py-2 text-center
+                  text-body-sm font-medium text-brand-primary
+                  transition-colors duration-200
+                  hover:bg-brand-primary-light
+                "
+                onClick={() => setDropdownOpen(false)}
+              >
+                View all notifications
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </ClickOutside>
   );
 };

@@ -135,7 +135,10 @@ export default function TableManagement() {
         </div>
       </div>
       <PageContent>
-        <BookingTable />
+        <BookingTable 
+          timelineFilter={timelineFilter}
+          checkEvent="Today Check In"
+        />
       </PageContent>
     </>
   );

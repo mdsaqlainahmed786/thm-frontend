@@ -84,14 +84,15 @@ export default function BookingDetails({
               viewBox="0 0 21 17"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
+              className="text-theme-primary"
             >
               <path
                 d="M2.34404 6.83337L1.96054 7.21687L1.57812 6.83337L1.96054 6.44987L2.34404 6.83337ZM20.219 15.5C20.219 15.6437 20.162 15.7815 20.0604 15.8831C19.9588 15.9846 19.821 16.0417 19.6774 16.0417C19.5337 16.0417 19.3959 15.9846 19.2944 15.8831C19.1928 15.7815 19.1357 15.6437 19.1357 15.5H20.219ZM7.37721 12.6335L1.96054 7.21687L2.72754 6.44987L8.14421 11.8665L7.37721 12.6335ZM1.96054 6.44987L7.37721 1.0332L8.14421 1.8002L2.72754 7.21687L1.96054 6.44987ZM2.34404 6.2917H13.1774V7.37504H2.34404V6.2917ZM20.219 13.3334V15.5H19.1357V13.3334H20.219ZM13.1774 6.2917C15.0449 6.2917 16.836 7.03359 18.1566 8.35416C19.4772 9.67473 20.219 11.4658 20.219 13.3334H19.1357C19.1357 11.7531 18.508 10.2376 17.3906 9.12019C16.2731 8.00279 14.7576 7.37504 13.1774 7.37504V6.2917Z"
-                fill="white"
+                fill="currentColor"
               />
               <path
                 d="M1.96054 7.21687L2.34404 6.83337L1.96054 6.44987M1.96054 7.21687L1.57812 6.83337L1.96054 6.44987M1.96054 7.21687L7.37721 12.6335L8.14421 11.8665L2.72754 6.44987L1.96054 7.21687ZM1.96054 6.44987L7.37721 1.0332L8.14421 1.8002L2.72754 7.21687L1.96054 6.44987ZM20.219 15.5C20.219 15.6437 20.162 15.7815 20.0604 15.8831C19.9588 15.9846 19.821 16.0417 19.6774 16.0417C19.5337 16.0417 19.3959 15.9846 19.2944 15.8831C19.1928 15.7815 19.1357 15.6437 19.1357 15.5M20.219 15.5H19.1357M20.219 15.5V13.3334M19.1357 15.5V13.3334M13.1774 6.2917H2.34404V7.37504H13.1774M13.1774 6.2917V7.37504M13.1774 6.2917C15.0449 6.2917 16.836 7.03359 18.1566 8.35416C19.4772 9.67473 20.219 11.4658 20.219 13.3334M13.1774 7.37504C14.7576 7.37504 16.2731 8.00279 17.3906 9.12019C18.508 10.2376 19.1357 11.7531 19.1357 13.3334M20.219 13.3334H19.1357"
-                stroke="white"
+                stroke="currentColor"
                 strokeWidth="1.08333"
               />
             </svg>
@@ -128,15 +129,15 @@ export default function BookingDetails({
       </div>
       <PageContent>
         <div className="flex flex-col gap-3">
-          <div className="grid  grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
                 loading ? "animate-pulse" : ""
               }`}
             >
               <div className="flex flex-col gap-2.5 justify-between">
                 <div className="flex flex-col gap-3">
-                  <div className="flex bg-primary/60 p-2.5 gap-2 rounded-[14px]">
+                  <div className="flex bg-brand-light p-2.5 gap-2 rounded-[14px]">
                     {/* <div className="min-h-40  rounded-[14px] relative flex justify-center" > */}
                     <Image
                       src={
@@ -148,21 +149,21 @@ export default function BookingDetails({
                       className="w-10 h-10 rounded-full  object-cover border-2 border-[#1C1C1C99]"
                     />
                     {/* </div> */}
-                    <div className="flex flex-col gap">
-                      <h2 className="text-sm font-normal">{data?.bookingID}</h2>
-                      <p className="text-sm font-bold">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <h2 className="text-sm font-normal text-theme-primary truncate">{data?.bookingID}</h2>
+                      <p className="text-sm font-bold text-theme-primary truncate">
                         {data?.usersRef?.name}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 dark:border-strokedark border border-stroke p-2.5 rounded-[14px] bg-[#1C1C1C99] dark:bg-[#1C1C1C99]">
-                    <div className="flex justify-between">
-                      <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                  <div className="flex flex-col gap-2 border border-theme-primary p-2.5 rounded-[14px] bg-theme-secondary">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                      <p className="text-sm font-normal text-theme-secondary">
                         Room type :
                       </p>
                       <div className="flex items-center gap-1">
-                        <div className="flex justify-center items-center border border-[#505050] w-7.5 h-7.5 rounded-full">
+                        <div className="flex justify-center items-center border border-theme-primary w-7.5 h-7.5 rounded-full flex-shrink-0">
                           <svg
                             width="18"
                             height="18"
@@ -354,24 +355,24 @@ export default function BookingDetails({
                             </defs>
                           </svg>
                         </div>
-                        <p className="text-base font-normal capitalize text-white dark:text-white">
+                        <p className="text-base font-normal capitalize text-theme-primary">
                           {data?.roomsRef?.roomType || 0} Room
                         </p>
                       </div>
                     </div>
-                    <div className="flex justify-between">
-                      <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                      <p className="text-sm font-normal text-theme-secondary">
                         Guests :
                       </p>
-                      <p className="text-base font-normal capitalize text-white dark:text-white">
+                      <p className="text-base font-normal capitalize text-theme-primary">
                         {(data && data.adults) || 0}
                       </p>
                     </div>
-                    <div className="flex justify-between">
-                      <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                      <p className="text-sm font-normal text-theme-secondary">
                         Child :
                       </p>
-                      <p className="text-base font-normal capitalize text-white dark:text-white">
+                      <p className="text-base font-normal capitalize text-theme-primary">
                         {(data && data.children) || 0}{" "}
                         {data?.childrenAge && data.childrenAge.length > 0
                           ? `(${data.childrenAge
@@ -381,14 +382,14 @@ export default function BookingDetails({
                       </p>
                     </div>
                   </div>
-                  <div className="flex justify-between gap-2 dark:border-strokedark border border-stroke p-2.5 rounded-[14px] bg-[#1C1C1C99] dark:bg-[#1C1C1C99]">
+                  <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-2 border border-theme-primary p-2.5 rounded-[14px] bg-theme-secondary">
                     <div className="flex gap-2">
                       <CheckInIcon />
                       <div>
-                        <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                        <p className="text-sm font-normal text-theme-secondary">
                           Check-in
                         </p>
-                        <p className="text-sm font-normal text-primary">
+                        <p className="text-sm font-normal text-brand-primary">
                           {data?.checkIn
                             ? moment(data.checkIn).format("DD MMM, YYYY")
                             : ""}
@@ -398,10 +399,10 @@ export default function BookingDetails({
                     <div className="flex gap-2">
                       <CheckInIcon />
                       <div>
-                        <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                        <p className="text-sm font-normal text-theme-secondary">
                           Check-out
                         </p>
-                        <p className="text-sm font-normal text-primary">
+                        <p className="text-sm font-normal text-brand-primary">
                           {data?.checkOut
                             ? moment(data.checkOut).format("DD MMM, YYYY")
                             : ""}
@@ -413,51 +414,51 @@ export default function BookingDetails({
               </div>
             </div>
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
                 loading ? "animate-pulse" : ""
               }`}
             >
-              <h5 className="mb-4 text-base font-bold text-white dark:text-white">
+              <h5 className="mb-4 text-base font-bold text-theme-primary">
                 User Details
               </h5>
               <div className="flex flex-col gap-4">
                 {data?.guestDetails?.map((guestDetail, index) => {
                   return (
-                    <div key={index} className="flex justify-between">
-                      <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                    <div key={index} className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                      <p className="text-sm font-normal text-theme-secondary">
                         Guest {++index}:
                       </p>
-                      <p className="text-base font-normal capitalize text-white dark:text-white">
+                      <p className="text-base font-normal capitalize text-theme-primary break-words">
                         {guestDetail && guestDetail.fullName}
                       </p>
                     </div>
                   );
                 })}
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                  <p className="text-sm font-normal text-theme-secondary">
                     Phone Number :
                   </p>
-                  <p className="text-base font-normal  text-white dark:text-white">
+                  <p className="text-base font-normal text-theme-primary break-words">
                     {data?.guestDetails && data.guestDetails.length !== 0
                       ? data.guestDetails[0].mobileNumber
                       : ""}
                   </p>
                 </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                  <p className="text-sm font-normal text-theme-secondary">
                     Email :
                   </p>
-                  <p className="text-base font-normal text-white dark:text-white">
+                  <p className="text-base font-normal text-theme-primary break-all">
                     {data?.guestDetails && data.guestDetails.length !== 0
                       ? data.guestDetails[0].email
                       : ""}
                   </p>
                 </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                  <p className="text-sm font-normal text-theme-secondary">
                     Address :
                   </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white w-70">
+                  <p className="text-base font-normal capitalize text-theme-primary break-words sm:text-right">
                     {data?.usersRef?.userAddressesRef
                       ? `${data.usersRef.userAddressesRef.street ?? ""}, ${
                           data.usersRef.userAddressesRef.city ?? ""
@@ -470,16 +471,16 @@ export default function BookingDetails({
               </div>
             </div>
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
                 loading ? "animate-pulse" : ""
-              } md:col-span-2 xl:col-span-1`}
+              }`}
             >
-              <h5 className="mb-4 text-base font-bold text-white dark:text-white">
+              <h5 className="mb-4 text-base font-bold text-theme-primary">
                 Bill Summary
               </h5>
               <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-end">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 sm:gap-0">
+                  <p className="text-sm font-normal text-theme-secondary">
                     {data?.roomsRef?.title || ""}
                     <br />
                     <small>
@@ -488,13 +489,13 @@ export default function BookingDetails({
                         : ""}
                     </small>
                   </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white">
+                  <p className="text-base font-normal capitalize text-theme-primary sm:text-right">
                     ₹ {(data && data.subTotal) || 0}
                   </p>
                 </div>
                 {data && (data.discount ?? 0) > 0 && (
-                  <div className="flex justify-between items-end">
-                    <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 sm:gap-0">
+                    <p className="text-sm font-normal text-theme-secondary">
                       Promo Code{" "}
                       <span className="font-bold ms-1 text-xs">
                         {data?.promoCode}
@@ -502,33 +503,33 @@ export default function BookingDetails({
                       <br />
                       <small>{data?.promoCodesRef?.name ?? ""} </small>
                     </p>
-                    <p className="text-base font-normal capitalize text-white dark:text-white">
+                    <p className="text-base font-normal capitalize text-theme-primary sm:text-right">
                       - ₹ {data.discount}
                     </p>
                   </div>
                 )}
-                <div className="flex justify-between items-end">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 sm:gap-0">
+                  <p className="text-sm font-normal text-theme-secondary">
                     Convince charges
                   </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white">
+                  <p className="text-base font-normal capitalize text-theme-primary sm:text-right">
                     ₹ {data?.convinceCharge || 0}
                   </p>
                 </div>
-                <div className="flex justify-between items-end">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 sm:gap-0">
+                  <p className="text-sm font-normal text-theme-secondary">
                     GST(18%)
                   </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white">
+                  <p className="text-base font-normal capitalize text-theme-primary sm:text-right">
                     ₹ {data?.tax || 0}
                   </p>
                 </div>
-                <div className="border border-dashed border-white/40 dark:border-white/40"></div>
-                <div className="flex justify-between items-end">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                <div className="border border-dashed border-theme-primary"></div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 sm:gap-0">
+                  <p className="text-sm font-normal text-theme-secondary">
                     Total
                   </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white">
+                  <p className="text-base font-normal capitalize text-theme-primary sm:text-right">
                     ₹ {data?.grandTotal || 0}
                   </p>
                 </div>
@@ -536,18 +537,18 @@ export default function BookingDetails({
             </div>
           </div>
           <div
-            className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+            className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
               loading ? "animate-pulse" : ""
             }`}
           >
             <div className="flex flex-col justify-between gap-3.5">
-              <h5 className="text-base font-bold text-white dark:text-white">
+              <h5 className="text-base font-bold text-theme-primary">
                 General Information
               </h5>
-              <p className="text-xs font-medium tracking-wide text-white dark:text-white">
+              <p className="text-xs font-medium tracking-wide text-theme-secondary">
                 {data?.roomsRef?.description || ""}
               </p>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-3 sm:gap-4">
                 {data?.roomsRef?.amenitiesRef?.map((amenity) => {
                   return (
                     <div className="flex items-center gap-1">
@@ -576,7 +577,7 @@ export default function BookingDetails({
                           />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium tracking-wide text-white/60 dark:text-white/60">
+                      <span className="text-sm font-medium tracking-wide text-theme-secondary">
                         {amenity?.name || ""}
                       </span>
                     </div>
@@ -585,17 +586,17 @@ export default function BookingDetails({
               </div>
             </div>
           </div>
-          <div className="col-span-12 xl:col-span-7">
+          <div className="w-full">
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
                 loading ? "animate-pulse" : ""
               }`}
             >
               <div className="flex flex-col justify-between gap-3.5">
-                <h5 className="text-base font-bold text-white dark:text-white">
+                <h5 className="text-base font-bold text-theme-primary">
                   Property Images
                 </h5>
-                <div className="flex gap-3 mb-3.5">
+                <div className="flex gap-3 mb-3.5 overflow-x-auto thm-scrollbar pb-2 -mx-1 px-1">
                   {data &&
                     data.roomsRef &&
                     data.roomsRef.roomImagesRef &&
@@ -609,7 +610,7 @@ export default function BookingDetails({
                           width={120}
                           height={120}
                           alt="Room Image"
-                          className="w-30 h-auto object-cover rounded-[14px]"
+                          className="w-24 h-24 sm:w-30 sm:h-30 flex-shrink-0 object-cover rounded-[14px]"
                         />
                       );
                     })}

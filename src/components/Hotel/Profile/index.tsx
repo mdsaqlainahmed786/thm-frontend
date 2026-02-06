@@ -318,18 +318,18 @@ const Profile: React.FC<{}> = () => {
   return (
     <>
       <div
-        className={`overflow-hidden rounded-xl  bg-boxdark shadow-default  dark:bg-boxdark ${
+        className={`overflow-hidden rounded-xl bg-theme-card shadow-theme-card ${
           loading ? "animate-pulse" : null
         } `}
       >
         <div
           className={`${
             popup ? "" : "hidden"
-          } fixed left-0 top-0 z-999999 flex h-screen w-full justify-center overflow-y-scroll bg-theme-black dark:bg-theme-black px-4 py-5`}
+          } fixed left-0 top-0 z-999999 flex h-screen w-full justify-center overflow-y-scroll bg-black/80 dark:bg-black/80 px-4 py-5`}
         >
-          <div className=" m-auto w-full max-w-lg rounded-xl border border-stroke bg-theme-black-full p-4 shadow-default dark:border-strokedark dark:bg-theme-black-full sm:p-6 xl:p-8">
+          <div className="m-auto w-full max-w-lg rounded-xl border border-theme-primary bg-theme-card p-4 shadow-theme-lg sm:p-6 xl:p-8">
             <div className="flex justify-between">
-              <h4>
+              <h4 className="text-theme-primary font-semibold">
                 {popupSetting === "amenity"
                   ? "Update Amenities"
                   : "Update Spoken Language"}
@@ -364,12 +364,12 @@ const Profile: React.FC<{}> = () => {
                       businessQuestions.map((data, index) => {
                         return (
                           <div
-                            className="rounded-xl border border-theme-gray bg-theme-black px-3 py-2.5 shadow-default dark:border-theme-gray dark:bg-theme-black mb-2"
+                            className="rounded-xl border border-theme-primary bg-theme-secondary px-3 py-2.5 shadow-theme-sm mb-2"
                             key={index}
                           >
                             <label
                               htmlFor="question"
-                              className="text-sm font-medium tracking-wide mb-1.5 font-quicksand "
+                              className="text-sm font-medium tracking-wide mb-1.5 font-quicksand text-theme-primary"
                             >
                               {data.question}
                             </label>
@@ -435,7 +435,7 @@ const Profile: React.FC<{}> = () => {
                                     />
                                     <label
                                       htmlFor={`questions-${index}`}
-                                      className="block text-sm font-normal text-gray-900 dark:text-gray-300"
+                                      className="block text-sm font-normal text-theme-secondary"
                                     >
                                       {answer}
                                     </label>
@@ -450,11 +450,11 @@ const Profile: React.FC<{}> = () => {
                 ) : (
                   <div className="mb-3">
                     <Label id="spokenLanguage">Language</Label>
-                    <div className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-3.5 py-1 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm">
+                    <div className="relative z-20 w-full appearance-none rounded-theme-xl border border-theme-primary bg-theme-secondary px-3.5 py-1 outline-none transition focus:border-primary active:border-primary text-theme-primary text-sm">
                       <Select
                         isMulti={true}
                         closeMenuOnSelect={false}
-                        className="text-black dark:text-black"
+                        className="text-theme-primary"
                         styles={{
                           control: (baseStyles, state) => ({
                             ...baseStyles,
@@ -486,7 +486,7 @@ const Profile: React.FC<{}> = () => {
               <div className="flex flex-wrap justify-end items-center gap-4">
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-theme-gray-1 dark:bg-theme-gray-1"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-theme-secondary hover:bg-opacity-90 rounded-[25px] bg-theme-tertiary"
                   onClick={() => setPopup(false)}
                 >
                   <span className="text-sm font-normal font-quicksand">
@@ -495,7 +495,7 @@ const Profile: React.FC<{}> = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-primary/50 dark:bg-primary/50"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-brand-primary"
                 >
                   <span className="text-sm font-normal font-quicksand">
                     Update
@@ -508,7 +508,7 @@ const Profile: React.FC<{}> = () => {
         {/* Edit User Model */}
       </div>
       <div
-        className={`overflow-hidden rounded-xl  bg-boxdark shadow-default  dark:bg-boxdark ${
+        className={`overflow-hidden rounded-xl bg-theme-card shadow-theme-card ${
           loading ? "animate-pulse" : null
         } `}
       >
@@ -516,11 +516,11 @@ const Profile: React.FC<{}> = () => {
         <div
           className={`${
             modal ? "" : "hidden"
-          } fixed left-0 top-6 z-999999 flex h-screen w-full justify-center overflow-y-scroll bg-theme-black dark:bg-theme-black px-4 py-5`}
+          } fixed left-0 top-6 z-999999 flex h-screen w-full justify-center overflow-y-scroll bg-black/80 dark:bg-black/80 px-4 py-5`}
         >
-          <div className=" m-auto w-full max-w-5xl rounded-xl border border-stroke bg-theme-black-full p-4 shadow-default dark:border-strokedark dark:bg-theme-black-full sm:p-6 xl:p-8">
+          <div className="m-auto w-full max-w-5xl rounded-xl border border-theme-primary bg-theme-card p-4 shadow-theme-lg sm:p-6 xl:p-8">
             <div className="flex justify-between">
-              <h4>Profile</h4>
+              <h4 className="text-theme-primary font-semibold">Profile</h4>
               <button
                 className="bg-primary/50 border-radius h-6 w-6 rounded-full flex justify-center items-center"
                 type="button"
@@ -577,7 +577,7 @@ const Profile: React.FC<{}> = () => {
                         <ListIcon width={16} height={16} />
                       </span>
                       <select
-                        className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm"
+                        className="relative z-20 w-full appearance-none rounded-theme-xl border border-theme-primary bg-theme-secondary px-12 py-3 outline-none transition focus:border-primary active:border-primary text-theme-primary text-sm"
                         required={true}
                         onChange={(e) =>
                           setFormInputs({
@@ -590,7 +590,7 @@ const Profile: React.FC<{}> = () => {
                         <option
                           value=""
                           disabled={false}
-                          className="text-body dark:text-bodydark"
+                          className="text-theme-primary bg-theme-card"
                         >
                           Select Business Type
                         </option>
@@ -599,7 +599,7 @@ const Profile: React.FC<{}> = () => {
                             <option
                               key={index}
                               value={data.id}
-                              className="text-body dark:text-bodydark"
+                              className="text-theme-primary bg-theme-card"
                             >
                               {data.name}
                             </option>
@@ -617,7 +617,7 @@ const Profile: React.FC<{}> = () => {
                         <ListIcon width={16} height={16} />
                       </span>
                       <select
-                        className="relative z-20 w-full appearance-none rounded-theme-xl border border-theme-gray-1 bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm"
+                        className="relative z-20 w-full appearance-none rounded-theme-xl border border-theme-primary bg-theme-secondary px-12 py-3 outline-none transition focus:border-primary active:border-primary text-theme-primary text-sm"
                         required={true}
                         onChange={(e) =>
                           setFormInputs({
@@ -630,7 +630,7 @@ const Profile: React.FC<{}> = () => {
                         <option
                           value=""
                           disabled={false}
-                          className="text-body dark:text-bodydark"
+                          className="text-theme-primary bg-theme-card"
                         >
                           Select Business Subtype
                         </option>
@@ -639,7 +639,7 @@ const Profile: React.FC<{}> = () => {
                             <option
                               key={index}
                               value={data.id}
-                              className="text-body dark:text-bodydark"
+                              className="text-theme-primary bg-theme-card"
                             >
                               {data.name}
                             </option>
@@ -768,14 +768,14 @@ const Profile: React.FC<{}> = () => {
                     />
                   </div>
                 </div>
-                <div className="">
+                  <div className="">
                   <div className="mb-3">
                     <Label id="bio">Description/Bio</Label>
                     <textarea
                       id="bio"
                       placeholder=""
                       required={false}
-                      className="w-full rounded-theme-xl border border-theme-gray-1 bg-white px-4.5 py-3 text-white focus:border-primary focus-visible:outline-none dark:border-theme-gray-1 dark:bg-boxdark dark:text-white dark:focus:border-primary text-sm font-normal"
+                      className="w-full rounded-theme-xl border border-theme-primary bg-theme-secondary px-4.5 py-3 text-theme-primary focus:border-primary focus-visible:outline-none text-sm font-normal"
                       name="bio"
                       value={formInputs.bio}
                       onChange={(e) =>
@@ -788,7 +788,7 @@ const Profile: React.FC<{}> = () => {
               <div className="flex flex-wrap justify-end items-center gap-4">
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-theme-gray-1 dark:bg-theme-gray-1"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-theme-secondary hover:bg-opacity-90 rounded-[25px] bg-theme-tertiary"
                   onClick={() => setModal(false)}
                 >
                   <span className="text-sm font-normal font-quicksand">
@@ -797,7 +797,7 @@ const Profile: React.FC<{}> = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-primary/50 dark:bg-primary/50"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-brand-primary"
                 >
                   <span className="text-sm font-normal font-quicksand">
                     Update
@@ -821,239 +821,219 @@ const Profile: React.FC<{}> = () => {
         <div className="flex flex-col gap-3">
           <div className="grid  grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-0 py-0 shadow-theme-card overflow-hidden ${
                 loading ? "animate-pulse" : ""
               }`}
             >
-              <div className="flex flex-col gap-2.5 justify-between">
-                <div className="flex flex-col gap-2.5">
-                  <div
-                    className="min-h-40  rounded-[14px] relative flex justify-center"
-                    style={{
-                      background: `url('${
-                        data?.businessProfileRef?.coverImage || DefaultCoverPic
-                      }')`,
-                    }}
-                  >
+              <div className="flex flex-col">
+                <div
+                  className="h-32 sm:h-40 relative w-full bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url('${data?.businessProfileRef?.coverImage || DefaultCoverPic}')`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  }}
+                >
+                  <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
                     <Image
                       src={
                         data?.businessProfileRef?.profilePic?.small ??
                         DefaultProfilePic
                       }
-                      width={330}
-                      height={160}
-                      alt="Default cover image"
-                      className="w-14.5 h-14.5 rounded-full absolute -bottom-6 object-cover border-2 border-[#1C1C1C99]"
+                      width={80}
+                      height={80}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full object-cover border-[3px] border-theme-primary shadow-lg bg-theme-card"
                     />
                   </div>
-                  <div className="flex justify-between">
-                    <h5 className="text-base font-bold dark:text-white text-white">
-                      {(data &&
-                        data.businessProfileRef &&
-                        data.businessProfileRef?.name) ||
-                        ""}
-                    </h5>
-                    <p className="text-xs font-normal dark:text-white text-white flex items-center gap-1">
-                      {data &&
-                      data?.businessProfileRef &&
-                      data?.businessProfileRef?.businessTypeRef &&
-                      data?.businessProfileRef?.businessTypeRef.name &&
-                      data.businessProfileRef?.businessTypeRef.icon ? (
-                        <>
-                          <span>
-                            <Image
-                              src={
-                                data?.businessProfileRef?.businessTypeRef.icon
-                              }
-                              width={40}
-                              height={40}
-                              alt="Hotel image"
-                              className="h-4.5
-                                                         w-full mb-1.5"
-                            />
-                          </span>
-                          <span>
-                            {data?.businessProfileRef?.businessTypeRef.name}
-                          </span>
-                        </>
-                      ) : (
-                        ""
-                      )}
-                      {data &&
-                      data?.businessProfileRef &&
-                      data?.businessProfileRef?.businessSubtypeRef &&
-                      data?.businessProfileRef?.businessSubtypeRef.name
-                        ? data?.businessProfileRef?.businessSubtypeRef.name
-                        : ""}
-                    </p>
-                  </div>
                 </div>
-                <div className="flex justify-around">
-                  <div className="flex flex-col gap-0.5 justify-center items-center">
-                    <h5 className="text-base font-bold tracking-wide leading-none">
-                      {(data && data?.posts) || 0}
-                    </h5>
-                    <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">
-                      Posts
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-0.5 justify-center items-center">
-                    <h5 className="text-base font-bold tracking-wide leading-none">
-                      {(data && data?.follower) || 0}
-                    </h5>
-                    <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">
-                      Followers
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-0.5 justify-center items-center">
-                    <h5 className="text-base font-bold tracking-wide leading-none">
-                      {(data && data?.following) || 0}
-                    </h5>
-                    <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">
-                      Following
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-0.5 justify-center items-center">
-                    <h5 className="text-base font-bold tracking-wide leading-none">
-                      <span className="flex items-center gap-1">
-                        <span>
-                          {(data &&
-                            data?.businessProfileRef &&
-                            data.businessProfileRef.rating) ||
-                            0}
-                        </span>
-                        <span>
-                          <svg
-                            width="16"
-                            height="17"
-                            viewBox="0 0 16 17"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M7.50175 1.15123C7.71632 0.794694 8.23322 0.794693 8.44779 1.15123L10.7617 4.99614C10.8388 5.12423 10.9645 5.21558 11.1102 5.24931L15.4819 6.26182C15.8873 6.35571 16.047 6.84732 15.7743 7.16156L12.8326 10.5504C12.7346 10.6632 12.6865 10.8111 12.6995 10.96L13.0875 15.4307C13.1234 15.8452 12.7053 16.1491 12.3221 15.9867L8.19013 14.2362C8.05248 14.1779 7.89706 14.1779 7.75941 14.2362L3.62745 15.9867C3.24429 16.1491 2.8261 15.8452 2.86208 15.4307L3.25008 10.96C3.263 10.8111 3.21498 10.6632 3.11698 10.5504L0.175285 7.16156C-0.0974985 6.84732 0.062233 6.35571 0.467628 6.26182L4.83939 5.24931C4.98503 5.21558 5.11076 5.12423 5.18785 4.99614L7.50175 1.15123Z"
-                              fill="#F2C94C"
-                            />
-                          </svg>
-                        </span>
+
+                <div className="mt-12 px-5 pb-6 flex flex-col items-center text-center">
+                  <h5 className="text-xl font-bold text-theme-primary mb-2">
+                    {(data &&
+                      data.businessProfileRef &&
+                      data.businessProfileRef?.name) ||
+                      ""}
+                  </h5>
+
+                  <div className="flex items-center justify-center gap-2 flex-wrap mb-6">
+                    {data &&
+                    data?.businessProfileRef &&
+                    data?.businessProfileRef?.businessTypeRef &&
+                    data?.businessProfileRef?.businessTypeRef.name ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light border border-theme-primary text-xs font-medium text-theme-secondary">
+                         {data.businessProfileRef?.businessTypeRef.icon && (
+                          <Image
+                            src={data.businessProfileRef.businessTypeRef.icon}
+                            width={14}
+                            height={14}
+                            alt="icon"
+                            className="w-3.5 h-3.5 opacity-70"
+                          />
+                        )}
+                        {data.businessProfileRef.businessTypeRef.name}
                       </span>
-                    </h5>
-                    <p className="text-[10px] leading-[14px] font-normal text-[#A3AED0]">
-                      Rating
-                    </p>
+                    ) : null}
+
+                    {data &&
+                    data?.businessProfileRef &&
+                    data?.businessProfileRef?.businessSubtypeRef &&
+                    data?.businessProfileRef?.businessSubtypeRef.name ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full bg-brand-light border border-theme-primary text-xs font-medium text-theme-secondary">
+                        {data.businessProfileRef.businessSubtypeRef.name}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="w-full grid grid-cols-4 divide-x divide-theme-primary border-t border-theme-primary pt-4">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-lg font-bold text-theme-primary">{(data && data?.posts) || 0}</span>
+                      <span className="text-xs text-theme-tertiary font-medium uppercase tracking-wide">Posts</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-lg font-bold text-theme-primary">{(data && data?.follower) || 0}</span>
+                      <span className="text-xs text-theme-tertiary font-medium uppercase tracking-wide">Followers</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-lg font-bold text-theme-primary">{(data && data?.following) || 0}</span>
+                      <span className="text-xs text-theme-tertiary font-medium uppercase tracking-wide">Following</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-1">
+                        <span className="text-lg font-bold text-theme-primary">
+                          {(data && data?.businessProfileRef && data.businessProfileRef.rating) || 0}
+                        </span>
+                        <svg className="w-3.5 h-3.5 text-[#F2C94C]" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7.50175 1.15123C7.71632 0.794694 8.23322 0.794693 8.44779 1.15123L10.7617 4.99614C10.8388 5.12423 10.9645 5.21558 11.1102 5.24931L15.4819 6.26182C15.8873 6.35571 16.047 6.84732 15.7743 7.16156L12.8326 10.5504C12.7346 10.6632 12.6865 10.8111 12.6995 10.96L13.0875 15.4307C13.1234 15.8452 12.7053 16.1491 12.3221 15.9867L8.19013 14.2362C8.05248 14.1779 7.89706 14.1779 7.75941 14.2362L3.62745 15.9867C3.24429 16.1491 2.8261 15.8452 2.86208 15.4307L3.25008 10.96C3.263 10.8111 3.21498 10.6632 3.11698 10.5504L0.175285 7.16156C-0.0974985 6.84732 0.062233 6.35571 0.467628 6.26182L4.83939 5.24931C4.98503 5.21558 5.11076 5.12423 5.18785 4.99614L7.50175 1.15123Z" />
+                        </svg>
+                      </div>
+                      <span className="text-xs text-theme-tertiary font-medium uppercase tracking-wide">Rating</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
                 loading ? "animate-pulse" : ""
               }`}
             >
-              <h5 className="mb-3.5 text-base font-bold text-white dark:text-white">
+              <h5 className="mb-3.5 text-base font-bold text-theme-primary">
                 Business Details
               </h5>
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
-                    Phone Number :
-                  </p>
-                  <p className="text-base font-normal text-white dark:text-white">
-                    {(data && data.businessProfileRef?.dialCode) || ""}
-                    {(data && data.businessProfileRef?.phoneNumber) || ""}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-[140px,1fr] gap-1 sm:gap-4">
+                  <p className="text-xs sm:text-sm font-medium text-theme-tertiary">Phone number</p>
+                  <p className="text-sm sm:text-base font-normal text-theme-primary break-words">
+                    {(data?.businessProfileRef?.dialCode ?? "") +
+                      (data?.businessProfileRef?.phoneNumber ?? "")}
                   </p>
                 </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
-                    Email :
-                  </p>
-                  <p className="text-base font-normal text-white dark:text-white">
-                    {(data && data.businessProfileRef?.email) || ""}
-                  </p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
-                    Website Link :
-                  </p>
-                  <a
-                    href={(data && data.businessProfileRef?.website) || "#"}
-                    className="text-base font-normal  dark:text-primary text-primary"
-                    target="_blank"
-                  >
-                    {(data && data.businessProfileRef?.website) || ""}
-                  </a>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
-                    GSTIN :
-                  </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white">
-                    {(data && data.businessProfileRef?.gstn) || ""}
+
+                <div className="grid grid-cols-1 sm:grid-cols-[140px,1fr] gap-1 sm:gap-4">
+                  <p className="text-xs sm:text-sm font-medium text-theme-tertiary">Email</p>
+                  <p className="text-sm sm:text-base font-normal text-theme-primary break-all">
+                    {data?.businessProfileRef?.email ?? ""}
                   </p>
                 </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60 w-19">
-                    Address :
-                  </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white text-right">
-                    {data && data.businessProfileRef?.address
-                      ? `${data.businessProfileRef.address.street || ""}, ${
-                          data.businessProfileRef.address.city || ""
-                        }, ${data.businessProfileRef.address.state || ""}, ${
-                          data.businessProfileRef.address.zipCode || ""
-                        }, ${data.businessProfileRef.address.country || ""}`
+
+                {!!data?.businessProfileRef?.website && (
+                  <div className="grid grid-cols-1 sm:grid-cols-[140px,1fr] gap-1 sm:gap-4">
+                    <p className="text-xs sm:text-sm font-medium text-theme-tertiary">Website</p>
+                    <a
+                      href={data.businessProfileRef.website}
+                      className="text-sm sm:text-base font-medium text-brand-primary break-all hover:underline"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {data.businessProfileRef.website}
+                    </a>
+                  </div>
+                )}
+
+                {!!data?.businessProfileRef?.gstn && (
+                  <div className="grid grid-cols-1 sm:grid-cols-[140px,1fr] gap-1 sm:gap-4">
+                    <p className="text-xs sm:text-sm font-medium text-theme-tertiary">GSTIN</p>
+                    <p className="text-sm sm:text-base font-normal text-theme-primary break-words">
+                      {data.businessProfileRef.gstn}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-[140px,1fr] gap-1 sm:gap-4">
+                  <p className="text-xs sm:text-sm font-medium text-theme-tertiary">Address</p>
+                  <p className="text-sm sm:text-base font-normal text-theme-primary break-words">
+                    {data?.businessProfileRef?.address
+                      ? `${data.businessProfileRef.address.street || ""}${
+                          data.businessProfileRef.address.city
+                            ? `, ${data.businessProfileRef.address.city}`
+                            : ""
+                        }${
+                          data.businessProfileRef.address.state
+                            ? `, ${data.businessProfileRef.address.state}`
+                            : ""
+                        }${
+                          data.businessProfileRef.address.zipCode
+                            ? `, ${data.businessProfileRef.address.zipCode}`
+                            : ""
+                        }${
+                          data.businessProfileRef.address.country
+                            ? `, ${data.businessProfileRef.address.country}`
+                            : ""
+                        }`
                       : ""}
                   </p>
                 </div>
               </div>
             </div>
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
                 loading ? "animate-pulse" : ""
               } md:col-span-2 xl:col-span-1`}
             >
-              <h5 className="mb-3.5 text-base font-bold text-white dark:text-white">
+              <h5 className="mb-3.5 text-base font-bold text-theme-primary">
                 Manager Details
               </h5>
               <div className="flex flex-col gap-4">
                 <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                  <p className="text-sm font-normal text-theme-tertiary">
                     Name :
                   </p>
-                  <p className="text-base font-normal text-white dark:text-white">
+                  <p className="text-base font-normal text-theme-primary">
                     {(data && data.name) || ""}
                   </p>
                 </div>
                 <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                  <p className="text-sm font-normal text-theme-tertiary">
                     Phone Number :
                   </p>
-                  <p className="text-base font-normal text-white dark:text-white">
+                  <p className="text-base font-normal text-theme-primary">
                     {(data && data.dialCode) || ""}{" "}
                     {(data && data.phoneNumber) || ""}
                   </p>
                 </div>
                 <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                  <p className="text-sm font-normal text-theme-tertiary">
                     Email :
                   </p>
-                  <p className="text-base font-normal text-white dark:text-white">
+                  <p className="text-base font-normal text-theme-primary">
                     {(data && data.email) || ""}
                   </p>
                 </div>
                 <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                  <p className="text-sm font-normal text-theme-tertiary">
                     Permission :
                   </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white">
+                  <p className="text-base font-normal capitalize text-theme-primary">
                     All Permission {/*This feature is not implement yet   */}
                   </p>
                 </div>
                 <div className="flex justify-between">
-                  <p className="text-sm font-normal text-white/60 dark:text-white/60">
+                  <p className="text-sm font-normal text-theme-tertiary">
                     Date of Joining :
                   </p>
-                  <p className="text-base font-normal capitalize text-white dark:text-white text-right">
+                  <p className="text-base font-normal capitalize text-theme-primary text-right">
                     {data && data.createdAt
                       ? moment(data.createdAt ?? "").format("DD-MM-YYYY")
                       : null}
@@ -1063,21 +1043,21 @@ const Profile: React.FC<{}> = () => {
             </div>
           </div>
           <div
-            className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+            className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
               loading ? "animate-pulse" : ""
             }`}
           >
             <div className="flex flex-col justify-between gap-3.5">
-              <h5 className="text-base font-bold text-white dark:text-white">
+              <h5 className="text-base font-bold text-theme-primary">
                 General Information
               </h5>
-              <p className="text-xs font-medium tracking-wide text-white dark:text-white">
+              <p className="text-xs font-medium tracking-wide text-theme-secondary">
                 {(data &&
                   data.businessProfileRef &&
                   data.businessProfileRef?.bio) ||
                   ""}
               </p>
-              <h5 className="text-base font-bold text-white dark:text-white">
+              <h5 className="text-base font-bold text-theme-primary">
                 Languages spoken
               </h5>
 
@@ -1136,12 +1116,12 @@ const Profile: React.FC<{}> = () => {
                   <span className="text-sm font-normal pr-1">Add</span>
                 </button>
               </div>
-              <h5 className="text-base font-bold text-white dark:text-white">
+              <h5 className="text-base font-bold text-theme-primary">
                 Check-in/Check-out
               </h5>
               <ol className="list-disc pl-5">
-                <li className="text-sm font-normal text-primary dark:text-primary">
-                  <span className="text-white/60 dark:text-white/60">
+                <li className="text-sm font-normal text-brand-primary">
+                  <span className="text-theme-tertiary">
                     Check-in from:
                   </span>{" "}
                   {(data &&
@@ -1149,8 +1129,8 @@ const Profile: React.FC<{}> = () => {
                     data?.businessProfileRef?.checkIn) ||
                     ""}
                 </li>
-                <li className="text-sm font-normal text-primary dark:text-primary">
-                  <span className="text-white/60 dark:text-white/60">
+                <li className="text-sm font-normal text-brand-primary">
+                  <span className="text-theme-tertiary">
                     Check-out from:
                   </span>{" "}
                   {(data &&
@@ -1163,13 +1143,13 @@ const Profile: React.FC<{}> = () => {
           </div>
           <div className="col-span-12 xl:col-span-7">
             <div
-              className={`rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+              className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
                 loading ? "animate-pulse" : ""
               }`}
             >
               <div className="flex flex-col justify-between gap-3.5">
                 <div className="flex justify-between items-center">
-                  <h5 className="text-base font-bold text-white dark:text-white tracking-wide">
+                  <h5 className="text-base font-bold text-theme-primary tracking-wide">
                     Amenities
                   </h5>
                   <Button.Hotel.Button
@@ -1219,7 +1199,7 @@ const Profile: React.FC<{}> = () => {
                                   />
                                 </svg>
                               </span>
-                              <span className="text-xs leading-[12px] text-white/60 dark:text-white/60">
+                              <span className="text-xs leading-[12px] text-theme-secondary">
                                 {amenity.name}
                               </span>
                             </div>
@@ -1232,19 +1212,19 @@ const Profile: React.FC<{}> = () => {
             </div>
           </div>
           <div
-            className={`rounded-xl border border-theme-gray bg-theme-black px-5 py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 ${
+            className={`rounded-xl border border-theme-primary bg-theme-card px-5 py-6 shadow-theme-card sm:px-7.5 ${
               loading ? "animate-pulse" : ""
             }`}
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Business Details Section */}
               <div className="flex flex-col gap-4">
-                <h5 className="text-xl font-bold text-white dark:text-white">
+                <h5 className="text-xl font-bold text-theme-primary">
                   Business Details
                 </h5>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <h3 className="text-2xl font-bold text-white dark:text-white mb-1">
+                    <h3 className="text-2xl font-bold text-theme-primary mb-1">
                       {(data && data.businessProfileRef?.name) || ""}
                     </h3>
                     <div className="flex items-center gap-2 mb-2">
@@ -1265,19 +1245,19 @@ const Profile: React.FC<{}> = () => {
                               />
                             </svg>
                           ))}
-                          <span className="text-white text-sm ml-1">
+                          <span className="text-theme-primary text-sm ml-1">
                             {parseFloat(
                               `${data.businessProfileRef.rating}`
                             ).toFixed(1)}
                           </span>
                         </>
                       ) : (
-                        <span className="text-white/60 text-sm">
+                        <span className="text-theme-tertiary text-sm">
                           No rating yet
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-white/60 dark:text-white/60">
+                    <p className="text-sm text-theme-secondary">
                       {data && data?.businessProfileRef?.businessTypeRef?.name
                         ? `${data.businessProfileRef.businessTypeRef.name}`
                         : ""}
@@ -1296,7 +1276,7 @@ const Profile: React.FC<{}> = () => {
                           (amenity: any, index: number) => (
                             <div
                               key={index}
-                              className="flex items-center gap-1.5 rounded-sm border border-stroke bg-white px-3 py-2 shadow-default dark:border-strokedark dark:bg-boxdark"
+                              className="flex items-center gap-1.5 rounded-sm border border-theme-primary bg-theme-secondary px-3 py-2 shadow-theme-sm"
                             >
                               {amenity?.icon && (
                                 <Image
@@ -1307,7 +1287,7 @@ const Profile: React.FC<{}> = () => {
                                   className="w-5 h-5"
                                 />
                               )}
-                              <p className="text-xs font-semibold tracking-wider">
+                              <p className="text-xs font-semibold tracking-wider text-theme-primary">
                                 {amenity?.name || ""}
                               </p>
                             </div>
@@ -1331,10 +1311,10 @@ const Profile: React.FC<{}> = () => {
                             fill="#60A5FA"
                           />
                         </svg>
-                        <span className="text-sm text-white/60 dark:text-white/60">
+                        <span className="text-sm text-theme-tertiary">
                           Phone Number:
                         </span>
-                        <span className="text-sm text-white dark:text-white">
+                        <span className="text-sm text-theme-primary">
                           {data.businessProfileRef.dialCode || ""}{" "}
                           {data.businessProfileRef.phoneNumber}
                         </span>
@@ -1354,10 +1334,10 @@ const Profile: React.FC<{}> = () => {
                             fill="#60A5FA"
                           />
                         </svg>
-                        <span className="text-sm text-white/60 dark:text-white/60">
+                        <span className="text-sm text-theme-tertiary">
                           Email:
                         </span>
-                        <span className="text-sm text-white dark:text-white">
+                        <span className="text-sm text-theme-primary">
                           {data.businessProfileRef.email}
                         </span>
                       </div>
@@ -1376,10 +1356,10 @@ const Profile: React.FC<{}> = () => {
                             fill="#60A5FA"
                           />
                         </svg>
-                        <span className="text-sm text-white/60 dark:text-white/60">
+                        <span className="text-sm text-theme-tertiary">
                           GSTIN:
                         </span>
-                        <span className="text-sm text-white dark:text-white">
+                        <span className="text-sm text-theme-primary">
                           {data.businessProfileRef.gstn || "-"}
                         </span>
                       </div>
@@ -1400,10 +1380,10 @@ const Profile: React.FC<{}> = () => {
                           />
                         </svg>
                         <div className="flex flex-col">
-                          <span className="text-sm text-white/60 dark:text-white/60">
+                          <span className="text-sm text-theme-tertiary">
                             Address:
                           </span>
-                          <span className="text-sm text-white dark:text-white">
+                          <span className="text-sm text-theme-primary">
                             {data.businessProfileRef.address.street || ""},{" "}
                             {data.businessProfileRef.address.city || ""},{" "}
                             {data.businessProfileRef.address.state || ""},{" "}
@@ -1416,7 +1396,7 @@ const Profile: React.FC<{}> = () => {
                   </div>
                   {/* Description */}
                   {data && data.businessProfileRef?.bio && (
-                    <p className="text-sm text-white dark:text-white mt-2">
+                    <p className="text-sm text-theme-secondary mt-2">
                       {data.businessProfileRef.bio}
                     </p>
                   )}
@@ -1425,7 +1405,7 @@ const Profile: React.FC<{}> = () => {
               {/* QR Code Section */}
               <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
-                  <h5 className="text-xl font-bold text-white dark:text-white">
+                  <h5 className="text-xl font-bold text-theme-primary">
                     Download QR
                   </h5>
                   <button
@@ -1450,7 +1430,7 @@ const Profile: React.FC<{}> = () => {
                     </svg>
                   </button>
                 </div>
-                <div className="w-full max-w-[300px] mx-auto aspect-square bg-white rounded-lg border border-stroke dark:border-strokedark flex justify-center items-center p-4">
+                <div className="w-full max-w-[300px] mx-auto aspect-square bg-white rounded-lg border border-theme-primary flex justify-center items-center p-4">
                   <Image
                     src={qr}
                     alt="Business QR Code"

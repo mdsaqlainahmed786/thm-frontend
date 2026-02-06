@@ -30,11 +30,23 @@ const fetchBookings = async (params: { [key: string]: any }, role?: Role) => {
             };
         } else {
             toast.error(response?.data?.message ?? ERROR_MESSAGE);
-            return undefined;
+            // React Query v5 queryFns must not return undefined
+            return {
+                data: [],
+                pageNo: Number(params?.pageNumber ?? 1),
+                totalPages: 0,
+                totalResources: 0,
+            };
         }
     } catch (error) {
         handleClientApiErrors(error)
-        return undefined;
+        // React Query v5 queryFns must not return undefined
+        return {
+            data: [],
+            pageNo: Number(params?.pageNumber ?? 1),
+            totalPages: 0,
+            totalResources: 0,
+        };
     }
 }
 const fetchBooking = async (bookingID: string) => {

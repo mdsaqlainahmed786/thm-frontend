@@ -30,11 +30,27 @@ const fetchHotelDashboard = async (params: { [key: string]: any }) => {
             };;
         } else {
             toast.error("Something went wrong");
-            return undefined;
+            // React Query v5 queryFns must not return undefined
+            return {
+                newBookings: 0,
+                todayCheckIn: 0,
+                todayCheckOut: 0,
+                earnings: 0,
+                totalRooms: 0,
+                availableRooms: 0,
+            };
         }
     } catch (error) {
         handleClientApiErrors(error)
-        return undefined;
+        // React Query v5 queryFns must not return undefined
+        return {
+            newBookings: 0,
+            todayCheckIn: 0,
+            todayCheckOut: 0,
+            earnings: 0,
+            totalRooms: 0,
+            availableRooms: 0,
+        };
     }
 }
 

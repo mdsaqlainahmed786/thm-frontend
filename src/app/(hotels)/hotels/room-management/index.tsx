@@ -1060,27 +1060,131 @@ export default function RoomManagement() {
         </div>
       </div>
       <PageContent>
-        <div className="max-w-full overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {isFetching ? (
+            <div className="rounded-xl border border-theme-gray bg-theme-black p-4">
+              <Loading />
+            </div>
+          ) : (data?.data?.length ?? 0) === 0 ? (
+            <div className="rounded-xl border border-theme-gray bg-theme-black p-4 text-white/60 text-sm">
+              No rooms found.
+            </div>
+          ) : (
+            data?.data?.map((room) => (
+              <div
+                key={room._id}
+                className="rounded-xl border border-theme-gray bg-theme-black p-4 space-y-3"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-white font-medium text-base">{room?.title}</h3>
+                    <p className="text-white/60 text-xs capitalize">{room?.roomType}</p>
+                  </div>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
+                    {room?.availability} Available
+                  </span>
+                </div>
+                
+                {room?.description && (
+                  <p className="text-white/60 text-sm line-clamp-2">{room?.description}</p>
+                )}
+                
+                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                  <div className="flex gap-2">
+                    <Button.Hotel.Edit
+                      name="Edit"
+                      svg={<SVG.Edit />}
+                      onClick={async () => {
+                        const roomDetails = await fetchRoom(room._id);
+                        const roomAmenities = roomDetails?.amenities || room?.amenities || [];
+                        const roomAmenityIds = Array.isArray(roomAmenities)
+                          ? roomAmenities.flat().map((item: any) => {
+                              if (item && typeof item === 'object' && item._id) return item._id.toString();
+                              return item?.toString() || item;
+                            }).filter((id: any) => id)
+                          : [];
+                        const selectedAmenities = amenities?.length && roomAmenityIds.length
+                          ? amenities.filter((a) => roomAmenityIds.includes(a._id?.toString())).map((a) => ({ value: a._id.toString(), label: a.name }))
+                          : [];
+                        setEditMode(true);
+                        setModal(true);
+                        setExistingImages(roomDetails?.roomImagesRef ?? room?.roomImagesRef ?? []);
+                        setRemovedExistingImageIds([]);
+                        setFormInputs({
+                          ...initialFormInputs,
+                          _id: room?._id,
+                          title: roomDetails?.title || room?.title,
+                          description: roomDetails?.description || room?.description,
+                          roomType: roomDetails?.roomType || room?.roomType,
+                          mealPlan: roomDetails?.mealPlan || room?.mealPlan,
+                          children: roomDetails?.children ?? room?.children,
+                          adults: roomDetails?.adults ?? room?.adults,
+                          price: roomDetails?.pricePerNight ?? room?.pricePerNight,
+                          bedType: roomDetails?.bedType || room?.bedType,
+                          totalRooms: roomDetails?.totalRooms ?? room?.totalRooms,
+                          amenities: selectedAmenities,
+                        });
+                      }}
+                    />
+                    <Button.Hotel.Delete
+                      name="Delete"
+                      svg={<SVG.Delete />}
+                      onClick={() => handleDelete(room?._id)}
+                    />
+                  </div>
+                  
+                  <div className="inline-flex p-1.5 gap-2 items-center bg-primary/50 rounded-full">
+                    <button
+                      disabled={room?.totalRooms && room.totalRooms <= 1}
+                      type="button"
+                      className={`${room?.totalRooms && room.totalRooms <= 1 ? "opacity-60" : ""} bg-primary p-1.5 rounded-full min-w-[28px] min-h-[28px] flex items-center justify-center`}
+                      onClick={() => changeInventory(room._id, room?.totalRooms - 1)}
+                    >
+                      <svg width="12" height="3" viewBox="0 0 14 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="13.5459" y="0.691406" width="2.61818" height="13.0909" rx="1.30909" transform="rotate(90 13.5459 0.691406)" fill="white" />
+                      </svg>
+                    </button>
+                    <span className="text-sm font-medium text-white min-w-[24px] text-center">{room?.totalRooms}</span>
+                    <button
+                      type="button"
+                      className="bg-primary p-1.5 rounded-full min-w-[28px] min-h-[28px] flex items-center justify-center"
+                      onClick={() => changeInventory(room._id, room?.totalRooms + 1)}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5.68945" y="0.455078" width="2.61818" height="13.0909" rx="1.30909" fill="white" />
+                        <rect x="13.5449" y="5.69141" width="2.61818" height="13.0909" rx="1.30909" transform="rotate(90 13.5449 5.69141)" fill="white" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block max-w-full thm-scrollbar overflow-x-auto">
           <div className="border dark:border-theme-gray border-theme-gray rounded-xl">
             <table className="w-full table-auto font-quicksand">
               <thead>
                 <tr className="bg-primary/50 text-left dark:bg-primary/50 text-sm">
-                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-left xl:pl-11  min-w-[120px]">
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-left xl:pl-11 min-w-[120px]">
                     Room Title
                   </th>
-                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[120px]">
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-center min-w-[100px]">
                     Room Type
                   </th>
-                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[120px]">
-                    Room Available
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-center min-w-[100px]">
+                    Available
                   </th>
-                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[220px]">
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-center min-w-[180px]">
                     Description
                   </th>
-                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-center min-w-[120px]">
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-center min-w-[120px]">
                     Action
                   </th>
-                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-2 font-medium text-black dark:text-white text-right min-w-[120px]">
+                  <th className="first:rounded-tl-xl last:rounded-tr-xl px-4 py-3 font-medium text-white text-right min-w-[140px]">
                     Inventory
                   </th>
                 </tr>
@@ -1100,30 +1204,30 @@ export default function RoomManagement() {
                         return (
                           <tr
                             key={room._id}
-                            className="even:bg-primary/10 odd:bg-theme-black dark:even:bg-primary/10 dark:odd:bg-theme-black hover:bg-primary/30 dark:hover:bg-primary/30 group [&:not(:last-child)]:border-b  dark:[&:not(:last-child)]:border-theme-gray [&:not(:last-child)]:border-theme-gray"
+                            className="even:bg-primary/10 odd:bg-theme-black dark:even:bg-primary/10 dark:odd:bg-theme-black hover:bg-primary/30 dark:hover:bg-primary/30 group [&:not(:last-child)]:border-b  dark:[&:not(:last-child)]:border-theme-gray [&:not(:last-child)]:border-theme-gray transition-colors duration-200"
                           >
-                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                              <p className="text-white dark:text-white text-sm ps-3">
+                            <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                              <p className="text-white dark:text-white text-sm">
                                 {room?.title}
                               </p>
                             </td>
-                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                            <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
                               <p className="text-white dark:text-white text-sm capitalize text-center">
                                 {room?.roomType}
                               </p>
                             </td>
-                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                            <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
                               <p className="text-white dark:text-white text-sm text-center">
                                 {room?.availability}
                               </p>
                             </td>
-                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                              <p className="text-white dark:text-white text-sm line-clamp-3 text-center">
+                            <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                              <p className="text-white/80 dark:text-white/80 text-sm line-clamp-2 text-center">
                                 {room?.description}
                               </p>
                             </td>
-                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                              <div className="flex gap-2">
+                            <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                              <div className="flex gap-2 justify-center">
                                 <Button.Hotel.Edit
                                   name="Edit"
                                   svg={<SVG.Edit />}
@@ -1190,8 +1294,8 @@ export default function RoomManagement() {
                                 />
                               </div>
                             </td>
-                            <td className="px-1 py-2 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
-                              <div className="inline-flex p-2 gap-2 items-center bg-primary/50 bg-blur-[35px] rounded-[24px]">
+                            <td className="px-4 py-3 group-last:first:rounded-bl-xl group-last:last:rounded-br-xl">
+                              <div className="inline-flex p-2 gap-2 items-center bg-primary/50 bg-blur-[35px] rounded-[24px] float-right">
                                 <button
                                   disabled={
                                     room?.totalRooms && room.totalRooms <= 1
@@ -1203,7 +1307,7 @@ export default function RoomManagement() {
                                     room?.totalRooms && room.totalRooms <= 1
                                       ? "opacity-60"
                                       : ""
-                                  } bg-primary flex gap-1 p-1 justify-center items-center rounded-3xl`}
+                                  } bg-primary flex gap-1 p-1 justify-center items-center rounded-3xl transition-opacity`}
                                   onClick={() =>
                                     changeInventory(
                                       room._id,
@@ -1234,7 +1338,7 @@ export default function RoomManagement() {
                                   </div>
                                   <span className="sr-only">Minus</span>
                                 </button>
-                                <span className="text-sm font-normal font-comic-sans">
+                                <span className="text-sm font-normal font-comic-sans min-w-[20px] text-center">
                                   {room?.totalRooms}
                                 </span>
                                 <button
@@ -1276,7 +1380,7 @@ export default function RoomManagement() {
                                       </svg>
                                     </span>
                                   </div>
-                                  <span className="sr-only">Minus</span>
+                                  <span className="sr-only">Plus</span>
                                 </button>
                               </div>
                             </td>
@@ -1288,13 +1392,13 @@ export default function RoomManagement() {
               </tbody>
             </table>
           </div>
+          </div>
           <Paginator
             pageNo={pageNo}
             totalPages={totalPages}
             totalResources={totalResources}
             onPageChange={(e, pageNo) => setPageNo(pageNo)}
           />
-        </div>
       </PageContent>
     </>
   );

@@ -48,10 +48,47 @@ const roomAvailabilityOptions: ApexOptions = {
       },
     },
     {
+      breakpoint: 1024,
+      options: {
+        chart: {
+          width: "100%",
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "65%",
+            },
+          },
+        },
+      },
+    },
+    {
+      breakpoint: 768,
+      options: {
+        chart: {
+          width: "100%",
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "60%",
+            },
+          },
+        },
+      },
+    },
+    {
       breakpoint: 640,
       options: {
         chart: {
-          width: 200,
+          width: "100%",
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "55%",
+            },
+          },
         },
       },
     },
@@ -90,10 +127,47 @@ const reservationStatusOptions: ApexOptions = {
       },
     },
     {
+      breakpoint: 1024,
+      options: {
+        chart: {
+          width: "100%",
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "65%",
+            },
+          },
+        },
+      },
+    },
+    {
+      breakpoint: 768,
+      options: {
+        chart: {
+          width: "100%",
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "60%",
+            },
+          },
+        },
+      },
+    },
+    {
       breakpoint: 640,
       options: {
         chart: {
-          width: 200,
+          width: "100%",
+        },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "55%",
+            },
+          },
         },
       },
     },
@@ -115,27 +189,56 @@ const Overview: React.FC<{}> = () => {
     refetch,
   } = useQuery({
     queryKey: ["dashboard", duration],
-    queryFn: () => fetchHotelDashboard({ duration }),
+    queryFn: async () => {
+      const result = await fetchHotelDashboard({ duration });
+      // Return default values if API returns undefined
+      if (!result) {
+        return {
+          newBookings: 0,
+          todayCheckIn: 0,
+          todayCheckOut: 0,
+          earnings: 0,
+          totalRooms: 0,
+          availableRooms: 0,
+        };
+      }
+      return result;
+    },
     placeholderData: keepPreviousData,
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Fetch bookings for reservation status distribution (restaurants only) and chart data
   const { data: bookingsData, isFetching: isFetchingBookings } = useQuery({
     queryKey: ["bookings", "status-distribution"],
-    queryFn: () => fetchBookings({ pageNumber: 1, limit: 1000 }),
+    queryFn: async () => {
+      const result = await fetchBookings({ pageNumber: 1, limit: 1000 });
+      if (!result) return { data: [], pageNo: 1, totalPages: 0, totalResources: 0 };
+      return result;
+    },
     placeholderData: keepPreviousData,
     enabled: isRestaurant, // Only fetch for restaurants
+    retry: 1,
   });
 
   // Fetch bookings for chart data (all business types)
   const { data: chartBookingsData } = useQuery({
     queryKey: ["bookings", "chart-data", duration],
-    queryFn: () => fetchBookings({ pageNumber: 1, limit: 1000 }),
+    queryFn: async () => {
+      const result = await fetchBookings({ pageNumber: 1, limit: 1000 });
+      if (!result) return { data: [], pageNo: 1, totalPages: 0, totalResources: 0 };
+      return result;
+    },
     placeholderData: keepPreviousData,
+    retry: 1,
   });
 
-  const availableRooms = data?.availableRooms ?? 0;
-  const totalRooms = data?.totalRooms ?? 0;
+  const availableRoomsRaw = data?.availableRooms ?? 0;
+  const totalRoomsRaw = data?.totalRooms ?? 0;
+  const totalRooms = Math.max(0, totalRoomsRaw);
+  const availableRooms = Math.max(0, Math.min(availableRoomsRaw, totalRooms || availableRoomsRaw));
+  const bookedRooms = Math.max(0, totalRooms - availableRooms);
 
   // Calculate reservation status distribution for restaurants
   const reservationStatusCounts = useMemo(() => {
@@ -288,38 +391,92 @@ const Overview: React.FC<{}> = () => {
       totalReservations,
     };
   }, [chartBookingsData, duration]);
+
+  if (isPending) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-white/10 rounded"></div>
+            <div className="h-4 w-64 bg-white/5 rounded"></div>
+          </div>
+          <div className="h-12 w-64 bg-white/5 rounded-lg"></div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-white/5 rounded-2xl border border-white/10"></div>
+          ))}
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
+          <div className="xl:col-span-2 h-96 bg-white/5 rounded-2xl border border-white/10"></div>
+          <div className="h-96 bg-white/5 rounded-2xl border border-white/10"></div>
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="h-96 bg-white/5 rounded-2xl border border-white/10"></div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-4">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
+            <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-theme-primary mb-2">Unable to Load Dashboard</h3>
+          <p className="text-theme-secondary text-sm mb-6">There was an error loading your dashboard data. Please try again.</p>
+        </div>
+        <button
+          onClick={() => refetch()}
+          className="px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-brand-hover transition-all duration-200 font-medium shadow-lg hover:shadow-xl active:scale-95"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <PageTitle>Overview</PageTitle>
-        <div className="w-full max-w-full overflow-x-auto no-scrollbar pr-4 sm:ml-auto sm:flex sm:w-auto sm:max-w-none sm:justify-end sm:overflow-visible">
-          <div
-            className="inline-flex w-max rounded-lg shadow-xs dark:bg-primary/60 bg-primary/60 p-0.5"
-            role="group"
-          >
-            {durationArray.map((text, index) => {
-              return (
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-theme-primary mb-1">Dashboard Overview</h1>
+          <p className="text-sm text-theme-secondary">Welcome back! Here's what's happening with your business today.</p>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 sm:pb-0">
+          <div className="inline-flex rounded-lg bg-white/5 p-1 backdrop-blur-sm border border-white/10">
+            {durationArray.map((text, index) => (
                 <button
                   onClick={() => setDuration(text)}
                   type="button"
                   key={index}
                   className={`${
                     duration === text
-                      ? "bg-[#4881F5] dark:bg-[#4881F5] border-[#4881F5]"
-                      : "text-white/50  dark:text-white/50 border-transparent"
-                  } px-2.5 py-1.5 text-sm font-normal text-gray-900 border  rounded-lg hover:bg-primary/50 dark:text-white  dark:hover:bg-[#4881F5]/80 dark:hover:text-white hover:text-white`}
-                >
-                  <span className="px-1.5">{text}</span>
+                    ? "bg-brand-primary text-white shadow-lg"
+                    : "text-theme-secondary hover:text-theme-primary"
+                } px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap`}
+              >
+                {text}
                 </button>
-              );
-            })}
+            ))}
           </div>
         </div>
       </div>
+      {/* Stats Cards */}
       <div
-        className={`grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 ${
-          isRestaurant ? "xl:grid-cols-3" : "xl:grid-cols-4"
-        } 2xl:gap-7.5`}
+        className={`grid grid-cols-1 sm:grid-cols-2 ${
+          isRestaurant ? "lg:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"
+        } gap-4 lg:gap-6`}
       >
         <CardDataStats
           loading={isFetching || isPending ? true : false}
@@ -416,137 +573,155 @@ const Overview: React.FC<{}> = () => {
           </svg>
         </CardDataStats>
       </div>
-      <div className="my-4 grid grid-cols-12 gap-4 md:my-6 md:gap-6 2xl:my-7.5 2xl:gap-7.5">
-        <div className="col-span-12 xl:col-span-8">
-          <div className="rounded-xl border border-theme-gray bg-theme-black px-5 py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5">
-            <div className="mb-7.5 justify-between sm:flex">
-              <div className="mb-2">
-                <PageTitle>Top Reports</PageTitle>
-              </div>
-              <div className="mb-2">
-                <div className="relative z-20 inline-block rounded bg-gray-2 dark:bg-boxdark">
-                  <select
-                    name="contentType"
-                    id="contentType"
-                    className="relative z-20 inline-flex appearance-none rounded border border-stroke bg-transparent py-1 pl-3 pr-8 text-sm outline-none dark:border-strokedark"
-                  >
-                    <option value="" className="dark:bg-boxdark">
-                      All
-                    </option>
-                    <option value="post" className="dark:bg-boxdark">
-                      Post
-                    </option>
-                    <option value="user" className="dark:bg-boxdark">
-                      User
-                    </option>
-                    <option value="comment" className="dark:bg-boxdark">
-                      Comment
-                    </option>
-                  </select>
-                  <span className="absolute right-3 top-1/2 z-10 -translate-y-1/2">
-                    <svg
-                      width="10"
-                      height="6"
-                      viewBox="0 0 10 6"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M0.47072 1.08816C0.47072 1.02932 0.500141 0.955772 0.54427 0.911642C0.647241 0.808672 0.809051 0.808672 0.912022 0.896932L4.85431 4.60386C4.92785 4.67741 5.06025 4.67741 5.14851 4.60386L9.09079 0.896932C9.19376 0.793962 9.35557 0.808672 9.45854 0.911642C9.56151 1.01461 9.5468 1.17642 9.44383 1.27939L5.50155 4.98632C5.22206 5.23639 4.78076 5.23639 4.51598 4.98632L0.558981 1.27939C0.50014 1.22055 0.47072 1.16171 0.47072 1.08816Z"
-                        fill="#637381"
-                      ></path>
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M1.22659 0.546578L5.00141 4.09604L8.76422 0.557869C9.08459 0.244537 9.54201 0.329403 9.79139 0.578788C10.112 0.899434 10.0277 1.36122 9.77668 1.61224L9.76644 1.62248L5.81552 5.33722C5.36257 5.74249 4.6445 5.7544 4.19352 5.32924C4.19327 5.32901 4.19377 5.32948 4.19352 5.32924L0.225953 1.61241C0.102762 1.48922 -4.20186e-08 1.31674 -3.20269e-08 1.08816C-2.40601e-08 0.905899 0.0780105 0.712197 0.211421 0.578787C0.494701 0.295506 0.935574 0.297138 1.21836 0.539529L1.22659 0.546578ZM4.51598 4.98632C4.78076 5.23639 5.22206 5.23639 5.50155 4.98632L9.44383 1.27939C9.5468 1.17642 9.56151 1.01461 9.45854 0.911642C9.35557 0.808672 9.19376 0.793962 9.09079 0.896932L5.14851 4.60386C5.06025 4.67741 4.92785 4.67741 4.85431 4.60386L0.912022 0.896932C0.809051 0.808672 0.647241 0.808672 0.54427 0.911642C0.500141 0.955772 0.47072 1.02932 0.47072 1.08816C0.47072 1.16171 0.50014 1.22055 0.558981 1.27939L4.51598 4.98632Z"
-                        fill="#637381"
-                      ></path>
-                    </svg>
-                  </span>
-                </div>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
+        {/* Main Chart */}
+        <div className="xl:col-span-2">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-5 sm:p-6 backdrop-blur-sm">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-theme-primary mb-1">Reservation Analytics</h2>
+                <p className="text-sm text-theme-secondary">Track your booking trends over time</p>
               </div>
             </div>
-            <div className="flex flex-col">
-              <ReactLineChart
-                options={{
-                  chart: {
-                    type: "area",
-                    height: 350,
-                    zoom: {
+            <div className="relative overflow-hidden rounded-xl">
+              <div className="min-h-[300px] sm:min-h-[350px]">
+                <ReactLineChart
+                  options={{
+                    chart: {
+                      type: "area",
+                      height: 350,
+                      zoom: {
+                        enabled: true,
+                      },
+                      foreColor: "#ffffff",
+                    },
+                    dataLabels: {
                       enabled: true,
                     },
-                    foreColor: "#ffffff",
-                  },
-                  dataLabels: {
-                    enabled: true,
-                  },
-                  stroke: {
-                    curve: "smooth",
-                  },
-                  fill: {
-                    type: "gradient",
-                    gradient: {
-                      shadeIntensity: 1,
-                      opacityFrom: 0.7,
-                      opacityTo: 0.3,
-                      stops: [0, 90, 100],
+                    stroke: {
+                      curve: "smooth",
                     },
-                  },
-                  colors: ["#3C50E0", "#10B981"],
-                  title: {
-                    text: reservationChartData.totalReservations.toString(),
-                    align: "left",
-                  },
-                  subtitle: {
-                    text: "Reservation Stats",
-                    align: "left",
-                  },
-                  labels: reservationChartData.labels,
-                  xaxis: {
-                    type: "category",
-                    labels: {
-                      style: {
+                    fill: {
+                      type: "gradient",
+                      gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.7,
+                        opacityTo: 0.3,
+                        stops: [0, 90, 100],
+                      },
+                    },
+                    colors: ["#3C50E0", "#10B981"],
+                    title: {
+                      text: reservationChartData.totalReservations.toString(),
+                      align: "left",
+                    },
+                    subtitle: {
+                      text: "Reservation Stats",
+                      align: "left",
+                    },
+                    labels: reservationChartData.labels,
+                    xaxis: {
+                      type: "category",
+                      labels: {
+                        style: {
+                          colors: "#ffffff",
+                        },
+                      },
+                    },
+                    yaxis: {
+                      opposite: true,
+                      labels: {
+                        style: {
+                          colors: "#ffffff",
+                        },
+                      },
+                    },
+                    legend: {
+                      horizontalAlign: "left",
+                      labels: {
                         colors: "#ffffff",
                       },
                     },
-                  },
-                  yaxis: {
-                    opposite: true,
-                    labels: {
-                      style: {
-                        colors: "#ffffff",
+                    responsive: [
+                      {
+                        breakpoint: 1024,
+                        options: {
+                          chart: {
+                            height: 300,
+                          },
+                        },
                       },
+                      {
+                        breakpoint: 640,
+                        options: {
+                          chart: {
+                            height: 250,
+                          },
+                          dataLabels: {
+                            enabled: false,
+                          },
+                          xaxis: {
+                            labels: {
+                              rotate: -45,
+                              rotateAlways: true,
+                              style: {
+                                fontSize: "10px",
+                              },
+                            },
+                          },
+                          yaxis: {
+                            labels: {
+                              style: {
+                                fontSize: "10px",
+                              },
+                            },
+                          },
+                          legend: {
+                            fontSize: "11px",
+                            labels: {
+                              fontSize: "11px",
+                            },
+                          },
+                          title: {
+                            style: {
+                              fontSize: "14px",
+                            },
+                          },
+                          subtitle: {
+                            style: {
+                              fontSize: "12px",
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  }}
+                  series={[
+                    {
+                      name: "New Reservations",
+                      data: reservationChartData.series1,
                     },
-                  },
-                  legend: {
-                    horizontalAlign: "left",
-                    labels: {
-                      colors: "#ffffff",
+                    {
+                      name: "Confirmed Reservations",
+                      data: reservationChartData.series2,
                     },
-                  },
-                }}
-                series={[
-                  {
-                    name: "New Reservations",
-                    data: reservationChartData.series1,
-                  },
-                  {
-                    name: "Confirmed Reservations",
-                    data: reservationChartData.series2,
-                  },
-                ]}
-                type="area"
-                height={"380px"}
-              />
+                  ]}
+                  type="area"
+                  height="380px"
+                />
+              </div>
             </div>
           </div>
         </div>
+        {/* Donut Chart */}
         {isRestaurant ? (
-          <div className="col-span-12 rounded-xl border border-theme-gray bg-theme-black px-5 pb-5 pt-7.5 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 xl:col-span-4">
-            <div className="mb-3 justify-between gap-4 sm:flex">
-              <PageTitle>Reservation Status Distribution</PageTitle>
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-5 sm:p-6 backdrop-blur-sm">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-theme-primary mb-1">Reservation Status</h2>
+              <p className="text-sm text-theme-secondary">Current booking distribution</p>
             </div>
-            <div className="mb-2">
+            <div className="mb-3 sm:mb-2">
               <div
                 id="chartReservationStatus"
                 className="mx-auto flex justify-center w-full"
@@ -560,79 +735,78 @@ const Overview: React.FC<{}> = () => {
                     reservationStatusCounts.noShow,
                   ]}
                   type="donut"
+                  width="100%"
                 />
               </div>
             </div>
-            <div className="w-full px-8 flex flex-col gap-2 justify-center items-center">
-              <p className="text-3xl font-bold text-white dark:text-white">
+            <div className="w-full px-4 sm:px-6 md:px-8 flex flex-col gap-2 justify-center items-center">
+              <p className="text-2xl sm:text-3xl font-bold text-theme-primary">
                 {reservationStatusCounts.total}
               </p>
-              <PageTitle>Total Reservations</PageTitle>
-              <div className="mt-4 w-full flex flex-col gap-2 text-sm">
-                <div className="flex justify-between items-center">
+              <PageTitle className="text-sm sm:text-base md:text-lg">Total Reservations</PageTitle>
+              <div className="mt-3 sm:mt-4 w-full flex flex-col gap-2 text-xs sm:text-sm">
+                <div className="flex justify-between items-center py-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#6F42C1]"></div>
-                    <span className="text-white/60">Confirmed</span>
+                    <div className="w-3 h-3 rounded-full bg-[#6F42C1] flex-shrink-0"></div>
+                    <span className="text-theme-secondary">Confirmed</span>
                   </div>
-                  <span className="text-white font-semibold">
+                  <span className="text-theme-primary font-semibold">
                     {reservationStatusCounts.confirmed}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center py-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#C29500]"></div>
-                    <span className="text-white/60">Pending</span>
+                    <div className="w-3 h-3 rounded-full bg-[#C29500] flex-shrink-0"></div>
+                    <span className="text-theme-secondary">Pending</span>
                   </div>
-                  <span className="text-white font-semibold">
+                  <span className="text-theme-primary font-semibold">
                     {reservationStatusCounts.pending}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center py-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#C10808]"></div>
-                    <span className="text-white/60">Cancelled</span>
+                    <div className="w-3 h-3 rounded-full bg-[#C10808] flex-shrink-0"></div>
+                    <span className="text-theme-secondary">Cancelled</span>
                   </div>
-                  <span className="text-white font-semibold">
+                  <span className="text-theme-primary font-semibold">
                     {reservationStatusCounts.cancelled}
                   </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  {/* <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#505050]"></div>
-                    <span className="text-white/60">No-show</span>
-                  </div> */}
-                  
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="col-span-12 rounded-xl border border-theme-gray bg-theme-black px-5 pb-5 pt-7.5 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5 xl:col-span-4">
-            <div className="mb-3 justify-between gap-4 sm:flex">
-              <PageTitle> Rooms Availability</PageTitle>
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-5 sm:p-6 backdrop-blur-sm">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-theme-primary mb-1">Room Availability</h2>
+              <p className="text-sm text-theme-secondary">Today's availability status</p>
             </div>
-            <div className="mb-2">
+            <div className="mb-3 sm:mb-2">
               <div id="chartThree" className="mx-auto flex justify-center w-full">
                 <ReactApexChart
                   options={roomAvailabilityOptions}
-                  series={[availableRooms, totalRooms - availableRooms]}
+                  series={[availableRooms, bookedRooms]}
                   type="donut"
+                  width="100%"
                 />
               </div>
             </div>
-            <div className="w-full px-8 flex flex-col gap-2 justify-center items-center">
-              <p className="text-3xl font-bold text-white dark:text-white">
+            <div className="w-full px-4 sm:px-6 md:px-8 flex flex-col gap-2 justify-center items-center">
+              <p className="text-2xl sm:text-3xl font-bold text-theme-primary">
                 {availableRooms}
               </p>
-              <PageTitle>Available Room Today</PageTitle>
+              <PageTitle className="text-sm sm:text-base md:text-lg">Available Room Today</PageTitle>
             </div>
           </div>
         )}
       </div>
-      <div className="my-4 md:my-6 2xl:my-7.5">
-        <div className="rounded-xl border border-theme-gray bg-theme-black px-5  py-6 shadow-default dark:border-theme-gray dark:bg-theme-black sm:px-7.5">
-          <div className="mb-4 flex justify-between">
-            <PageTitle>Guest List</PageTitle>
+      {/* Guest List Table */}
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-5 sm:p-6 backdrop-blur-sm">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-theme-primary mb-1">Recent Bookings</h2>
+            <p className="text-sm text-theme-secondary">View and manage your latest reservations</p>
+          </div>
             <div className="flex">
               {/* <Button.IconButton text="Add Coupon" variant="primary" onClick={() => {
                                 setModal(true)
@@ -644,7 +818,6 @@ const Overview: React.FC<{}> = () => {
           <BookingTable />
         </div>
       </div>
-    </>
   );
 };
 

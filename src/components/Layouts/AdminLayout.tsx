@@ -6,6 +6,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import TanstackQueryProvider from "@/context/TanstackQueryProvider";
 import { InputProvider } from "@/context/SearchProvider";
 import useLocalStorage from "@/hooks/useLocalStorage";
+
 interface AdminLayoutSearchableProps {
   isSearchable: true;
   searchPlaceholder: string;

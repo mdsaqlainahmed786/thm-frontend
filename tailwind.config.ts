@@ -1,15 +1,24 @@
 import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 const colors = require("tailwindcss/colors");
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: "class",
+  darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     fontFamily: {
+      sans: [
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Segoe UI",
+        "Roboto",
+        "Inter",
+        "sans-serif",
+      ],
       satoshi: ["Satoshi", "sans-serif"],
       quicksand: ["var(--quicksand)", "sans-serif"],
       "comic-sans": ["var(--comic-sans)", "sans-serif"],
@@ -17,8 +26,12 @@ const config: Config = {
     screens: {
       "2xsm": "375px",
       xsm: "425px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
       "3xl": "2000px",
-      ...defaultTheme.screens,
     },
     extend: {
       colors: {
@@ -26,7 +39,6 @@ const config: Config = {
         transparent: "transparent",
         white: "#FFFFFF",
         black: {
-          // ...colors.black,
           DEFAULT: "#000000",
           2: "#010101",
         },
@@ -34,11 +46,96 @@ const config: Config = {
           ...colors.red,
           DEFAULT: "#FB5454",
         },
+
+        // ============================================
+        // NEW DESIGN SYSTEM COLORS
+        // ============================================
+
+        // Light Theme Colors
+        light: {
+          bg: {
+            primary: "#FFFFFF",
+            secondary: "#F8FAFB",
+            tertiary: "#F3F4F6",
+            elevated: "#FFFFFF",
+            card: "#FFFFFF",
+            hover: "#F3F4F6",
+            active: "#EBF5FF",
+          },
+          text: {
+            primary: "#1F2937",
+            secondary: "#6B7280",
+            tertiary: "#9CA3AF",
+            muted: "#D1D5DB",
+          },
+          border: {
+            primary: "#E5E7EB",
+            secondary: "#F3F4F6",
+          },
+        },
+
+        // Dark Theme Colors
+        dark: {
+          bg: {
+            primary: "#0F172A",
+            secondary: "#1E293B",
+            tertiary: "#334155",
+            elevated: "#1E293B",
+            card: "#1E293B",
+            hover: "#334155",
+            active: "#1E3A5F",
+          },
+          text: {
+            primary: "#F1F5F9",
+            secondary: "#CBD5E1",
+            tertiary: "#94A3B8",
+            muted: "#64748B",
+          },
+          border: {
+            primary: "#334155",
+            secondary: "#1E293B",
+          },
+        },
+
+        // Brand Colors
+        brand: {
+          primary: "#3B82F6",
+          "primary-hover": "#2563EB",
+          "primary-active": "#1D4ED8",
+          "primary-light": "#EBF5FF",
+          secondary: "#60A5FA",
+          "dark-primary": "#60A5FA",
+          "dark-hover": "#3B82F6",
+        },
+
+        // Status Colors
+        status: {
+          success: "#10B981",
+          "success-bg": "#D1FAE5",
+          "success-dark": "#34D399",
+          "success-bg-dark": "#064E3B",
+          warning: "#F59E0B",
+          "warning-bg": "#FEF3C7",
+          "warning-dark": "#FBBF24",
+          "warning-bg-dark": "#78350F",
+          error: "#EF4444",
+          "error-bg": "#FEE2E2",
+          "error-dark": "#F87171",
+          "error-bg-dark": "#7F1D1D",
+          info: "#0EA5E9",
+          "info-bg": "#E0F2FE",
+          "info-dark": "#38BDF8",
+          "info-bg-dark": "#0C4A6E",
+        },
+
+        // ============================================
+        // LEGACY COLORS (Backward Compatibility)
+        // ============================================
         body: "#64748B",
         bodydark: "#AEB7C0",
         bodydark1: "#DEE4EE",
         bodydark2: "#8A99AF",
-        primary: "#4169E1",
+        primary: "#3B82F6", // Updated to match new brand
         secondary: "#80CAEE",
         stroke: "#E2E8F0",
         gray: {
@@ -50,13 +147,13 @@ const config: Config = {
         graydark: "#333A48",
         whiten: "#F1F5F9",
         whiter: "#F5F7FD",
-        boxdark: "#2E3044", // Card background
-        "boxdark-2": "var(--boxdark-2)", // Main background
-        "boxdark-sidebar": "#262837", // Side panel
-        "boxdark-hover": "#3A3D57", // Hover state
-        strokedark: "#FFFFFF20",
-        "form-strokedark": "#3d4d60",
-        "form-input": "#FFFFFF22",
+        boxdark: "#0D0D0D",
+        "boxdark-2": "var(--bg-primary)",
+        "boxdark-sidebar": "#000000",
+        "boxdark-hover": "#1A1A1A",
+        strokedark: "#2A2A2A",
+        "form-strokedark": "#2A2A2A",
+        "form-input": "#0D0D0D",
         meta: {
           1: "#DC3545",
           2: "#EFF2F7",
@@ -69,21 +166,39 @@ const config: Config = {
           9: "#E5E7EB",
           10: "#0FADCF",
         },
-        success: "#219653",
-        danger: "#D34053",
-        warning: "#FFA70B",
-        //Hotel theme 
-        "theme-black-full": "#1C1C1C",
-        "theme-black": "#1C1C1C99",
-        "theme-gray": "#3F444D",
-        "theme-gray-1": "#505050",
+        success: "#10B981",
+        danger: "#EF4444",
+        warning: "#F59E0B",
+
+        // Hotel theme (mapped to new system)
+        "theme-black-full": "#000000",
+        "theme-black": "var(--bg-card)",
+        "theme-gray": "var(--border-primary)",
+        "theme-gray-1": "#404040",
       },
       borderRadius: {
-        //Hotel theme 
-        "theme-lg": '28px',
-        "theme-xl": '30px'
+        "theme-lg": "28px",
+        "theme-xl": "30px",
+        sm: "4px",
+        md: "6px",
+        lg: "8px",
+        xl: "12px",
+        "2xl": "16px",
       },
       fontSize: {
+        // Design system typography
+        "heading-1": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+        "heading-2": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+        "heading-3": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+        "heading-4": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+        "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+        "label-lg": ["14px", { lineHeight: "20px", fontWeight: "600" }],
+        "label-md": ["12px", { lineHeight: "16px", fontWeight: "600" }],
+        "label-sm": ["10px", { lineHeight: "14px", fontWeight: "600" }],
+
+        // Legacy sizes
         "title-xxl": ["44px", "55px"],
         "title-xxl2": ["42px", "58px"],
         "title-xl": ["36px", "45px"],
@@ -96,6 +211,29 @@ const config: Config = {
         "title-xsm": ["18px", "24px"],
       },
       spacing: {
+        // Design system spacing (8px grid)
+        0.5: "2px",
+        1: "4px",
+        1.5: "6px",
+        2: "8px",
+        2.5: "10px",
+        3: "12px",
+        3.5: "14px",
+        4: "16px",
+        5: "20px",
+        6: "24px",
+        7: "28px",
+        8: "32px",
+        9: "36px",
+        10: "40px",
+        11: "44px",
+        12: "48px",
+        14: "56px",
+        16: "64px",
+        18: "72px",
+        20: "80px",
+
+        // Legacy spacing
         4.5: "1.125rem",
         5.5: "1.375rem",
         6.5: "1.625rem",
@@ -103,20 +241,16 @@ const config: Config = {
         8.5: "2.125rem",
         9.5: "2.375rem",
         10.5: "2.625rem",
-        11: "2.75rem",
         11.5: "2.875rem",
         12.5: "3.125rem",
         13: "3.25rem",
         13.5: "3.375rem",
-        14: "3.5rem",
         14.5: "3.625rem",
         15: "3.75rem",
         15.5: "3.875rem",
-        16: "4rem",
         16.5: "4.125rem",
         17: "4.25rem",
         17.5: "4.375rem",
-        18: "4.5rem",
         18.5: "4.625rem",
         19: "4.75rem",
         19.5: "4.875rem",
@@ -243,6 +377,9 @@ const config: Config = {
         47.5: "11.875rem",
         75: "18.75rem",
       },
+      minHeight: {
+        11: "44px", // Touch target minimum
+      },
       zIndex: {
         999999: "999999",
         99999: "99999",
@@ -265,13 +402,42 @@ const config: Config = {
       content: {
         "icon-copy": 'url("../images/icon/icon-copy-alt.svg")',
       },
-      transitionProperty: { width: "width", stroke: "stroke" },
+      transitionProperty: {
+        width: "width",
+        stroke: "stroke",
+        colors:
+          "color, background-color, border-color, text-decoration-color, fill, stroke",
+      },
+      transitionDuration: {
+        DEFAULT: "200ms",
+        fast: "150ms",
+        normal: "200ms",
+        slow: "300ms",
+        theme: "300ms",
+      },
+      transitionTimingFunction: {
+        DEFAULT: "ease-out",
+      },
       borderWidth: {
+        DEFAULT: "1px",
+        0: "0",
+        1.5: "1.5px",
+        2: "2px",
+        3: "3px",
         6: "6px",
         10: "10px",
         12: "12px",
       },
       boxShadow: {
+        // Design system shadows
+        "theme-sm": "var(--shadow-sm)",
+        "theme-md": "var(--shadow-md)",
+        "theme-lg": "var(--shadow-lg)",
+        "theme-xl": "var(--shadow-xl)",
+        "theme-card": "var(--shadow-card)",
+        "theme-card-hover": "var(--shadow-card-hover)",
+
+        // Legacy shadows
         default: "0px 8px 13px -3px rgba(0, 0, 0, 0.07)",
         card: "0px 1px 3px rgba(0, 0, 0, 0.12)",
         "card-2": "0px 1px 2px rgba(0, 0, 0, 0.05)",
@@ -344,6 +510,26 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(100%)" },
           "50%": { transform: "translateY(0)" },
         },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        slideInLeft: {
+          "0%": { transform: "translateX(-100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        slideInRight: {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        scaleIn: {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
       },
       animation: {
         linspin: "linspin 1568.2353ms linear infinite",
@@ -362,9 +548,15 @@ const config: Config = {
         line1: "line 10s infinite linear",
         line2: "line-revert 8s infinite linear",
         line3: "line 7s infinite linear",
+        shimmer: "shimmer 1.5s ease-in-out infinite",
+        "fade-in": "fadeIn 200ms ease-out",
+        "slide-in-left": "slideInLeft 300ms ease-out",
+        "slide-in-right": "slideInRight 300ms ease-out",
+        "scale-in": "scaleIn 200ms ease-out",
       },
     },
   },
   plugins: [],
 };
+
 export default config;

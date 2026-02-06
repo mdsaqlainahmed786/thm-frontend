@@ -21,6 +21,7 @@ declare module "next-auth" {
             name?: string;
             username: string;
             profilePic: ProfilePic;
+            businessProfilePic?: ProfilePic;
             accessToken: string;
             role: Role;
             accountType: AccountType,
@@ -37,6 +38,7 @@ declare module "next-auth/jwt" {
         name?: string;
         username: string;
         profilePic: ProfilePic;
+        businessProfilePic?: ProfilePic;
         accessToken: string;
         role: Role;
         accountType: AccountType,

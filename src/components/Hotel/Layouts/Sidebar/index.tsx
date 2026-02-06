@@ -6,13 +6,13 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import SidebarItem from "./SidebarItem";
-import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
 
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (arg: boolean) => void;
 }
+
 const getMenuGroups = (businessTypeName?: string) => {
   const isRestaurant = businessTypeName === "Restaurant";
   const isHotel = businessTypeName === "Hotel" || businessTypeName === "Home Stays";
@@ -27,8 +27,8 @@ const getMenuGroups = (businessTypeName?: string) => {
       icon: (
         <svg
           className="fill-current"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -58,8 +58,8 @@ const getMenuGroups = (businessTypeName?: string) => {
       icon: (
         <svg
           className="fill-current"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -85,8 +85,8 @@ const getMenuGroups = (businessTypeName?: string) => {
       icon: (
         <svg
           className="fill-current"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -170,8 +170,8 @@ const getMenuGroups = (businessTypeName?: string) => {
       icon: (
         <svg
           className="fill-current"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -201,8 +201,8 @@ const getMenuGroups = (businessTypeName?: string) => {
       icon: (
         <svg
           className="fill-current"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -247,8 +247,8 @@ const getMenuGroups = (businessTypeName?: string) => {
       icon: (
         <svg
           className="fill-current"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -276,8 +276,8 @@ const getMenuGroups = (businessTypeName?: string) => {
       icon: (
         <svg
           className="fill-current"
-          width="24"
-          height="24"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -298,7 +298,7 @@ const getMenuGroups = (businessTypeName?: string) => {
 
   return [
     {
-      name: "Menu",
+      name: "MENU",
       menuItems,
     },
   ];
@@ -316,70 +316,118 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   );
 
   return (
-    <ClickOutside onClick={() => setSidebarOpen(false)}>
-      <aside
-        className={`fixed left-0 top-0 flex h-screen w-[16.125rem] flex-col overflow-y-hidden bg-theme-black duration-300 ease-linear dark:bg-theme-black border-r border-theme-gray lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* <!-- SIDEBAR HEADER --> */}
-        <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-          <Link href="/">
-            <Image
-              width={48}
-              height={48}
-              src={"/images/logo/logo.svg"}
-              alt="The Hotel Media Logo"
-              priority
-            />
-          </Link>
-          <p>The Hotel Media</p>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-controls="sidebar"
-            className="block lg:hidden"
+    <aside
+      id="sidebar"
+      role="navigation"
+      aria-label="Main navigation"
+      className={`
+        fixed left-0 top-0 z-[9999] flex h-screen w-64 max-w-[85vw] flex-col
+        bg-theme-sidebar border-r border-theme-primary
+        transition-transform duration-300 ease-out
+        xl:translate-x-0
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+      `}
+    >
+      {/* Sidebar Header - Logo Section (64px height) */}
+      <div className="flex h-16 items-center justify-between gap-3 border-b border-theme-primary px-4">
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            width={36}
+            height={36}
+            src={"/images/logo/logo.svg"}
+            alt="The Hotel Media Logo"
+            priority
+            className="flex-shrink-0"
+          />
+          <span className="text-heading-4 font-semibold text-theme-primary truncate">
+            TheHotelMedia
+          </span>
+        </Link>
+        
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close sidebar"
+          className="
+            flex h-10 w-10 items-center justify-center rounded-lg
+            text-theme-secondary hover:bg-theme-hover hover:text-theme-primary
+            transition-colors duration-200
+            xl:hidden
+          "
+        >
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <svg
-              className="fill-current"
-              width="20"
-              height="18"
-              viewBox="0 0 20 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M19 8.175H2.98748L9.36248 1.6875C9.69998 1.35 9.69998 0.825 9.36248 0.4875C9.02498 0.15 8.49998 0.15 8.16248 0.4875L0.399976 8.3625C0.0624756 8.7 0.0624756 9.225 0.399976 9.5625L8.16248 17.4375C8.31248 17.5875 8.53748 17.7 8.76248 17.7C8.98748 17.7 9.17498 17.625 9.36248 17.475C9.69998 17.1375 9.69998 16.6125 9.36248 16.275L3.02498 9.8625H19C19.45 9.8625 19.825 9.4875 19.825 9.0375C19.825 8.55 19.45 8.175 19 8.175Z"
-                fill=""
-              />
-            </svg>
-          </button>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* Sidebar Content */}
+      <div className="flex flex-1 flex-col overflow-y-auto thm-scrollbar">
+        {/* Navigation Menu */}
+        <nav className="flex-1 px-3 py-4">
+          {menuGroups.map((group, groupIndex) => (
+            <div key={groupIndex} className="mb-6">
+              {/* Group Title */}
+              <h3 className="mb-3 px-3 text-label-sm font-semibold uppercase tracking-wider text-theme-tertiary">
+                {group.name}
+              </h3>
+              
+              {/* Menu Items */}
+              <ul className="flex flex-col gap-1">
+                {group.menuItems.map((menuItem, menuIndex) => (
+                  <SidebarItem
+                    key={menuIndex}
+                    item={menuItem}
+                    pageName={pageName}
+                    setPageName={setPageName}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div className="border-t border-theme-primary p-4">
+          <div className="flex items-center gap-3 rounded-lg bg-theme-hover p-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-primary text-white">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-body-sm font-medium text-theme-primary truncate">
+                Need Help?
+              </p>
+              <p className="text-body-sm text-theme-tertiary">
+                Contact Support
+              </p>
+            </div>
+          </div>
         </div>
-        {/* <!-- SIDEBAR HEADER --> */}
-        <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
-          {/* <!-- Sidebar Menu --> */}
-          <nav className="mt-5 py-4 lg:mt-9 pe-2">
-            {menuGroups.map((group, groupIndex) => (
-              <div key={groupIndex}>
-                <h3 className="mb-4 ml-4 text-sm font-semibold text-bodydark2">
-                  {group.name}
-                </h3>
-                <ul className="mb-6 flex flex-col gap-2">
-                  {group.menuItems.map((menuItem, menuIndex) => (
-                    <SidebarItem
-                      key={menuIndex}
-                      item={menuItem}
-                      pageName={pageName}
-                      setPageName={setPageName}
-                    />
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </nav>
-          {/* <!-- Sidebar Menu --> */}
-        </div>
-      </aside>
-    </ClickOutside>
+      </div>
+    </aside>
   );
 };
 
