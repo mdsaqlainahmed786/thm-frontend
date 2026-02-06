@@ -1,30 +1,55 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SidebarDropdown from "./SidebarDropdown";
+
+type SidebarChildItem = { label: string; route: string };
+
+type SidebarMenuItem = {
+  icon: React.ReactNode;
+  label: string;
+  route: string;
+  children?: SidebarChildItem[];
+};
 
 const SidebarItem = ({
   item,
   pageName,
   setPageName,
-}: any) => {
-  const handleClick = () => {
-    const updatedPageName =
-      pageName !== item.label.toLowerCase() ? item.label.toLowerCase() : "";
-    return setPageName(updatedPageName);
-  };
+  onNavigate,
+}: {
+  item: SidebarMenuItem;
+  pageName: string;
+  setPageName: (next: string) => void;
+  onNavigate?: () => void;
+}) => {
+  const normalizedLabel = item.label.toLowerCase();
+  const hasChildren = !!item.children?.length;
 
   const pathname = usePathname();
 
-  const isActive = (item: any) => {
+  const isItemActive = useMemo(() => {
     if (item.route === pathname) return true;
     if (item.children) {
-      return item.children.some((child: any) => isActive(child));
+      return item.children.some((child) => child.route === pathname);
     }
     return false;
-  };
+  }, [item.children, item.route, pathname]);
 
-  const isItemActive = isActive(item);
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      onNavigate?.();
+
+      // Parent items act as expand/collapse toggles (avoid navigating to `#`).
+      if (hasChildren) {
+        e.preventDefault();
+      }
+
+      const updatedPageName = pageName !== normalizedLabel ? normalizedLabel : "";
+      setPageName(updatedPageName);
+    },
+    [hasChildren, normalizedLabel, onNavigate, pageName, setPageName],
+  );
 
   return (
     <>
@@ -64,7 +89,7 @@ const SidebarItem = ({
             {item.children && (
               <svg
                 className={`flex-shrink-0 fill-current text-bodydark2 transition-transform duration-300 ease-in-out dark:text-bodydark ${
-                  pageName === item.label.toLowerCase() ? "rotate-180" : ""
+                  pageName === normalizedLabel ? "rotate-180" : ""
                 }`}
                 width="20"
                 height="20"
@@ -86,12 +111,12 @@ const SidebarItem = ({
         {item.children && (
           <div
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              pageName === item.label.toLowerCase()
+              pageName === normalizedLabel
                 ? "max-h-96 opacity-100"
                 : "max-h-0 opacity-0"
             }`}
           >
-            <SidebarDropdown item={item.children} />
+            <SidebarDropdown item={item.children} onNavigate={onNavigate} />
           </div>
         )}
       </li>

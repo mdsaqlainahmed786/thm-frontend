@@ -20,18 +20,18 @@ interface MainLayoutNonSearchableProps {
 type MainLayoutProps = HotelAdminLayoutSearchableProps | MainLayoutNonSearchableProps;
 
 export default function HotelAdminLayout(props: MainLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   // Lock background scroll when the mobile/tablet drawer is open
   useEffect(() => {
     if (typeof window === "undefined") return;
     const isXlUp = window.matchMedia("(min-width: 1280px)").matches;
     if (isXlUp) return;
-    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    document.body.style.overflow = isSidebarOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [sidebarOpen]);
+  }, [isSidebarOpen]);
 
   return (
     <div className="min-h-screen bg-theme-primary text-theme-primary overflow-x-hidden">
@@ -39,16 +39,19 @@ export default function HotelAdminLayout(props: MainLayoutProps) {
         {/* Page Wrapper */}
         <div className="flex min-w-0">
           {/* Sidebar */}
-          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          <Sidebar
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+          />
 
           {/* Backdrop for off-canvas sidebar (mobile/tablet) */}
           <div
-            onClick={() => setSidebarOpen(false)}
+            onClick={() => setIsSidebarOpen(false)}
             className={`
               fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm
               transition-opacity duration-300 ease-out
               xl:hidden
-              ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}
+              ${isSidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}
             `}
             aria-hidden="true"
           />
@@ -57,8 +60,8 @@ export default function HotelAdminLayout(props: MainLayoutProps) {
           <div className="relative flex min-w-0 flex-1 flex-col xl:ml-64">
             {/* Header */}
             <Header
-              sidebarOpen={sidebarOpen}
-              setSidebarOpen={setSidebarOpen}
+              isSidebarOpen={isSidebarOpen}
+              setIsSidebarOpen={setIsSidebarOpen}
               isSearchable={props.isSearchable}
               queryPlaceholder={props.searchPlaceholder ?? ""}
             />

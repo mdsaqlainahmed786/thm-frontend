@@ -4,9 +4,10 @@ import { usePathname } from "next/navigation";
 
 interface SidebarDropdownProps {
   item: Array<{ label: string; route: string }>;
+  onNavigate?: () => void;
 }
 
-const SidebarDropdown = ({ item }: SidebarDropdownProps) => {
+const SidebarDropdown = ({ item, onNavigate }: SidebarDropdownProps) => {
   const pathname = usePathname();
 
   return (
@@ -18,6 +19,7 @@ const SidebarDropdown = ({ item }: SidebarDropdownProps) => {
           <li key={index}>
             <Link
               href={child.route}
+              onClick={onNavigate}
               className={`
                 group relative flex items-center gap-2 rounded-md px-3 py-2
                 text-body-sm font-medium

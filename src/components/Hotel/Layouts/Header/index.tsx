@@ -1,5 +1,6 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
 import Link from "next/link";
 import DropdownNotification from "./DropdownNotification";
 import DropdownUser from "./DropdownUser";
@@ -8,8 +9,8 @@ import { useSearchInput } from "@/context/SearchProvider";
 import { usePathname } from "next/navigation";
 
 interface HeaderProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (arg: boolean) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: Dispatch<SetStateAction<boolean>>;
   isSearchable: boolean;
   queryPlaceholder: string;
 }
@@ -51,11 +52,11 @@ const Header = (props: HeaderProps) => {
           {/* Hamburger Menu Button */}
           <button
             aria-controls="sidebar"
-            aria-label={props.sidebarOpen ? "Close menu" : "Open menu"}
-            aria-expanded={props.sidebarOpen}
+            aria-label={props.isSidebarOpen ? "Close menu" : "Open menu"}
+            aria-expanded={props.isSidebarOpen}
             onClick={(e) => {
               e.stopPropagation();
-              props.setSidebarOpen(!props.sidebarOpen);
+              props.setIsSidebarOpen((prev) => !prev);
             }}
             className="
               flex h-11 w-11 items-center justify-center rounded-lg
@@ -74,21 +75,21 @@ const Header = (props: HeaderProps) => {
                 className={`
                   absolute left-0 block h-0.5 w-full rounded-sm bg-current
                   transition-all duration-300 ease-out
-                  ${props.sidebarOpen ? "top-2.5 rotate-45" : "top-1"}
+                  ${props.isSidebarOpen ? "top-2.5 rotate-45" : "top-1"}
                 `}
               />
               <span
                 className={`
                   absolute left-0 top-2.5 block h-0.5 w-full rounded-sm bg-current
                   transition-all duration-200 ease-out
-                  ${props.sidebarOpen ? "opacity-0 scale-x-0" : "opacity-100 scale-x-100"}
+                  ${props.isSidebarOpen ? "opacity-0 scale-x-0" : "opacity-100 scale-x-100"}
                 `}
               />
               <span
                 className={`
                   absolute left-0 block h-0.5 w-full rounded-sm bg-current
                   transition-all duration-300 ease-out
-                  ${props.sidebarOpen ? "top-2.5 -rotate-45" : "top-4"}
+                  ${props.isSidebarOpen ? "top-2.5 -rotate-45" : "top-4"}
                 `}
               />
             </span>

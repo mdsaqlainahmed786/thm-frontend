@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SidebarDropdown from "./SidebarDropdown";
@@ -12,14 +12,27 @@ interface SidebarItemProps {
   };
   pageName: string;
   setPageName: (name: string) => void;
+  onNavigate?: () => void;
 }
 
-const SidebarItem = ({ item, pageName, setPageName }: SidebarItemProps) => {
-  const handleClick = () => {
-    const updatedPageName =
-      pageName !== item.label.toLowerCase() ? item.label.toLowerCase() : "";
-    return setPageName(updatedPageName);
-  };
+const SidebarItem = ({ item, pageName, setPageName, onNavigate }: SidebarItemProps) => {
+  const normalizedLabel = item.label.toLowerCase();
+  const hasChildren = !!item.children?.length;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      onNavigate?.();
+
+      // Parent items act as expand/collapse toggles (avoid navigating to `#`).
+      if (hasChildren) {
+        e.preventDefault();
+      }
+
+      const updatedPageName = pageName !== normalizedLabel ? normalizedLabel : "";
+      setPageName(updatedPageName);
+    },
+    [hasChildren, normalizedLabel, onNavigate, pageName, setPageName],
+  );
 
   const pathname = usePathname();
 
@@ -32,7 +45,7 @@ const SidebarItem = ({ item, pageName, setPageName }: SidebarItemProps) => {
   };
 
   const isItemActive = isActive(item);
-  const isExpanded = pageName === item.label.toLowerCase();
+  const isExpanded = pageName === normalizedLabel;
 
   return (
     <li>
@@ -97,7 +110,7 @@ const SidebarItem = ({ item, pageName, setPageName }: SidebarItemProps) => {
             ${isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}
           `}
         >
-          <SidebarDropdown item={item.children} />
+          <SidebarDropdown item={item.children} onNavigate={onNavigate} />
         </div>
       )}
     </li>

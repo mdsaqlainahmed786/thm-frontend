@@ -1,9 +1,7 @@
 "use client";
-import React, { useState, ReactNode } from "react";
+import React from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import TanstackQueryProvider from "@/context/TanstackQueryProvider";
 import { InputProvider } from "@/context/SearchProvider";
 import useLocalStorage from "@/hooks/useLocalStorage";
 
@@ -24,7 +22,10 @@ type MainLayoutProps =
   | MainLayoutNonSearchableProps;
 
 export default function AdminLayout(props: MainLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useLocalStorage("adminSidebarOpen", false);
+  const [isSidebarOpen, setIsSidebarOpen] = useLocalStorage(
+    "adminSidebarOpen",
+    false,
+  );
 
   return (
     <div className="dark:bg-boxdark-2 dark:text-bodydark">
@@ -32,15 +33,18 @@ export default function AdminLayout(props: MainLayoutProps) {
         {/* <!-- ===== Page Wrapper Start ===== --> */}
         <div className="flex">
           {/* <!-- ===== Sidebar Start ===== --> */}
-          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          <Sidebar
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+          />
           {/* <!-- ===== Sidebar End ===== --> */}
 
           {/* <!-- ===== Content Area Start ===== --> */}
           <div className="relative flex flex-1 flex-col transition-all duration-300 lg:ml-72.5">
             {/* <!-- ===== Header Start ===== --> */}
             <Header
-              sidebarOpen={sidebarOpen}
-              setSidebarOpen={setSidebarOpen}
+              isSidebarOpen={isSidebarOpen}
+              setIsSidebarOpen={setIsSidebarOpen}
               isSearchable={props.isSearchable}
               queryPlaceholder={props.searchPlaceholder ?? ""}
             />

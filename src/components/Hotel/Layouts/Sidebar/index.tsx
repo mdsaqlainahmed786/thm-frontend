@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
-import { usePathname } from "next/navigation";
+import React, { useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,8 +8,8 @@ import SidebarItem from "./SidebarItem";
 import useLocalStorage from "@/hooks/useLocalStorage";
 
 interface SidebarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (arg: boolean) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const getMenuGroups = (businessTypeName?: string) => {
@@ -304,8 +303,7 @@ const getMenuGroups = (businessTypeName?: string) => {
   ];
 };
 
-const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
-  const pathname = usePathname();
+const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) => {
   const [pageName, setPageName] = useLocalStorage("selectedMenu", "dashboard");
   const { data: session } = useSession();
   const businessTypeName = session?.user?.businessTypeName;
@@ -314,6 +312,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     () => getMenuGroups(businessTypeName),
     [businessTypeName]
   );
+
+  // Ensures the sidebar is open without forcing redundant state updates/re-renders.
+  const ensureSidebarOpen = useCallback(() => {
+    setIsSidebarOpen((prev) => (prev ? prev : true));
+  }, [setIsSidebarOpen]);
 
   return (
     <aside
@@ -325,12 +328,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         bg-theme-sidebar border-r border-theme-primary
         transition-transform duration-300 ease-out
         xl:translate-x-0
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}
     >
       {/* Sidebar Header - Logo Section (64px height) */}
       <div className="flex h-16 items-center justify-between gap-3 border-b border-theme-primary px-4">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" onClick={ensureSidebarOpen} className="flex items-center gap-3">
           <Image
             width={36}
             height={36}
@@ -346,7 +349,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         
         {/* Close button for mobile */}
         <button
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setIsSidebarOpen(false)}
           aria-label="Close sidebar"
           className="
             flex h-10 w-10 items-center justify-center rounded-lg
@@ -391,6 +394,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     item={menuItem}
                     pageName={pageName}
                     setPageName={setPageName}
+                    onNavigate={ensureSidebarOpen}
                   />
                 ))}
               </ul>

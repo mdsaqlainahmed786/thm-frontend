@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { usePathname } from "next/navigation";
+import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import SidebarItem from "./SidebarItem";
@@ -11,8 +10,8 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchUser } from "@/api-services/user";
 
 interface SidebarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (arg: boolean) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (next: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const getMenuGroups = (isRootAdmin: boolean = false) => [
@@ -466,8 +465,7 @@ const getMenuGroups = (isRootAdmin: boolean = false) => [
   },
 ];
 
-const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
-  const pathname = usePathname();
+const Sidebar = ({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) => {
   const [pageName, setPageName] = useState("dashboard");
   const { data: session } = useSession();
   
@@ -487,18 +485,27 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const isRootAdmin = currentUser?.email === "admin@thehotelmedia.com";
   
   // Generate menu groups based on root admin status
-  const menuGroups = getMenuGroups(isRootAdmin);
+  const menuGroups = useMemo(() => getMenuGroups(isRootAdmin), [isRootAdmin]);
+
+  // Ensures the sidebar is open without forcing redundant state updates/re-renders.
+  const ensureSidebarOpen = useCallback(() => {
+    setIsSidebarOpen((prev) => (prev ? prev : true));
+  }, [setIsSidebarOpen]);
 
   return (
-    <ClickOutside onClick={() => setSidebarOpen(false)}>
+    <ClickOutside onClick={() => setIsSidebarOpen(false)}>
       <aside
         className={`fixed left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark-sidebar lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* <!-- SIDEBAR HEADER --> */}
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-          <Link href="/dashboard" className="transition-opacity duration-300">
+          <Link
+            href="/dashboard"
+            onClick={ensureSidebarOpen}
+            className="transition-opacity duration-300"
+          >
             <Image
               width={100}
               height={100}
@@ -508,7 +515,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             />
           </Link>
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => setIsSidebarOpen((prev) => !prev)}
             aria-controls="sidebar"
             className="block lg:hidden"
           >
@@ -547,6 +554,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       item={menuItem}
                       pageName={pageName}
                       setPageName={setPageName}
+                      onNavigate={ensureSidebarOpen}
                     />
                   ))}
                 </ul>
