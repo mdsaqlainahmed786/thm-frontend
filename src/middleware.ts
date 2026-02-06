@@ -98,14 +98,14 @@ export async function middleware(req: NextRequest) {
     if (isHotelSubdomain && isAdminRoute) {
         return NextResponse.redirect(new URL(HOTEL_LOGIN_ROUTE, publicOrigin));
     }
-    
+
     // CRITICAL: Clear admin cookies if we're on hotel subdomain/route to prevent cross-contamination
     // Only clear if there's a mismatch (admin cookies exist but we're in hotel context)
     if ((isHotelSubdomain || isHotelRoute) && pathname !== HOTEL_LOGIN_ROUTE) {
         const adminSessionToken = cookieStore.get('AdminSessionToken');
         const adminAccessToken = cookieStore.get('X-Admin-Access-Token');
         const hotelSessionToken = cookieStore.get('SessionToken');
-        
+
         // Only clear admin cookies if they exist AND we have a valid hotel session
         // This prevents clearing during login flow but cleans up after context switch
         if ((adminSessionToken || adminAccessToken) && hotelSessionToken) {
@@ -116,14 +116,14 @@ export async function middleware(req: NextRequest) {
             return response;
         }
     }
-    
+
     // CRITICAL: Clear hotel cookies if we're on admin subdomain to prevent cross-contamination
     // Only clear if there's a mismatch (hotel cookies exist but we're in admin context)
     if (isAdminSubdomain && pathname !== LOGIN_ROUTE) {
         const hotelSessionToken = cookieStore.get('SessionToken');
         const hotelAccessToken = cookieStore.get('X-Access-Token');
         const adminSessionToken = cookieStore.get('AdminSessionToken');
-        
+
         // Only clear hotel cookies if they exist AND we have a valid admin session
         if ((hotelSessionToken || hotelAccessToken) && adminSessionToken) {
             console.log('[MIDDLEWARE] Clearing hotel cookies on admin subdomain - context mismatch detected');
