@@ -3,6 +3,16 @@ import useColorMode from "@/hooks/useColorMode";
 const DarkModeSwitcher = () => {
   const [colorMode, setColorMode] = useColorMode();
 
+  // Theme switching should only exist on admin.thehotelmedia.com
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname ?? "";
+    const isAdminHost =
+      hostname === "admin.thehotelmedia.com" ||
+      (process.env.NODE_ENV !== "production" && hostname === "localhost");
+
+    if (!isAdminHost) return null;
+  }
+
   return (
     <li>
       <label
@@ -11,6 +21,8 @@ const DarkModeSwitcher = () => {
       >
         <input
           type="checkbox"
+          checked={colorMode === "dark"}
+          aria-label="Toggle dark mode"
           onChange={() => {
             if (typeof setColorMode === "function") {
               setColorMode(colorMode === "light" ? "dark" : "light");

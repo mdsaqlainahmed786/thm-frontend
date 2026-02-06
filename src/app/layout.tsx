@@ -53,29 +53,34 @@ const ThemeScript = () => {
   const script = `
     (function() {
       try {
-        // Check if we're on login page
-        var isLoginPage = window.location.pathname.includes('/hotels/login');
-        var theme = 'dark'; // Default to dark mode
-        
-        if (isLoginPage) {
-          // Force light mode for login page only
+        var pathname = window.location.pathname || '';
+        var hostname = window.location.hostname || '';
+
+        var isHotelsLogin = pathname.includes('/hotels/login');
+        var isHotelsArea = pathname.indexOf('/hotels') === 0;
+        var isAdminHost = hostname === 'admin.thehotelmedia.com' || (hostname === 'localhost' && '${process.env.NODE_ENV}' !== 'production');
+
+        var theme = 'dark'; // default
+
+        if (isHotelsLogin) {
           theme = 'light';
-        } else {
-          // For all other pages, always use dark mode (ignore any stored preference)
+        } else if (isHotelsArea) {
           theme = 'dark';
-          // Clear any light mode preference from localStorage
+        } else if (isAdminHost) {
+          var stored = localStorage.getItem('thm-theme');
+          theme = (stored === 'light' || stored === 'dark') ? stored : 'dark';
+        } else {
+          theme = 'dark';
+          // Ensure non-admin hosts never stick to light mode accidentally.
           if (localStorage.getItem('thm-theme') === 'light') {
             localStorage.setItem('thm-theme', 'dark');
           }
         }
-        
+
         document.documentElement.setAttribute('data-theme', theme);
         document.body.classList.add(theme);
-        if (theme === 'dark') {
-          document.body.classList.remove('light');
-        } else {
-          document.body.classList.remove('dark');
-        }
+        if (theme === 'dark') document.body.classList.remove('light');
+        else document.body.classList.remove('dark');
       } catch (e) {
         document.documentElement.setAttribute('data-theme', 'dark');
         document.body.classList.add('dark');

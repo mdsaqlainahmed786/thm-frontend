@@ -5,6 +5,35 @@ import useLocalStorage from "./useLocalStorage";
 
 type Theme = "light" | "dark";
 
+function isAdminThemeHost(hostname: string) {
+  // Restrict theme switching to admin subdomain in production.
+  // Allow localhost in non-prod to make local development usable.
+  if (hostname === "admin.thehotelmedia.com") return true;
+  if (process.env.NODE_ENV !== "production" && hostname === "localhost") return true;
+  return false;
+}
+
+function getEnforcedTheme(): Theme | null {
+  if (typeof window === "undefined") return "dark";
+
+  const pathname = window.location.pathname ?? "";
+  const hostname = window.location.hostname ?? "";
+
+  // Hotel login should always be light (existing behavior).
+  const isHotelsLogin = pathname.includes("/hotels/login");
+  if (isHotelsLogin) return "light";
+
+  // Keep hotels area dark, even if somehow rendered on admin host.
+  const isHotelsArea = pathname.startsWith("/hotels");
+  if (isHotelsArea) return "dark";
+
+  // On non-admin hosts, force dark mode.
+  if (!isAdminThemeHost(hostname)) return "dark";
+
+  // On admin host we allow user preference (no enforcement).
+  return null;
+}
+
 /**
  * Hook to manage color mode (light/dark theme)
  * 
@@ -22,15 +51,17 @@ const useColorMode = (): [Theme, (theme: Theme) => void] => {
   useEffect(() => {
     setMounted(true);
 
-    // Check if we're on login page - if so, force light mode
-    const isLoginPage = window.location.pathname.includes('/hotels/login');
-    
-    if (isLoginPage) {
-      // Force light mode for login page only
-      setColorModeStorage("light");
+    const enforced = getEnforcedTheme();
+    if (enforced) {
+      setColorModeStorage(enforced);
     } else {
-      // For all other pages, always use dark mode (override any stored preference)
-      setColorModeStorage("dark");
+      // Admin host: respect stored preference; ensure it's valid.
+      const stored = localStorage.getItem("thm-theme");
+      if (stored === "light" || stored === "dark") {
+        setColorModeStorage(stored);
+      } else {
+        setColorModeStorage("dark");
+      }
     }
   }, [setColorModeStorage]);
 
@@ -58,24 +89,16 @@ const useColorMode = (): [Theme, (theme: Theme) => void] => {
   // Removed auto-switch functionality
 
   const setColorMode = useCallback((theme: Theme) => {
-    // Check if we're on login page
-    const isLoginPage = window.location.pathname.includes('/hotels/login');
-    
-    if (isLoginPage) {
-      // Allow light mode only on login page
-      document.documentElement.classList.add("theme-transitioning");
-      setColorModeStorage("light");
-      setTimeout(() => {
-        document.documentElement.classList.remove("theme-transitioning");
-      }, 300);
-    } else {
-      // Force dark mode for all other pages
-      document.documentElement.classList.add("theme-transitioning");
-      setColorModeStorage("dark");
-      setTimeout(() => {
-        document.documentElement.classList.remove("theme-transitioning");
-      }, 300);
-    }
+    const enforced = getEnforcedTheme();
+
+    document.documentElement.classList.add("theme-transitioning");
+
+    // If theme is enforced (non-admin hosts / hotels area), ignore requested theme.
+    setColorModeStorage(enforced ?? theme);
+
+    setTimeout(() => {
+      document.documentElement.classList.remove("theme-transitioning");
+    }, 300);
   }, [setColorModeStorage]);
 
   return [colorMode, setColorMode];
