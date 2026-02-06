@@ -75,8 +75,15 @@ export async function middleware(req: NextRequest) {
     const isAdminRoute = pathname.startsWith('/admin/');
 
     const isDashboardEndpoint = dashboardEndpoints.some((endpoint) => {
-        const regex = new RegExp(`^${endpoint.replace(/:path\\*/g, '.*')}$`);
-        return regex.test(pathname);
+        // Avoid dynamic RegExp construction (can break if patterns aren't escaped correctly).
+        // We only need simple matching for `:path*` (prefix match).
+        if (endpoint.includes(':path*')) {
+            const base = endpoint.replace(':path*', '');
+            return pathname.startsWith(base);
+        }
+        // Normalize trailing slash patterns like "/users/" to also match "/users"
+        if (endpoint.endsWith('/') && pathname === endpoint.slice(0, -1)) return true;
+        return pathname === endpoint;
     });
 
     const redirectSameOrigin = (toPathname: string) => {
