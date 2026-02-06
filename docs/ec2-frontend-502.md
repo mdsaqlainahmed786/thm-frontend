@@ -19,8 +19,38 @@ Typical meanings:
 - **`connect() failed (111: Connection refused)`**: Next.js process is **not listening** on the configured port.
 - **`upstream timed out`**: Next.js is **hung / overloaded** (CPU, memory, or a slow SSR path).
 - **`no live upstreams`**: nginx upstream config points to a dead upstream group.
+- **`upstream sent too big header`**: nginx response header buffers are too small (often due to large `Set-Cookie` headers from auth). Common with NextAuth.
 
 Important: **PM2 can show "online" while nginx still gets connection refused** if the process is restarting/crash-looping quickly, or if it is bound to a different interface (common IPv6/localhost mismatch).
+
+### Fix for: `upstream sent too big header`
+
+Add these inside every nginx `location` that proxies to Next.js (port `3000`), e.g. `location / { ... }`:
+
+```nginx
+# Allow large auth headers (NextAuth / large cookies)
+proxy_buffer_size 128k;
+proxy_buffers 4 256k;
+proxy_busy_buffers_size 256k;
+```
+
+Reload:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### Fix for frequent 504s: increase upstream timeouts (mitigation)
+
+If you see repeated `upstream timed out (110: Connection timed out) while reading response header from upstream`,
+you can mitigate by increasing timeouts in those same `location` blocks:
+
+```nginx
+proxy_connect_timeout 5s;
+proxy_send_timeout 120s;
+proxy_read_timeout 120s;
+send_timeout 120s;
+```
 
 ---
 

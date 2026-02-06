@@ -3,6 +3,13 @@ const nextConfig = {
 	outputFileTracingRoot: __dirname,
 	typescript: { ignoreBuildErrors: true },
 	eslint: { ignoreDuringBuilds: true },
+	compiler: {
+		// Enables the styled-components SWC transform (was previously in next.config.mjs)
+		styledComponents: true,
+	},
+	env: {
+		HOST: process.env.HOST,
+	},
 	
 	// Disable X-Powered-By header for security
 	poweredByHeader: false,
