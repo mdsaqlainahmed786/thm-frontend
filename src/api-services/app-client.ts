@@ -20,10 +20,20 @@ const apiRequest = axios.create({
  */
 apiRequest.interceptors.request.use(
     async (config) => {
-        // Determine if this is an admin request based on URL path
-        const isAdminRequest = typeof window !== 'undefined' && 
-            (window.location.pathname.startsWith('/dashboard') || 
-             window.location.pathname.startsWith('/admin/'));
+        const url = config.url ?? '';
+        // Prefer API-path based detection (robust even when admin UI route is /users, /posts, etc.)
+        const isAdminApiRequest =
+            url.startsWith('/admin/') ||
+            url.includes('/api/v1/admin/') ||
+            url.includes('/admin/');
+
+        // Fallback: determine if this is an admin request based on current UI route
+        const isAdminUiRoute =
+            typeof window !== 'undefined' &&
+            (window.location.pathname.startsWith('/dashboard') ||
+                window.location.pathname.startsWith('/admin/'));
+
+        const isAdminRequest = isAdminApiRequest || isAdminUiRoute;
         
         // Use appropriate token based on context
         let accessToken;

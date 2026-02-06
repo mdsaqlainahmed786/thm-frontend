@@ -5,7 +5,7 @@ import SVG from "@/components/SVG";
 import { fetchRooms } from "@/api-services/booking";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Loading from "@/components/Loading";
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import Paginator from "@/components/Paginator";
 import Label from "@/components/Hotel/Common/UI/Label";
 import Input from "@/components/Hotel/Common/UI/Input";
@@ -56,6 +56,8 @@ export default function RoomManagement() {
   >([]);
   const [editMode, setEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const {
     isPending,
     isError,
@@ -88,6 +90,9 @@ export default function RoomManagement() {
       setIsSubmitting(false);
       setExistingImages([]);
       setRemovedExistingImageIds([]);
+      setUploadPercent(null);
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
     }
   }, [modal]);
 
@@ -123,7 +128,16 @@ export default function RoomManagement() {
         toast.error("At least one image is required");
         return false;
       }
+      if (totalImages > 20) {
+        toast.error("Maximum 20 images allowed");
+        return false;
+      }
       setIsSubmitting(true);
+      const willUploadImages = (formInputs.images?.length ?? 0) > 0;
+      setUploadPercent(willUploadImages ? 0 : null);
+      // Cancel any in-flight request before starting a new one
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
       const fromData = new FormData();
       fromData.append("price", parseFloat(formInputs.price as any).toFixed(2));
       fromData.append("currency", formInputs.currency);
@@ -188,7 +202,20 @@ export default function RoomManagement() {
       }
 
       if (editMode) {
-        const data = await updateRoom(fromData, formInputs._id);
+        const data = await updateRoom(fromData, formInputs._id, {
+          signal: abortControllerRef.current.signal,
+          onUploadProgress: willUploadImages
+            ? (progressEvent) => {
+                const total = progressEvent.total ?? progressEvent.loaded;
+                if (!total) return;
+                const percent = Math.min(
+                  100,
+                  Math.round((progressEvent.loaded * 100) / total)
+                );
+                setUploadPercent(percent);
+              }
+            : undefined,
+        });
         if (data.status) {
           setFormInputs(initialFormInputs);
           setExistingImages([]);
@@ -197,7 +224,20 @@ export default function RoomManagement() {
           refetch();
         }
       } else {
-        const data = await createRoom(fromData);
+        const data = await createRoom(fromData, {
+          signal: abortControllerRef.current.signal,
+          onUploadProgress: willUploadImages
+            ? (progressEvent) => {
+                const total = progressEvent.total ?? progressEvent.loaded;
+                if (!total) return;
+                const percent = Math.min(
+                  100,
+                  Math.round((progressEvent.loaded * 100) / total)
+                );
+                setUploadPercent(percent);
+              }
+            : undefined,
+        });
         if (data.status) {
           setFormInputs(initialFormInputs);
           setExistingImages([]);
@@ -210,6 +250,8 @@ export default function RoomManagement() {
       console.log(error);
     } finally {
       setIsSubmitting(false);
+      setUploadPercent(null);
+      abortControllerRef.current = null;
     }
   };
   const handleImages = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,11 +264,31 @@ export default function RoomManagement() {
       }
     }
     if (filesData.length) {
+      const remainingExistingImages = existingImages.filter(
+        (img) => !removedExistingImageIds.includes(img._id)
+      );
+      const currentTotal =
+        remainingExistingImages.length + (formInputs.images?.length ?? 0);
+      const remainingSlots = 20 - currentTotal;
+      if (remainingSlots <= 0) {
+        toast.error("Maximum 20 images allowed");
+        e.target.value = "";
+        return;
+      }
+      const acceptedFiles = filesData.slice(0, remainingSlots);
+      if (acceptedFiles.length < filesData.length) {
+        toast.error(
+          `Only ${remainingSlots} more image${
+            remainingSlots === 1 ? "" : "s"
+          } can be added (max 20)`
+        );
+      }
       setFormInputs((prev) => ({
         ...prev,
-        images: [...prev.images, ...filesData],
+        images: [...prev.images, ...acceptedFiles],
       }));
     }
+    e.target.value = "";
   };
   const removeFileFromArray = (fileIndex: number) => {
     setFormInputs({
@@ -377,7 +439,17 @@ export default function RoomManagement() {
               <button
                 className="bg-primary/50 border-radius h-6 w-6 rounded-full flex justify-center items-center"
                 type="button"
-                onClick={() => setModal(false)}
+                onClick={() => {
+                  if (isSubmitting) {
+                    const ok = confirm(
+                      "Upload/update is in progress. Close and cancel the request?"
+                    );
+                    if (!ok) return;
+                    abortControllerRef.current?.abort();
+                    abortControllerRef.current = null;
+                  }
+                  setModal(false);
+                }}
               >
                 <svg
                   className="fill-current"
@@ -398,6 +470,11 @@ export default function RoomManagement() {
             </div>
             <form onSubmit={handleFormSubmit}>
               <div className="my-8">
+                <div
+                  className={`transition-opacity ${
+                    isSubmitting ? "opacity-60" : "opacity-100"
+                  }`}
+                >
                 {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div className="mb-3">
                                         <Label id="name" >Business Type</Label>
@@ -444,6 +521,7 @@ export default function RoomManagement() {
                       id="title"
                       name="title"
                       required={true}
+                      disabled={isSubmitting}
                       value={formInputs.title}
                       onChange={(e) =>
                         setFormInputs({ ...formInputs, title: e.target.value })
@@ -460,6 +538,7 @@ export default function RoomManagement() {
                       <select
                         className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm"
                         required={true}
+                        disabled={isSubmitting}
                         onChange={(e) =>
                           setFormInputs({
                             ...formInputs,
@@ -517,6 +596,7 @@ export default function RoomManagement() {
                         id="children"
                         className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm"
                         required={true}
+                        disabled={isSubmitting}
                         onChange={(e) =>
                           setFormInputs({
                             ...formInputs,
@@ -556,6 +636,7 @@ export default function RoomManagement() {
                         id="children"
                         className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm"
                         required={true}
+                        disabled={isSubmitting}
                         onChange={(e) =>
                           setFormInputs({
                             ...formInputs,
@@ -595,6 +676,7 @@ export default function RoomManagement() {
                       type="number"
                       id="price"
                       name="price"
+                      disabled={isSubmitting}
                       value={formInputs.price.toString()}
                       onChange={(e) =>
                         setFormInputs({
@@ -614,6 +696,7 @@ export default function RoomManagement() {
                       <select
                         className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-transparent px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm placeholder-white/60"
                         required={true}
+                        disabled={isSubmitting}
                         onChange={(e) =>
                           setFormInputs({
                             ...formInputs,
@@ -656,6 +739,7 @@ export default function RoomManagement() {
                       <select
                         className="relative z-20 w-full appearance-none rounded-theme-xl border border-stroke bg-form-input px-12 py-3 outline-none transition focus:border-primary active:border-primary dark:border-theme-gray-1 dark:bg-form-input text-white dark:text-white text-sm dark:placeholder-gray-400"
                         required={true}
+                        disabled={isSubmitting}
                         onChange={(e) =>
                           setFormInputs({
                             ...formInputs,
@@ -694,6 +778,7 @@ export default function RoomManagement() {
                       type="number"
                       id="totalRooms"
                       name="totalRooms"
+                      disabled={isSubmitting}
                       value={formInputs.totalRooms.toString()}
                       onChange={(e) =>
                         setFormInputs({
@@ -716,6 +801,7 @@ export default function RoomManagement() {
                         <Select
                           isMulti={true}
                           closeMenuOnSelect={false}
+                          isDisabled={isSubmitting}
                           className="text-black dark:text-black"
                           styles={{
                             control: (baseStyles, state) => ({
@@ -770,6 +856,7 @@ export default function RoomManagement() {
                     required={false}
                     className="w-full rounded-2xl border border-theme-gray-1 bg-white px-4.5 py-3 text-white focus:border-primary focus-visible:outline-none dark:border-theme-gray-1 dark:bg-boxdark dark:text-white dark:focus:border-primary text-sm font-normal"
                     name="description"
+                    disabled={isSubmitting}
                     value={formInputs.description}
                     onChange={(e) =>
                       setFormInputs({
@@ -782,7 +869,9 @@ export default function RoomManagement() {
                 </div>
                 <label
                   htmlFor="room-images"
-                  className="w-full rounded-theme-xl border border-theme-gray-1 bg-white px-3 py-2 text-white focus:border-primary focus-visible:outline-none dark:border-theme-gray-1 dark:bg-boxdark dark:text-white dark:focus:border-primary text-sm font-normal flex justify-between items-center mb-3 cursor-pointer"
+                  className={`w-full rounded-theme-xl border border-theme-gray-1 bg-white px-3 py-2 text-white focus:border-primary focus-visible:outline-none dark:border-theme-gray-1 dark:bg-boxdark dark:text-white dark:focus:border-primary text-sm font-normal flex justify-between items-center mb-3 cursor-pointer ${
+                    isSubmitting ? "pointer-events-none opacity-60" : ""
+                  }`}
                 >
                   <span>Room Images</span>
                   <input
@@ -792,6 +881,7 @@ export default function RoomManagement() {
                     className="hidden"
                     id="room-images"
                     multiple={true}
+                    disabled={isSubmitting}
                     onChange={handleImages}
                   />
                   <span className="px-3 py-2 text-xs font-medium text-center text-white bg-primary/50  rounded-2xl hover:bg-primary/80 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-primary/50  dark:hover:bg-primary/80 dark:focus:ring-blue-800">
@@ -809,6 +899,7 @@ export default function RoomManagement() {
                         >
                           <button
                             type="button"
+                            disabled={isSubmitting}
                             className="top-1 right-1 w-4 h-4 bg-primary absolute rounded-full text-white text-[10px] leading-[10px] flex justify-center items-center z-10"
                             onClick={() => removeExistingImage(img._id)}
                           >
@@ -842,6 +933,7 @@ export default function RoomManagement() {
                         >
                           <button
                             type="button"
+                            disabled={isSubmitting}
                             className="top-1 right-1 w-4 h-4 bg-primary absolute rounded-full text-white text-[10px] leading-[10px] flex justify-center items-center"
                             onClick={() => removeFileFromArray(index)}
                           >
@@ -868,13 +960,41 @@ export default function RoomManagement() {
                       );
                     })}
                 </div>
+                {isSubmitting && uploadPercent !== null ? (
+                  <div className="mt-6 w-full">
+                    <div className="flex items-center justify-between text-xs text-white/80">
+                      <span>
+                        {uploadPercent >= 100
+                          ? "Processing images…"
+                          : "Uploading images…"}
+                      </span>
+                      <span>{uploadPercent}%</span>
+                    </div>
+                    <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-theme-gray-1/60">
+                      <div
+                        className={`h-full rounded-full bg-primary/70 transition-[width] duration-200 ${
+                          uploadPercent >= 100 ? "animate-pulse" : ""
+                        }`}
+                        style={{ width: `${uploadPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+                </div>
               </div>
               <div className="flex flex-wrap justify-end items-center gap-4">
                 <button
                   type="button"
-                  disabled={isSubmitting}
                   className="flex items-center justify-center gap-2 px-4 py-2 text-white hover:bg-opacity-90 rounded-[25px] bg-theme-gray-1 dark:bg-theme-gray-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => {
+                    if (isSubmitting) {
+                      const ok = confirm(
+                        "Upload/update is in progress. Cancel and close?"
+                      );
+                      if (!ok) return;
+                      abortControllerRef.current?.abort();
+                      abortControllerRef.current = null;
+                    }
                     // Reset removed images when canceling - don't delete them
                     setRemovedExistingImageIds([]);
                     setModal(false);

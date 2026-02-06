@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, ReactNode, useEffect } from "react";
+import React, { useState, ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -36,7 +36,7 @@ export default function AdminLayout(props: MainLayoutProps) {
           {/* <!-- ===== Sidebar End ===== --> */}
 
           {/* <!-- ===== Content Area Start ===== --> */}
-          <div className="relative flex flex-1 flex-col lg:ml-72.5">
+          <div className="relative flex flex-1 flex-col transition-all duration-300 lg:ml-72.5">
             {/* <!-- ===== Header Start ===== --> */}
             <Header
               sidebarOpen={sidebarOpen}
