@@ -452,14 +452,39 @@ const authOptions: AuthOptions = {
             return token;
         },
         async redirect({ url, baseUrl }) {
+            const isProd = process.env.NODE_ENV === 'production';
+            const isLocalBase =
+                baseUrl.includes('localhost') ||
+                baseUrl.includes('127.0.0.1') ||
+                baseUrl.includes('0.0.0.0');
+            const configuredPublicBase =
+                process.env.NEXT_PUBLIC_HOST ||
+                process.env.NEXTAUTH_URL ||
+                '';
+            const configuredPublicOrigin = (() => {
+                if (!configuredPublicBase) return undefined;
+                try {
+                    const u = new URL(
+                        configuredPublicBase.startsWith('http')
+                            ? configuredPublicBase
+                            : `https://${configuredPublicBase}`
+                    );
+                    return u.origin;
+                } catch {
+                    return undefined;
+                }
+            })();
+            const safeBaseUrl =
+                (isProd && isLocalBase && configuredPublicOrigin) ? configuredPublicOrigin : baseUrl;
+
             // Always allow redirects to our own subdomains
             if (url.includes('thehotelmedia.com')) {
                 return url;
             }
             // Default behavior
-            if (url.startsWith("/")) return `${baseUrl}${url}`
-            else if (new URL(url).origin === new URL(baseUrl).origin) return url
-            return baseUrl
+            if (url.startsWith("/")) return `${safeBaseUrl}${url}`
+            else if (new URL(url).origin === new URL(safeBaseUrl).origin) return url
+            return safeBaseUrl
         }
     },
     events: {
